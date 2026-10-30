@@ -15,7 +15,7 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  const CATALOG = [CFG.lite.product, CFG.ultra.product, ...CFG.passes, ...CFG.packs];
+  const CATALOG = [CFG.lite.product, CFG.ultra.product, CFG.turbo.product, ...CFG.passes, ...CFG.packs];
   const byId = id => CATALOG.find(p => p.id === id);
 
   /* ---------------------------------------------------------------
@@ -78,7 +78,7 @@
     const plan = (order.items.find(i => i.type === 'lite' || i.type === 'ultra') || {}).type, gotLite = !!plan, u = B.getUser(), bal = B.balance();
     body.innerHTML = `<div class="pay-result"><div class="done-badge" aria-hidden="true">✓</div><h2>Payment <em>successful</em></h2><p class="demo-note" style="margin-top:0">Demo order — no money was taken.</p>
       <div class="receipt"><div><span>Order</span><b>${order.id}</b></div><div><span>Date</span><b>${fmtDate(order.createdAt)}</b></div><div><span>Total</span><b>${inr(order.total)}</b></div></div>
-      <ul class="order-lines compact">${order.items.map(i => `<li><div><b>${esc(i.name)}</b><small>${i.type === 'credits' ? `+${i.credits} credits added` : i.type === 'pass' ? `Free recommendations until ${fmtDate(bal.recPassUntil)}` : `${plan === 'ultra' ? 'Ultra' : 'Lite'} active until ${fmtDate(u.plan.renewsAt)}`}</small></div><span>${inr(i.price)}</span></li>`).join('')}</ul>
+      <ul class="order-lines compact">${order.items.map(i => `<li><div><b>${esc(i.name)}</b><small>${i.type === 'credits' ? `+${i.credits} credits added` : i.type === 'pass' ? `Free recommendations until ${fmtDate(bal.recPassUntil)}` : i.type === 'turbo' ? `Turbo active on ProMouser Online until ${fmtDate(B.turbo().until)}` : `${i.type === 'ultra' ? 'Ultra' : 'Lite'} unlocked for life${i.type === 'ultra' ? ` · plus Turbo until ${fmtDate(B.turbo().until)}` : ''}`}</small></div><span>${inr(i.price)}</span></li>`).join('')}</ul>
       ${gotLite ? `<p class="lite-welcome${plan === 'ultra' ? ' ultra' : ''}">Welcome to <strong>ProMouser ${plan === 'ultra' ? 'Ultra' : 'Lite'}</strong>. We’re switching you to the ${plan === 'ultra' ? 'purple' : 'blue'} theme now.</p>` : ''}
       <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations.html" id="coGo">Get recommendations</a><button class="btn btn-ghost" type="button" id="coDone">Done</button></div></div>`;
     const done = () => { A.closeModal(true); if (gotLite) location.reload(); };
@@ -104,19 +104,27 @@
       host.innerHTML = `
         <div class="shop-heroes">
           <article class="shop-hero theme-lite reveal visible" id="lite">
-            <span class="plan-tag lite">Subscription</span>
+            <span class="plan-tag lite">One-time · yours forever</span>
             <h3>ProMouser <em>Lite</em></h3>
-            <p class="shop-price"><b>${inr(CFG.lite.product.price)}</b> / month</p>
+            <p class="shop-price"><b>${inr(CFG.lite.product.price)}</b> once</p>
             <ul class="tick-list"><li>Blue &amp; black theme</li><li>Unlimited results (not just the top ${CFG.free.resultsLimit})</li><li>Advanced preferences: hand size or exact hand length, left-handed, Minecraft 1.8 vs 1.9+, budget, buttons, customisation, click style</li><li>${CFG.lite.dailyCredits} free credits a day, with each run using ${CFG.lite.costPerRecommendation}</li></ul>
-            ${ultra ? `<p class="panel-note">You’re on Ultra, which already includes everything in Lite.</p>` : lite ? `<p class="panel-note">You’re on Lite until ${fmtDate(u.plan.renewsAt)}.</p><div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">Add another month</button></div>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">Get Lite</button><a class="btn btn-ghost" href="${root}lite.html">What’s included</a></div>`}
+            ${ultra ? `<p class="panel-note">You’re on Ultra, which already includes everything in Lite.</p>` : lite ? `<p class="panel-note">You own Lite for life. ✓</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">Get Lite</button><a class="btn btn-ghost" href="${root}lite.html">What’s included</a></div>`}
           </article>
           <article class="shop-hero theme-ultra reveal visible" id="ultra">
-            <span class="ultra-badge">Best · Subscription</span>
+            <span class="ultra-badge">Best · One-time</span>
             <h3>ProMouser <em>Ultra</em></h3>
-            <p class="shop-price"><b>${inr(CFG.ultra.product.price)}</b> / month</p>
-            <ul class="tick-list"><li>Purple &amp; black theme</li><li>Everything in Lite</li><li><strong>Unlimited recommendations</strong>, no credits used</li><li>Saved profiles, price watchlist, sensitivity converter, shortlist export</li><li>An assistant that remembers you</li></ul>
-            ${ultra ? `<p class="panel-note">You’re on Ultra until ${fmtDate(u.plan.renewsAt)}.</p><div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">Add another month</button></div>`
-              : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">${lite ? 'Upgrade to Ultra' : 'Get Ultra'}</button><a class="btn btn-ghost" href="${root}ultra.html">What’s included</a></div>${lite ? '<p class="field-note">Upgrading starts a fresh Ultra month from today.</p>' : ''}`}
+            <p class="shop-price"><b>${inr(CFG.ultra.product.price)}</b> once</p>
+            <ul class="tick-list"><li>Purple &amp; black theme</li><li>Everything in Lite</li><li><strong>Unlimited recommendations</strong>, no credits used</li><li>Saved profiles, price watchlist, sensitivity converter, shortlist export</li><li>An assistant that remembers you</li><li><strong>1 month of ProMouser Turbo</strong> on ProMouser Online, included</li></ul>
+            ${ultra ? `<p class="panel-note">You own Ultra for life. ✓</p>`
+              : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">${lite ? 'Upgrade to Ultra' : 'Get Ultra'}</button><a class="btn btn-ghost" href="${root}ultra.html">What’s included</a></div>`}
+          </article>
+          <article class="shop-hero theme-turbo reveal visible" id="turbo">
+            <span class="plan-tag turbo">Monthly · ProMouser Online</span>
+            <h3>ProMouser <em>Turbo</em></h3>
+            <p class="shop-price"><b>${inr(CFG.turbo.product.price)}</b> / month</p>
+            <ul class="tick-list"><li>A gradient username on ProMouser Online</li><li>Custom gradients on your profile page</li><li>The Turbo battle pass track</li><li>An exclusive 3D digital mouse</li></ul>
+            ${B.turbo().active ? `<p class="panel-note">Turbo is active until ${fmtDate(B.turbo().until)}.</p>` : ''}
+            <div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.turbo.product.id}" type="button">${B.turbo().active ? 'Add a month' : 'Get Turbo'}</button><a class="btn btn-ghost" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">Open ProMouser Online</a></div>
           </article>
           <article class="shop-hero reveal visible">
             <span class="plan-tag">Pass</span>
@@ -140,8 +148,9 @@
           <p class="demo-note"><strong>Demo checkout:</strong> every purchase here is simulated so the full flow can be tested. No payment is taken. Prices are placeholders until Razorpay is connected.</p>
         </div>
         <div class="faq reveal visible"><h3>Questions</h3>
-          <details><summary>Does Lite renew automatically?</summary><p>Not in the demo. Lite lasts 30 days from purchase; you can add another month at any time from this page or your account.</p></details>
-          <details><summary>What happens to my credits if Lite ends?</summary><p>Your purchased credits stay. Your daily allowance returns to ${CFG.free.dailyCredits}, results go back to the top ${CFG.free.resultsLimit}, and the theme returns to red and black.</p></details>
+          <details><summary>Are Lite and Ultra subscriptions?</summary><p>No. Lite (${inr(CFG.lite.product.price)}) and Ultra (${inr(CFG.ultra.product.price)}) are one-time payments: pay once and keep them forever. Turbo (${inr(CFG.turbo.product.price)} a month) is the only monthly plan.</p></details>
+          <details><summary>I already have Lite. Can I get Ultra?</summary><p>Yes. Buying Ultra switches you to Ultra for life. Buying Lite on an Ultra account never downgrades you.</p></details>
+          <details><summary>What is ProMouser Turbo?</summary><p>Turbo is for <a href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online</a>, our social site with games, friends and lobbies. It uses the same account. Ultra includes your first month.</p></details>
           <details><summary>Can I get a refund?</summary><p>Refund terms will be set when real payments go live.</p></details>
         </div>`;
     };

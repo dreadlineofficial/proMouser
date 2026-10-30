@@ -31,8 +31,8 @@ Check that it worked: **Table Editor** should now list `profiles`, `credit_balan
      to check their inbox, and the link brings them back to `account.html`.
    - Turning it OFF makes testing quicker, because sign-up logs you straight in.
 2. **Authentication → URL Configuration**
-   - **Site URL:** `https://www.promouser.shop`
-   - **Redirect URLs:** add `https://www.promouser.shop/account.html`.
+   - **Site URL:** `https://promouser.website`
+   - **Redirect URLs:** add `https://promouser.website/account.html`.
      For local testing, also add `http://localhost:8000/account.html`.
 
 ## 4. Paste your keys into the site
@@ -66,11 +66,11 @@ Test locally with `python3 -m http.server 8000` in this folder, then open
 I tested all of this against a real Postgres database:
 - Users can read only their own data.
 - Users can't change their own credits, plan, pass or orders, even by calling the API directly.
-- The server decides what a run costs (1 credit on Free, 3 on Lite, free with a Recommendation Pass).
+- The server decides what a run costs (1 credit on Free, 3 on Lite, 0 on Ultra, free with a Recommendation Pass).
   Passes live in `user_passes`, one row per feature, so a pass never touches your credits.
 - Plans are `free`, `lite` and `ultra`. Ultra recommendations cost 0 credits. Ultra's watchlist, saved profiles and
   assistant memory live in `profiles.extras`, and a trigger refuses changes to it from non-Ultra accounts.
-  It refills 5 or 15 daily credits at midnight India time and ends Lite when it expires.
+  It refills 5 or 15 daily credits at midnight India time. Lite and Ultra are lifetime plans, so they never expire.
 - Prices come from the `products` table, not the browser.
 - Deleting an account removes all of that user's data.
 
@@ -91,6 +91,17 @@ I tested all of this against a real Postgres database:
   `schema.sql` again** in the SQL Editor. It's safe to re-run: it updates prices and functions and
   keeps every user, credit and order. Daily credit amounts are in
   `pm_allowance` / `pm_cost` in `schema.sql`.
+
+## ProMouser Online (shared accounts)
+ProMouser Online uses this same Supabase project, so one account works on both sites.
+1. After `schema.sql`, also run `supabase/online.sql` (a copy is in this folder; the original is in
+   the ProMouser-Online repo).
+2. Put the same URL and key in ProMouser Online's `supabase-config.js`.
+3. Add the Online site's address to **Authentication → URL Configuration → Redirect URLs**.
+
+Lite and Ultra are one-time (lifetime) purchases. Ultra also adds 30 days of **ProMouser Turbo**
+(`profiles.turbo_until`), which ProMouser Online reads. CPS test personal bests are saved to
+`profiles.cps_best` and shown on Online profiles.
 
 ## Dev mode with Supabase (optional)
 The dev panel (Ctrl+Shift+D on localhost) can switch plans and set credits in Supabase too, but only for

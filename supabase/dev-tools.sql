@@ -31,7 +31,7 @@ language plpgsql security definer set search_path = '' as $$
 declare uid uuid := public.pm_require_dev();
 begin
   if p_tier in ('lite','ultra') then
-    update public.profiles set plan = p_tier, plan_cancelled = false, plan_since = now(), plan_renews_at = now() + interval '30 days' where id = uid;
+    update public.profiles set plan = p_tier, plan_cancelled = false, plan_since = now(), plan_renews_at = null where id = uid;
     update public.credit_balances set daily = public.pm_allowance(p_tier) where user_id = uid;
   elsif p_tier = 'free' then
     update public.profiles set plan = 'free', plan_cancelled = false, plan_since = null, plan_renews_at = null where id = uid;
@@ -77,8 +77,15 @@ begin
   else raise exception 'BAD_TARGET'; end if;
 end $$;
 
+create or replace function public.dev_set_turbo(p_days int) returns void
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := public.pm_require_dev();
+begin
+  update public.profiles set turbo_until = case when p_days > 0 then now() + make_interval(days => p_days) end where id = uid;
+end $$;
+
 do $$ declare f text; begin
-  foreach f in array array['pm_require_dev()', 'dev_set_plan(text)', 'dev_set_credits(int, int)', 'dev_set_pass(text, int)', 'dev_next_day()', 'dev_clear(text)'] loop
+  foreach f in array array['pm_require_dev()', 'dev_set_plan(text)', 'dev_set_turbo(int)', 'dev_set_credits(int, int)', 'dev_set_pass(text, int)', 'dev_next_day()', 'dev_clear(text)'] loop
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated', f);
   end loop;

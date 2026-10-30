@@ -34,7 +34,7 @@
     const PLANS = window.PM_PLAN;
     const week = hist.filter(h => now - h.at < 7 * DAY).length;
     const used = Math.max(0, bal.dailyAllowance - bal.daily);
-    const planLine = t !== 'free' ? `${PLANS.short(t)} · ${Math.max(1, Math.ceil((u.plan.renewsAt - now) / DAY))} days left` : 'Free plan';
+    const planLine = t !== 'free' ? `${PLANS.short(t)} · ${u.plan.renewsAt ? Math.max(1, Math.ceil((u.plan.renewsAt - now) / DAY)) + ' days left' : 'lifetime'}` : 'Free plan';
     const passLine = bal.recPass ? `Recommendation Pass · ${Math.max(1, Math.ceil((bal.recPassUntil - now) / DAY))} days left` : null;
     const first = esc(u.name.split(' ')[0]);
     const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });

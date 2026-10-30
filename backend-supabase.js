@@ -68,6 +68,7 @@
       prefs: Object.assign({ games: [], weight: 'any', grip: 'any', connection: 'any' }, s.prefs || {}),
       plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
       extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null },
+      turboUntil: ms(s.turbo_until), cpsBest: s.cps_best || {},
       credits: { date: s.credits.date, daily: s.credits.daily, purchased: s.credits.purchased },
       passes,
       orders: orders.map(o => ({ id: o.id, createdAt: ms(o.created_at), items: o.items, total: o.total_inr, method: o.provider, status: o.status, paymentId: o.provider_payment_id })),
@@ -140,6 +141,7 @@
     getUser() { return clone(user); },
     tier() { return PLAN.tierOf(user); },
     has(feature) { return PLAN.has(user, feature); },
+    turbo() { return { active: !!(user && user.turboUntil > Date.now()), until: (user && user.turboUntil) || null }; },
     async updateExtras(patch) {
       const u = need();
       for (const k of Object.keys(patch)) if (!PLAN.has(u, k)) throw fail('That’s a ProMouser Ultra feature.', 'NEEDS_ULTRA');
@@ -210,6 +212,11 @@
     async resumeLite() { return setCancelled(false); },
 
     /* recommendation history */
+    async saveCpsBest(seconds, cps) {   // shown on ProMouser Online profiles
+      if (!user) return;
+      const { data, error } = await (await ready).rpc('save_cps_best', { p_seconds: seconds, p_cps: cps });
+      if (!error && data) user.cpsBest = data;
+    },
     async addHistory(entry) {
       need();
       const { error } = await (await ready).from('recommendation_runs').insert({ data: entry });
@@ -221,6 +228,7 @@
     /* developer tools: need supabase/dev-tools.sql and your account in public.developers */
     dev: {
       setPlan: tier => devCall('dev_set_plan', { p_tier: tier }),
+      setTurbo: days => devCall('dev_set_turbo', { p_days: days }),
       setCredits: ({ daily = null, purchased = null }) => devCall('dev_set_credits', { p_daily: daily, p_purchased: purchased }),
       setPass: (feature, days) => devCall('dev_set_pass', { p_feature: feature, p_days: days }),
       nextDay: () => devCall('dev_next_day', {}),

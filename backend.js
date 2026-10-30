@@ -22,11 +22,16 @@
   const DAY = 86400000;
   const CONFIG = window.PM_CONFIG = {
     free: { dailyCredits: 5, resultsLimit: 3, costPerRecommendation: 1 },
-    lite: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 3, periodDays: 30,
-      product: { id: 'lite-1m', type: 'lite', name: 'ProMouser Lite (1 month)', price: 349 } },
+    // Lite and Ultra are one-time payments: pay once, keep the plan for life.
+    lite: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 3,
+      product: { id: 'lite-lifetime', type: 'lite', name: 'ProMouser Lite (lifetime)', price: 699 } },
     // Ultra: everything in Lite, purple theme, recommendations never cost credits, plus the Ultra-only features below.
-    ultra: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 0, periodDays: 30, maxProfiles: 5, maxWatch: 30,
-      product: { id: 'ultra-1m', type: 'ultra', name: 'ProMouser Ultra (1 month)', price: 799 } },
+    ultra: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 0, maxProfiles: 5, maxWatch: 30, turboDays: 30,
+      product: { id: 'ultra-lifetime', type: 'ultra', name: 'ProMouser Ultra (lifetime)', price: 1119 } },
+    // ProMouser Turbo: the monthly plan for ProMouser Online (gradient names, profile themes, battle pass, a Turbo mouse).
+    // Same account on both sites. Buying Ultra adds 30 days of Turbo.
+    turbo: { onlineUrl: 'https://dreadlineofficial.github.io/ProMouser-Online/',
+      product: { id: 'turbo-1m', type: 'turbo', name: 'ProMouser Turbo (1 month)', price: 199, days: 30 } },
     // Credits work for everything. A pass covers ONE feature: right now that's recommendations.
     passes: [
       { id: 'rec-pass-1m', type: 'pass', feature: 'recommendation', name: 'Recommendation Pass (1 month)', short: 'Recommendation Pass', price: 199, days: 30,
@@ -139,6 +144,7 @@
     getUser() { return clean(current()); },
     tier() { return PLAN.tierOf(current()); },
     has(feature) { return PLAN.has(current(), feature); },
+    turbo() { const u = current(); return { active: !!(u && u.turboUntil > Date.now()), until: (u && u.turboUntil) || null }; },
     /* Ultra extras: watchlist [{id, price, at}], saved profiles [{name, prefs}], assistant memory (prefs object) */
     async updateExtras(patch) {
       const u = current(); if (!u) throw new Error('Please sign in first.');
@@ -189,11 +195,12 @@
         const qty = it.qty || 1;
         if (it.type === 'credits') u.credits.purchased += it.credits * qty;
         if (it.type === 'pass') { const P = passFor(it.feature || 'recommendation'); const base = passActive(u, P.feature) ? u.passes[P.feature] : now; u.passes[P.feature] = base + P.days * DAY * qty; }
-        if (it.type === 'lite' || it.type === 'ultra') {   // same tier: extend; switching tier: starts now
-          const C = CONFIG[it.type], base = u.plan.tier === it.type && u.plan.renewsAt > now ? u.plan.renewsAt : now;
-          u.plan = { tier: it.type, since: u.plan.tier === it.type ? (u.plan.since || now) : now, renewsAt: base + C.periodDays * DAY * qty };
-          u.credits.daily = Math.max(u.credits.daily, C.dailyCredits);
+        if (it.type === 'lite' || it.type === 'ultra') {   // one-time: the plan is yours for life, and never downgrades
+          if (PLAN.RANK[it.type] > PLAN.RANK[u.plan.tier] || (u.plan.tier === it.type && u.plan.renewsAt)) u.plan = { tier: it.type, since: u.plan.tier === it.type ? (u.plan.since || now) : now };
+          u.credits.daily = Math.max(u.credits.daily, CONFIG[it.type].dailyCredits);
+          if (it.type === 'ultra') u.turboUntil = Math.max(u.turboUntil || 0, now) + CONFIG.ultra.turboDays * DAY;
         }
+        if (it.type === 'turbo') u.turboUntil = Math.max(u.turboUntil || 0, now) + CONFIG.turbo.product.days * DAY * qty;
       });
       u.orders.unshift(order); saveUser(u); emit(); return clean(u);
     },
@@ -201,6 +208,11 @@
     async resumeLite() { const u = current(); if (u && PLAN.paid(u.plan.tier)) { delete u.plan.cancelled; saveUser(u); emit(); } return clean(u); },
 
     /* recommendation history */
+    async saveCpsBest(seconds, cps) {   // shown on ProMouser Online profiles
+      const u = current(); if (!u || !(cps > 0 && cps <= 40)) return;
+      u.cpsBest = u.cpsBest || {};
+      if (!(u.cpsBest[seconds] >= cps)) { u.cpsBest[seconds] = Math.round(cps * 100) / 100; saveUser(u); }
+    },
     async addHistory(entry) { const u = current(); if (!u) return; u.history.unshift({ id: uid('r'), at: Date.now(), ...entry }); u.history = u.history.slice(0, 12); saveUser(u); emit(); },
     newOrderId() { return uid('PM'); },
 
@@ -209,7 +221,7 @@
       async setPlan(tier) {
         const u = current(); if (!u) throw new Error('Sign in first.');
         const now = Date.now();
-        if (PLAN.paid(tier)) { u.plan = { tier, since: now, renewsAt: now + CONFIG[tier].periodDays * DAY }; u.credits.daily = Math.max(Math.min(u.credits.daily, CONFIG[tier].dailyCredits), CONFIG[tier].dailyCredits); }
+        if (PLAN.paid(tier)) { u.plan = { tier, since: now }; u.credits.daily = Math.max(Math.min(u.credits.daily, CONFIG[tier].dailyCredits), CONFIG[tier].dailyCredits); }
         else { u.plan = { tier: 'free' }; u.credits.daily = Math.min(u.credits.daily, CONFIG.free.dailyCredits); }
         saveUser(u); emit(); return clean(u);
       },
@@ -224,6 +236,7 @@
         if (days > 0) u.passes[feature] = Date.now() + days * DAY; else delete u.passes[feature];
         saveUser(u); emit(); return clean(u);
       },
+      async setTurbo(days) { const u = current(); if (!u) throw new Error('Sign in first.'); u.turboUntil = days > 0 ? Date.now() + days * DAY : null; saveUser(u); emit(); return clean(u); },
       async nextDay() { const u = current(); if (!u) return; u.credits.date = '2000-01-01'; normalize(u); saveUser(u); emit(); return clean(u); },
       async clear(what) { const u = current(); if (!u) return; if (what === 'history') u.history = []; if (what === 'orders') u.orders = []; if (what === 'onboarding') u.onboarded = false; saveUser(u); emit(); return clean(u); }
     }

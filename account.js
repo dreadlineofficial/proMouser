@@ -176,7 +176,7 @@
   function ultraGate(what) {
     openModal(`<div class="auth-head"><span class="ultra-badge">Ultra</span><h2>${esc(what)} is part of <em>ProMouser Ultra</em></h2></div>
       <p class="panel-note">Ultra adds a purple &amp; black theme, unlimited recommendations, saved profiles, a price watchlist, the sensitivity converter, shortlist export and an assistant that remembers you — plus everything in Lite.</p>
-      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra.html">See Ultra · ${inr(CFG.ultra.product.price)}/month</a></div>`);
+      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra.html">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
     const c = $('#pmOverlay [data-close]'); c && c.addEventListener('click', () => closeModal());
   }
 
@@ -212,7 +212,8 @@
     }
     const bal = B.balance(), t = B.tier(), paid = t !== 'free', p = u.prefs, name = PLAN.short(t);
     const hrs = Math.max(0, Math.round((bal.resetsAt - Date.now()) / 3600000));
-    const planLine = paid ? `${name} renews ${fmtDate(u.plan.renewsAt)}${u.plan.cancelled ? ' — <strong>cancelled, ends then</strong>' : ''}` : (u.plan.lapsedAt ? 'Your paid plan has ended' : 'Free plan');
+    const tb = B.turbo ? B.turbo() : { active: false };
+    const planLine = (paid ? (u.plan.renewsAt ? `${name} until ${fmtDate(u.plan.renewsAt)}` : `${name} · yours for life`) : (u.plan.lapsedAt ? 'Your paid plan has ended' : 'Free plan')) + (tb.active ? ` · <span class="turbo-text">Turbo</span> until ${fmtDate(tb.until)}` : '');
     host.innerHTML = `
       <div class="acct-head"><div class="avatar big ${t}">${esc(u.name.charAt(0).toUpperCase())}</div><div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p>${esc(u.email)} · member since ${fmtDate(u.createdAt)}</p></div></div>
       <div class="acct-grid">
@@ -224,7 +225,7 @@
             <div><span>Recommendation Pass</span><b>${bal.recPass ? 'Active' : '—'}</b><em>${bal.recPass ? 'free recommendations until ' + fmtDate(bal.recPassUntil) : 'unlimited recommendations for 1 month'}</em></div>
           </div>
           <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : ''} and shows ${t === 'lite' ? 'every match' : 'your top ' + CFG.free.resultsLimit}.`}</p>
-          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? (u.plan.cancelled ? `<button class="btn btn-outline btn-sm" type="button" id="resumeLite">Resume ${name}</button>` : `<button class="btn btn-outline btn-sm" type="button" id="cancelLite">Cancel ${name}</button>`) : `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>`}${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
+          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? '' : `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
         </article>
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
           <form id="prefsForm" class="pref-form">
@@ -243,8 +244,6 @@
       await B.updateProfile({ prefs: { games: f.getAll('games'), weight: f.get('weight') || 'any', grip: f.get('grip') || 'any', connection: f.get('connection') || 'any' } });
       toast('Preferences saved.');
     });
-    const c = $('#cancelLite', host); c && c.addEventListener('click', async () => { await B.cancelLite(); toast('Lite will end at the close of the current period.'); renderAccountPage(host); });
-    const r = $('#resumeLite', host); r && r.addEventListener('click', async () => { await B.resumeLite(); toast('Lite resumed.'); renderAccountPage(host); });
     $('#delAcct', host).addEventListener('click', async () => { if (confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); } });
   }
 

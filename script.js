@@ -207,6 +207,7 @@
       ['Hand grip guide', 'hand-grip.html', 'Palm, claw and fingertip grips explained'],
       ['Mouse tips', 'mouse-tips.html', 'DPI, polling rate, surface and lift-off settings'],
       ['Minecraft tips', 'minecraft-tips.html', 'Setups for builders and PvP players'],
+      ['ProMouser Online', 'https://dreadlineofficial.github.io/ProMouser-Online/', 'Games, CPS duels, friends, lobbies and 3D digital mice'],
       ['Test hub', 'tests.html', 'CPS, reaction, aim, polling rate, scroll and button tests'],
       ['CPS test', 'cps-test.html', 'Clicks per second, double clicks and stray right clicks'],
       ['Reaction time test', 'reaction-test.html', 'Wait for green, then click as fast as you can'],
@@ -223,7 +224,7 @@
       ['Contact', 'contact.html', 'Feedback, corrections and questions'],
       ['Privacy policy', 'privacy.html', 'What the site stores in your browser'],
       ['Terms of use', 'terms.html', 'Terms for using ProMouser']
-    ].map(([t, u, d]) => ({ t, u: root + u, d, k: (t + ' ' + d).toLowerCase() }));
+    ].map(([t, u, d]) => ({ t, u: /^https?:/.test(u) ? u : root + u, d, k: (t + ' ' + d).toLowerCase() }));
 
     let host = $('#searchResults');
     if (!host) { host = document.createElement('div'); host.id = 'searchResults'; host.className = 'search-results'; overlay.appendChild(host); }

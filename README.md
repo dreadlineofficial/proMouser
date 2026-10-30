@@ -12,7 +12,7 @@ ProMouser is a lightweight static website for gamers and PC users who want pract
 
 ## Website
 
-[promouser.shop](https://www.promouser.shop/)
+[promouser.website](https://promouser.website/)
 
 ## Built with
 

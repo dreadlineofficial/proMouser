@@ -50,6 +50,11 @@ create table if not exists public.credit_balances (
 -- plans: free < lite < ultra (named constraints so re-running this file upgrades older installs)
 alter table public.profiles drop constraint if exists profiles_plan_check;
 alter table public.profiles add constraint profiles_plan_check check (plan in ('free','lite','ultra'));
+-- Lite and Ultra are one-time (lifetime) purchases: plan_renews_at stays null for them.
+-- ProMouser Turbo is the monthly plan for ProMouser Online; buying Ultra adds 30 days of it.
+alter table public.profiles add column if not exists turbo_until timestamptz;
+-- CPS test personal bests per test length ("5": 9.4), shown on ProMouser Online profiles
+alter table public.profiles add column if not exists cps_best jsonb not null default '{}'::jsonb;
 -- Ultra extras: watchlist, saved preference profiles, assistant memory
 alter table public.profiles add column if not exists extras jsonb not null default '{}'::jsonb;
 alter table public.profiles drop constraint if exists profiles_extras_check;
@@ -76,7 +81,11 @@ create table if not exists public.products (
   check ((type = 'pass') = (feature is not null))
 );
 alter table public.products drop constraint if exists products_type_check;
-alter table public.products add constraint products_type_check check (type in ('credits','pass','lite','ultra'));
+alter table public.products add constraint products_type_check check (type in ('credits','pass','lite','ultra','turbo','item'));
+-- passes name the feature they cover; ProMouser Online items name the item they grant
+alter table public.products drop constraint if exists products_check;
+alter table public.products drop constraint if exists products_feature_check;
+alter table public.products add constraint products_feature_check check ((type in ('pass','item')) = (feature is not null));
 
 insert into public.products (id, type, feature, name, credits, days, price_inr) values
   ('credits-10',  'credits', null,             '10 credits',                     10,  0,  39),
@@ -84,10 +93,13 @@ insert into public.products (id, type, feature, name, credits, days, price_inr) 
   ('credits-100', 'credits', null,             '100 credits',                   100,  0, 249),
   ('credits-300', 'credits', null,             '300 credits',                   300,  0, 649),
   ('rec-pass-1m', 'pass',    'recommendation', 'Recommendation Pass (1 month)',   0, 30, 199),
-  ('lite-1m',     'lite',    null,             'ProMouser Lite (1 month)',        0, 30, 349),
-  ('ultra-1m',    'ultra',   null,             'ProMouser Ultra (1 month)',       0, 30, 799)
+  ('lite-lifetime',  'lite',  null,          'ProMouser Lite (lifetime)',       0,  0,  699),
+  ('ultra-lifetime', 'ultra', null,          'ProMouser Ultra (lifetime)',      0,  0, 1119),
+  ('turbo-1m',       'turbo', null,          'ProMouser Turbo (1 month)',       0, 30,  199)
 on conflict (id) do update set type = excluded.type, feature = excluded.feature, name = excluded.name, credits = excluded.credits,
-  days = excluded.days, price_inr = excluded.price_inr;
+  days = excluded.days, price_inr = excluded.price_inr, active = true;
+-- the old monthly plans: kept for order history, no longer sold
+update public.products set active = false where id in ('lite-1m', 'ultra-1m');
 
 create table if not exists public.orders (
   id                  text primary key,
@@ -195,7 +207,7 @@ begin
   select jsonb_build_object(
       'id', p.id, 'email', u.email, 'name', p.name, 'prefs', p.prefs, 'onboarded', p.onboarded,
       'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at,
-      'plan_cancelled', p.plan_cancelled, 'extras', p.extras,
+      'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best,
       'passes', coalesce((select jsonb_object_agg(x.feature, x.until) from public.user_passes x where x.user_id = p.id and x.until > now()), '{}'::jsonb),
       'credits', jsonb_build_object('date', b.daily_date, 'daily', b.daily, 'purchased', b.purchased))
     into r
@@ -237,6 +249,21 @@ begin
   delete from auth.users where id = auth.uid();
 end $$;
 
+-- Save a CPS test result; only ever raises a personal best.
+create or replace function public.save_cps_best(p_seconds int, p_cps numeric) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid(); r jsonb;
+begin
+  if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
+  if p_seconds not in (1, 2, 3, 5, 10, 15, 30, 60) or p_cps is null or p_cps <= 0 or p_cps > 40 then raise exception 'BAD_SCORE'; end if;
+  update public.profiles set cps_best = jsonb_set(cps_best, array[p_seconds::text], to_jsonb(round(p_cps, 2)))
+    where id = uid and coalesce((cps_best ->> p_seconds::text)::numeric, 0) < p_cps;
+  select cps_best into r from public.profiles where id = uid;
+  return r;
+end $$;
+revoke all on function public.save_cps_best(int, numeric) from public, anon;
+grant execute on function public.save_cps_best(int, numeric) to authenticated;
+
 revoke all on function public.get_my_state()      from public, anon;
 revoke all on function public.spend_credits(text) from public, anon;
 revoke all on function public.delete_my_account() from public, anon;
@@ -276,13 +303,19 @@ begin
     elsif pr.type = 'pass' then
       insert into public.user_passes (user_id, feature, until) values (p_user, pr.feature, now() + make_interval(days => pr.days * n))
         on conflict (user_id, feature) do update set until = greatest(public.user_passes.until, now()) + make_interval(days => pr.days * n);
-    elsif pr.type in ('lite','ultra') then   -- same tier extends; switching tier starts from now
-      update public.profiles set plan_cancelled = false,
+    elsif pr.type in ('lite','ultra') then   -- one-time: the plan is kept for life and never downgrades
+      update public.profiles set plan_cancelled = false, plan_renews_at = null,
         plan_since = case when plan = pr.type then coalesce(plan_since, now()) else now() end,
-        plan_renews_at = case when plan = pr.type then greatest(coalesce(plan_renews_at, now()), now()) else now() end + make_interval(days => pr.days * n),
         plan = pr.type
-        where id = p_user;
+        where id = p_user and not (plan = 'ultra' and pr.type = 'lite');
       update public.credit_balances set daily = greatest(daily, public.pm_allowance(pr.type)) where user_id = p_user;
+      if pr.type = 'ultra' then
+        update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + interval '30 days' where id = p_user;
+      end if;
+    elsif pr.type = 'turbo' then
+      update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + make_interval(days => pr.days * n) where id = p_user;
+    elsif pr.type = 'item' then   -- ProMouser Online cosmetics (online.sql); feature holds the item id
+      insert into public.online_inventory (user_id, item_id, source) values (p_user, pr.feature, 'purchase') on conflict do nothing;
     end if;
   end loop;
   return total;

@@ -177,6 +177,7 @@
     if (run.pb) store.best[key] = { cps: run.cps, at: run.at };
     store.runs = [run, ...store.runs].slice(0, 50);
     save();
+    if (!run.btn && !run.moving && B && B.saveCpsBest && B.getUser && B.getUser()) B.saveCpsBest(run.d, run.cps).catch(() => {});   // standard runs count for your profile
     last = { r, run, clicks: S.clicks.slice() };
     $('#cBig').textContent = fmt(r.cps, 2) + ' CPS';
     $('#cSmall').textContent = run.pb ? 'New personal best!' : rankOf(r.cps)[1];
@@ -309,7 +310,7 @@
       <div class="cps3-tiles" aria-hidden="true">${tile('Peak CPS', '12.4')}${tile('Double clicks', '7')}${tile('Stray right clicks', '2')}${tile('Click style', 'Jitter')}${tile('Consistency', '81%')}${tile('Average gap', '84 ms')}</div>
       <div class="cps3-lock"><span class="plan-tag lite">Lite</span><h4>See what really happened in that run</h4>
         <p>Lite counts your double clicks, catches stray right clicks mid-run, and shows peak CPS, consistency, click style and a second-by-second graph.</p>
-        <div class="hero-cta" style="justify-content:center">${signedIn ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}lite.html">Get Lite${price ? ' · ₹' + price + '/month' : ''}</a></div></div>
+        <div class="hero-cta" style="justify-content:center">${signedIn ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}lite.html">Get Lite${price ? ' · ₹' + price + ' once' : ''}</a></div></div>
     </div>`;
   }
 

@@ -1,8 +1,35 @@
-# ProMouser redesign — notes (v6)
+# ProMouser redesign — notes (v7)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
+
+## What's new in v7
+
+- **Domain:** canonical links, the sitemap, robots.txt and the docs now use **promouser.website**.
+- **New prices:**
+  - **Lite** is a one-time **₹699** and **Ultra** a one-time **₹1,119**. Both are yours for life,
+    with nothing to cancel.
+  - Buying Lite on an Ultra account never downgrades it.
+  - Ultra now includes **1 month of ProMouser Turbo**.
+  - **Turbo** is ₹199/month, sold in the shop as the only subscription.
+  - The old monthly products stay in the database for order history, but can no longer be bought.
+- **ProMouser Online** is advertised across the site:
+  - a "New" Online link in the nav and the footer
+  - a section on the home page
+  - the announcement bar
+  - a Turbo card in the shop
+  - a duel callout on the Test Hub
+  - an entry in search
+
+  The URL lives in `ONLINE_URL` in `build.py` and `PM_CONFIG.turbo.onlineUrl` in `backend.js`.
+- **CPS test personal bests** are saved to your account (`save_cps_best`) and appear on your
+  ProMouser Online profile.
+- **Supabase:**
+  - `schema.sql` adds `turbo_until`, `cps_best`, the `turbo` and `item` product types and
+    the lifetime plan logic.
+  - `online.sql` (copied here) adds everything for ProMouser Online.
+  - Run them again after updating; both are safe to re-run.
 
 ## What's new in v6
 
@@ -80,7 +107,7 @@ http://localhost:8000. Everything works from either.
   - It fixes typos in mouse names, shows what it has learned as removable chips, and keeps the conversation for the tab.
   - It is not an LLM. It can't answer things outside mice, and it says so.
 - **Passes are now per-feature.** Credits work for everything. The old "Credit Pass" (unlimited credits) is now the **Recommendation Pass**: unlimited recommendations for 30 days without spending credits. Your credit balance stays visible, with a PASS badge in the header. Old demo accounts are migrated automatically.
-- **Dev mode** (`dev.js`). It only exists on your own computer: on localhost, 127.0.0.1 or `file://`, press **Ctrl+Shift+D** or add **`?dev=1`**. On promouser.shop the file is never requested, and you can delete `dev.js` before uploading. Panels:
+- **Dev mode** (`dev.js`). It only exists on your own computer: on localhost, 127.0.0.1 or `file://`, press **Ctrl+Shift+D** or add **`?dev=1`**. On promouser.website the file is never requested, and you can delete `dev.js` before uploading. Panels:
   - **Account:** switch **Normal ↔ Lite**, add or set credits, give or remove the pass, jump to the next day, re-run onboarding, clear history or orders, one-click test account
   - **Engine:** every mouse's score and the parts behind it, for any preferences
   - **Data:** checks `mice-data.js` for gaps
