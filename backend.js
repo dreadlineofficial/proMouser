@@ -23,20 +23,20 @@
   const CONFIG = window.PM_CONFIG = {
     free: { dailyCredits: 5, resultsLimit: 3, costPerRecommendation: 1 },
     lite: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 3, periodDays: 30,
-      product: { id: 'lite-1m', type: 'lite', name: 'ProMouser Lite (1 month)', price: 149 } },
+      product: { id: 'lite-1m', type: 'lite', name: 'ProMouser Lite (1 month)', price: 349 } },
     // Ultra: everything in Lite, purple theme, recommendations never cost credits, plus the Ultra-only features below.
     ultra: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 0, periodDays: 30, maxProfiles: 5, maxWatch: 30,
-      product: { id: 'ultra-1m', type: 'ultra', name: 'ProMouser Ultra (1 month)', price: 299 } },
+      product: { id: 'ultra-1m', type: 'ultra', name: 'ProMouser Ultra (1 month)', price: 799 } },
     // Credits work for everything. A pass covers ONE feature: right now that's recommendations.
     passes: [
-      { id: 'rec-pass-1m', type: 'pass', feature: 'recommendation', name: 'Recommendation Pass (1 month)', short: 'Recommendation Pass', price: 99, days: 30,
+      { id: 'rec-pass-1m', type: 'pass', feature: 'recommendation', name: 'Recommendation Pass (1 month)', short: 'Recommendation Pass', price: 199, days: 30,
         perk: 'Unlimited recommendations for 30 days, without spending credits' }
     ],
     packs: [
-      { id: 'credits-10', type: 'credits', credits: 10, name: '10 credits', price: 29 },
-      { id: 'credits-30', type: 'credits', credits: 30, name: '30 credits', price: 79, tag: 'Popular' },
-      { id: 'credits-100', type: 'credits', credits: 100, name: '100 credits', price: 199, tag: 'Best value' },
-      { id: 'credits-300', type: 'credits', credits: 300, name: '300 credits', price: 499 }
+      { id: 'credits-10', type: 'credits', credits: 10, name: '10 credits', price: 39 },
+      { id: 'credits-30', type: 'credits', credits: 30, name: '30 credits', price: 99, tag: 'Popular' },
+      { id: 'credits-100', type: 'credits', credits: 100, name: '100 credits', price: 249, tag: 'Best value' },
+      { id: 'credits-300', type: 'credits', credits: 300, name: '300 credits', price: 649 }
     ]
   };
 

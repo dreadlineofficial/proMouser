@@ -87,7 +87,9 @@ I tested all of this against a real Postgres database:
   from dev-tools without spending credits. That's fine for now. If it ever matters, move
   `PM.recommend` into a Supabase Edge Function.
 - **Prices live in two places.** They're in `products` (the database) and in `PM_CONFIG`
-  (`backend.js`, used for display). Change both together. Daily credit amounts are in
+  (`backend.js`, used for display). Change both together. **When you download a new version of the site, run
+  `schema.sql` again** in the SQL Editor. It's safe to re-run: it updates prices and functions and
+  keeps every user, credit and order. Daily credit amounts are in
   `pm_allowance` / `pm_cost` in `schema.sql`.
 
 ## Dev mode with Supabase (optional)

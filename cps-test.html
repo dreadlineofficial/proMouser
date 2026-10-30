@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CPS Test — ProMouser</title>
-  <meta name="description" content="ProMouser CPS Test with realistic mode, live statistics, and Minecraft-focused feedback." />
+  <title>CPS Test: clicks per second, double clicks and more — ProMouser</title>
+  <meta name="description" content="Free CPS test from 1 to 60 seconds with moving-target mode, personal bests and history. Lite adds double-click counting, stray right-click detection and a CPS graph." />
   <link rel="canonical" href="https://www.promouser.shop/cps-test.html" />
   <meta name="theme-color" content="#07070a" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ProMouser" />
-  <meta property="og:title" content="CPS Test — ProMouser" />
-  <meta property="og:description" content="ProMouser CPS Test with realistic mode, live statistics, and Minecraft-focused feedback." />
+  <meta property="og:title" content="CPS Test: clicks per second, double clicks and more — ProMouser" />
+  <meta property="og:description" content="Free CPS test from 1 to 60 seconds with moving-target mode, personal bests and history. Lite adds double-click counting, stray right-click detection and a CPS graph." />
   <meta property="og:url" content="https://www.promouser.shop/cps-test.html" />
   <meta property="og:image" content="https://www.promouser.shop/assets/images/hero-banner.png" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -29,8 +29,8 @@
   <div class="ambient" aria-hidden="true"><div class="spot"></div><div class="grain"></div></div>
 
   <div class="announcement-bar" id="announcementBar">
-    <span>CPS Test Update: <strong>v2.0</strong> is now live —</span>
-    <a href="tests.html">Try it now</a>
+    <span>New: <strong>CPS test v3</strong> and a Test Hub with 8 mouse tests —</span>
+    <a href="tests.html">Try them</a>
     <button class="close-banner" id="closeBanner" aria-label="Close" type="button">✕</button>
   </div>
 
@@ -48,7 +48,7 @@
         </li>
         <li class="has-dropdown">
           <a href="tests.html" aria-controls="nav-menu-2" aria-expanded="false">Tests <span class="chevron">▾</span></a>
-          <ul class="dropdown" id="nav-menu-2"><li><a href="cps-test.html"><span class="dd-ico" data-icon="Click"></span><span class="dd-txt"><b>CPS test</b><small>Clicks per second, realistic mode</small></span></a></li><li><a href="double-click-test.html"><span class="dd-ico" data-icon="Time"></span><span class="dd-txt"><b>Double click test</b><small>Timing and consistency</small></span></a></li><li><a href="sens.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>Sensitivity converter <span class="badge">Ultra</span></b><small>Same aim in every game</small></span></a></li></ul>
+          <ul class="dropdown" id="nav-menu-2"><li><a href="tests.html"><span class="dd-ico" data-icon="Hub"></span><span class="dd-txt"><b>Test hub <span class="badge">New</span></b><small>All 8 mouse tests in one place</small></span></a></li><li><a href="cps-test.html"><span class="dd-ico" data-icon="Click"></span><span class="dd-txt"><b>CPS test</b><small>Double clicks, stray clicks, graphs</small></span></a></li><li><a href="reaction-test.html"><span class="dd-ico" data-icon="Speed"></span><span class="dd-txt"><b>Reaction time</b><small>Wait for green, then click</small></span></a></li><li><a href="aim-trainer.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>Aim trainer</b><small>Speed and accuracy</small></span></a></li><li><a href="polling-rate-test.html"><span class="dd-ico" data-icon="Poll"></span><span class="dd-txt"><b>Polling rate</b><small>How many Hz your mouse reports</small></span></a></li><li><a href="sens.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>Sensitivity converter <span class="badge">Ultra</span></b><small>Same aim in every game</small></span></a></li></ul>
         </li>
         <li class="has-dropdown">
           <a href="blog/" aria-controls="nav-menu-3" aria-expanded="false">Guides <span class="chevron">▾</span></a>
@@ -88,217 +88,25 @@
 
   <main id="main" tabindex="-1">
 
-<section class="about-section page-hero" id="hero">
-<div class="container about-grid">
-<div class="about-text reveal">
-<span class="section-label">ProMouser CPS Test</span>
-<h1>Measure your click speed, build consistency, and track progress over time.</h1>
-<p>Latest update: <strong>v2.0</strong> · <strong>April 2, 2026</strong>. Realistic mode, a difficulty slider, and a live average CPS view help you practice with clear feedback.</p>
-<div class="hero-cta">
-<button class="btn btn-primary" id="jumpToTest" type="button">Jump to the test</button>
-<a class="btn btn-ghost" href="#feedback">View feedback guide</a>
-</div>
-</div>
-<div class="about-cards reveal">
-<div class="feature-card">
-<div class="fc-icon" data-icon="Focus"></div>
-<h4>Realistic mode</h4>
-<p>The target area moves during the run to reduce autopilot clicking and encourage steady control.</p>
-</div>
-<div class="feature-card">
-<div class="fc-icon" data-icon="Stats"></div>
-<h4>Live CPS + Avg CPS</h4>
-<p>Track your live click rate and see the current average evolve in real time while the timer is running.</p>
-</div>
-<div class="feature-card">
-<div class="fc-icon" data-icon="Skill"></div>
-<h4>Practice smart</h4>
-<p>Use it as a warm-up, find a repeatable pace, and compare results across devices and settings.</p>
-</div>
-<div class="feature-card">
-<div class="fc-icon" data-icon="Hub"></div>
-<h4>Full hub support</h4>
-<p>Pair it with the double-click test and mouse guides for a complete improvement routine.</p>
-</div>
-</div>
-</div>
-</section>
-<section class="about-section" id="testSection">
-<div class="container section-header reveal">
-<span class="section-label">CPS test</span>
-<h2>Pick a duration and <em>click smarter</em>.</h2>
-<p>Choose your timer, toggle realistic mode, and monitor your current performance as your run progresses.</p>
-</div>
-<div class="container cps-layout">
-<div class="cps-panel reveal">
-<div class="cps-badge-row">
-<span class="cps-badge">Best: None</span>
-<span class="cps-badge">Top score: None</span>
-<span class="cps-badge">v2.0</span>
-</div>
-<div class="cps-stage" id="cpsStage">
-<div class="cps-stage-overlay" id="cpsOverlay">
-<div class="cps-stage-icon" data-icon="Start"></div>
-<p>Choose a timer and start clicking.</p>
-<small>Use the controls below to begin a fresh run.</small>
-</div>
-<button class="cps-click-area" id="clickArea" type="button">
-<span>Select Time</span>
-<small>Choose 1s, 5s, or 10s</small>
-</button>
-</div>
-<div class="cps-controls">
-<div class="cps-time-buttons" id="timeButtons">
-<button class="cps-time-btn active" data-time="1" type="button">1s</button>
-<button class="cps-time-btn" data-time="5" type="button">5s</button>
-<button class="cps-time-btn" data-time="10" type="button">10s</button>
-<button class="cps-time-btn hidden" data-time="2" type="button">2s</button>
-<button class="cps-time-btn hidden" data-time="3" type="button">3s</button>
-<button class="cps-time-btn hidden" data-time="4" type="button">4s</button>
-<button class="cps-time-btn hidden" data-time="6" type="button">6s</button>
-<button class="cps-time-btn hidden" data-time="7" type="button">7s</button>
-<button class="cps-time-btn hidden" data-time="8" type="button">8s</button>
-<button class="cps-time-btn hidden" data-time="9" type="button">9s</button>
-</div>
-<div class="cps-option-row">
-<button class="cps-option-btn" id="allTimesToggle" type="button">All times</button>
-<button class="cps-option-btn" id="rightClickToggle" type="button">Right Click: <span>OFF</span></button>
-<button class="cps-option-btn" id="realisticToggle" type="button">Realistic Mode: <span>OFF</span></button>
-</div>
-<div class="cps-restart-row">
-<button class="cps-restart-btn" disabled="" id="restartButton" type="button">Restart run</button>
-</div>
-</div>
-<div class="cps-range-row">
-<label for="difficulty">Difficulty</label>
-<input id="difficulty" max="10" min="1" type="range" value="5"/>
-<span id="diffVal">5</span>
-</div>
-<p class="cps-footer-note">Tip: Relax your hand, keep the mouse stable, and take short breaks between attempts for the cleanest score.</p>
-</div>
-<aside class="cps-sidebar reveal">
-<div class="result-card result-card-stats">
-<div class="stats-top-row">
-<div>
-<p class="stat-label">Live CPS</p>
-<h3 class="stat-value" id="live">0.0</h3>
-</div>
-<div class="bar-wrap-vertical">
-<div class="bar-track-vertical">
-<div class="bar-fill-vertical" id="barFill"></div>
-</div>
-</div>
-</div>
-<div class="stat-grid">
-<div>
-<p class="stat-label">Avg CPS</p>
-<p class="stat-supp" id="avg">0.0</p>
-</div>
-<div>
-<p class="stat-label">Time left</p>
-<p class="stat-supp" id="time">0.000</p>
-</div>
-<div>
-<p class="stat-label">Clicks</p>
-<p class="stat-supp" id="clicks">0</p>
-</div>
-<div>
-<p class="stat-label">Final result</p>
-<p class="stat-supp" id="final">—</p>
-</div>
-</div>
-</div>
-<div class="result-card">
-<p class="stat-label">Run summary</p>
-<div class="history-board" id="historyBoard">No runs yet. Select a timer and start clicking.</div>
-</div>
-</aside>
-</div>
-</section>
-<section class="about-section" id="release">
-<div class="container about-grid">
-<div class="about-text reveal">
-<span class="section-label">Latest notes</span>
-<h2>Release notes <em>(v2.0)</em></h2>
-<ul class="content-list">
-<li>Added Realistic Mode to introduce controlled movement during a run.</li>
-<li>Added a difficulty slider for Realistic Mode.</li>
-<li>Added an average CPS calculation.</li>
-</ul>
-</div>
-<div class="about-cards reveal">
-<div class="feature-card">
-<div class="fc-icon" data-icon="Test"></div>
-<h4>(v1.9)</h4>
-<p>Right clicks now supported, the aesthetic was improved, more selectable times were added, the animated CPS meter bar was refreshed, and free click area support was added.</p>
-</div>
-<div class="feature-card legacy-panel">
-<div class="fc-icon" data-icon="Guide"></div>
-<h4>v1.0 CPS Test</h4>
-<p>Jump back to the classic experience and compare your current build with the original test layout.</p>
-<button class="btn btn-outline" id="classicModeButton" type="button">Use classic mode</button>
-</div>
-</div>
-</div>
-</section>
-<section class="about-section" id="feedback">
-<div class="container section-header reveal">
-<span class="section-label">CPS Feedback</span>
-<h2>Minecraft-related performance guide</h2>
-<p>Use this guide as a quick reference for what your CPS means in practice.</p>
-</div>
-<div class="container feedback-grid">
-<div class="feedback-card reveal">
-<span>1–4 CPS</span>
-<p>Very low click rate. Suitable for basic gameplay and casual survival, but not effective for competitive PvP.</p>
-</div>
-<div class="feedback-card reveal">
-<span>5–6 CPS</span>
-<p>Entry-level performance. Viable for casual PvP, but you will generally lose trades and combos against more experienced players.</p>
-</div>
-<div class="feedback-card reveal">
-<span>7–8 CPS</span>
-<p>Respectable click rate. Solid for standard PvP scenarios; with good aim and movement, this is more than sufficient for consistent performance.</p>
-</div>
-<div class="feedback-card reveal">
-<span>9–10 CPS</span>
-<p>Above-average performance. Players at this level can begin to take and maintain combos reliably, assuming decent mechanics and positioning.</p>
-</div>
-<div class="feedback-card reveal">
-<span>11–12 CPS</span>
-<p>Advanced click rate. Typically indicates refined clicking technique and allows strong pressure in close combat, provided control is maintained.</p>
-</div>
-<div class="feedback-card reveal">
-<span>13–14 CPS</span>
-<p>High-level PvP performance. At this rate, you can apply sustained offensive pressure and capitalize on openings, assuming your aim and game sense are developed.</p>
-</div>
-<div class="feedback-card reveal">
-<span>15–16 CPS</span>
-<p>Very high click rate. Common among serious PvP players using advanced techniques. Effective only if you can maintain accuracy and consistency.</p>
-</div>
-<div class="feedback-card reveal">
-<span>17–18 CPS</span>
-<p>Competitive-level speed. At this point, the limiting factors are usually aim, timing, and consistency rather than raw CPS alone.</p>
-</div>
-<div class="feedback-card reveal">
-<span>19–20 CPS</span>
-<p>Exceptional mechanical speed. If achieved legitimately with control and accuracy, this is highly impressive.</p>
-</div>
-<div class="feedback-card reveal">
-<span>20+ CPS</span>
-<p>Focus more on other aspects — your CPS is already sorted, and your aim, timing, positioning, and game sense will matter more than raw speed.</p>
-</div>
-</div>
-</section>
-<section class="quick-links">
-<div class="container about-text reveal">
-<span class="section-label">Next step</span>
-<h2>View the full testing hub</h2>
-<p>When you're done with the CPS page, jump back to the central testing section and compare both tools side by side.</p>
-<a class="btn btn-outline" href="tests.html">Back to test hub</a>
-</div>
-</section>
-
+    <section class="about-section page-hero" id="cps">
+      <div class="container">
+        <div class="section-header reveal"><span class="section-label">CPS test v3</span><h1>How fast can you <em>click</em>?</h1>
+          <p>Pick a length and start clicking. The timer starts on your first click. Lite and Ultra also count double clicks, catch stray right clicks and graph every second of your run.</p></div>
+        <div data-cps></div>
+        <noscript><p class="panel-note">The CPS test needs JavaScript.</p></noscript>
+      </div>
+    </section>
+    <section class="about-section">
+      <div class="container about-grid">
+        <div class="about-text reveal"><span class="section-label">Good to know</span><h2>What your score means</h2>
+          <p>Most people click 6 to 8 times a second normally. Jitter clicking usually gets 10 to 14, butterfly clicking 15 to 25, and drag clicking can pass 25. For 1.8 Minecraft PvP, 10+ CPS is where fights start to feel even.</p>
+          <p>Your mouse matters too. Some mice can’t register butterfly or drag clicks well at all, like the Razer DeathAdder and the Logitech SUPERSTRIKE. See <a href="mice/minecraft.html">the best mice for Minecraft</a>.</p></div>
+        <div class="faq reveal"><details class="faq-item"><summary>Why doesn’t right-clicking open a menu here?</summary><p>The browser’s right-click menu (Inspect, Search, Save as…) is switched off inside the test, so a stray right click can’t interrupt a run. Lite and Ultra also tell you when and how often it happened.</p></details><details class="faq-item"><summary>What counts as a double click?</summary><p>Two clicks registered less than 30 ms apart. One finger can’t click that fast, so it’s either two butterfly fingers landing together or your mouse switch registering one press twice. Lite and Ultra count them for you.</p></details><details class="faq-item"><summary>Does the first click count?</summary><p>Yes. It starts the timer and counts as click one, like most CPS tests.</p></details><details class="faq-item"><summary>Why did my run reset?</summary><p>If you switch tabs or windows mid-run, the browser pauses the page and the timing stops being accurate, so the test starts over instead of giving you a wrong score.</p></details><details class="faq-item"><summary>Where are my scores saved?</summary><p>In this browser. Ultra members can download their full history as a CSV file.</p></details></div>
+      </div>
+    </section>
+    <section class="about-section">
+      <div class="container"><div class="panel reveal" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><b style="margin-right:6px">More tests</b><a class="chip" href="double-click-test.html">Double click test</a><a class="chip" href="reaction-test.html">Reaction time</a><a class="chip" href="aim-trainer.html">Aim trainer</a><a class="chip" href="polling-rate-test.html">Polling rate test</a><a class="chip" href="scroll-test.html">Scroll wheel test</a><a class="chip" href="mouse-button-test.html">Mouse button test</a><a class="chip" href="tests.html">All tests →</a></div></div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -321,6 +129,7 @@
           <h5>Tools</h5>
           <a href="cps-test.html">CPS Test</a>
           <a href="double-click-test.html">Double Click Test</a>
+          <a href="tests.html">Test Hub</a>
           <a href="recommendations.html">Recommendations</a>
           <a href="mouse-ai.html">Recommendation Assistant</a>
           <a href="shop.html">Shop &amp; ProMouser Lite</a>
@@ -348,298 +157,7 @@
   <script src="backend.js"></script>
   <script src="backend-supabase.js"></script>
   <script src="account.js"></script>
-  <script>
-    (function () {
-      const stage = document.getElementById('cpsStage');
-      const clickArea = document.getElementById('clickArea');
-      const overlay = document.getElementById('cpsOverlay');
-      const liveEl = document.getElementById('live');
-      const avgEl = document.getElementById('avg');
-      const timeEl = document.getElementById('time');
-      const clicksEl = document.getElementById('clicks');
-      const finalEl = document.getElementById('final');
-      const historyBoard = document.getElementById('historyBoard');
-      const barFill = document.getElementById('barFill');
-      const diffSlider = document.getElementById('difficulty');
-      const diffVal = document.getElementById('diffVal');
-      const jumpToTest = document.getElementById('jumpToTest');
-      const allTimesToggle = document.getElementById('allTimesToggle');
-      const rightClickToggle = document.getElementById('rightClickToggle');
-      const realisticToggle = document.getElementById('realisticToggle');
-      const classicModeButton = document.getElementById('classicModeButton');
-      const restartButton = document.getElementById('restartButton');
-      const timeButtons = Array.from(document.querySelectorAll('.cps-time-btn'));
-      const extraTimes = timeButtons.filter((button) => Number(button.dataset.time) !== 1 && Number(button.dataset.time) !== 5 && Number(button.dataset.time) !== 10);
-
-      const state = {
-        duration: 1000,
-        currentTime: 1,
-        timeSelected: false,
-        clicks: 0,
-        running: false,
-        finished: false,
-        startTime: 0,
-        elapsed: 0,
-        rightClickEnabled: false,
-        realisticMode: false,
-        showExtraTimes: false,
-        moveFrame: null,
-        moveTimer: null,
-        classicMode: false
-      };
-
-      function setOverlayVisible(visible) {
-        overlay.classList.toggle('hidden', !visible);
-      }
-
-      function updateDifficultyLabel() {
-        diffVal.textContent = diffSlider.value;
-      }
-
-      function updateButtons() {
-        timeButtons.forEach((button) => {
-          const isActive = Number(button.dataset.time) === state.currentTime;
-          button.classList.toggle('active', isActive);
-          if (extraTimes.includes(button)) {
-            button.classList.toggle('hidden', !state.showExtraTimes);
-          }
-        });
-        allTimesToggle.textContent = state.showExtraTimes ? 'Less times' : 'All times';
-      }
-
-      function updateStats() {
-        const totalSeconds = Math.max(state.currentTime, 0.001);
-        const currentCps = state.clicks / totalSeconds;
-        liveEl.textContent = currentCps.toFixed(1);
-        avgEl.textContent = currentCps.toFixed(1);
-        timeEl.textContent = Math.max(0, (state.duration - state.elapsed) / 1000).toFixed(3);
-        clicksEl.textContent = String(state.clicks);
-        barFill.style.height = `${Math.min((currentCps / 20) * 100, 100)}%`;
-      }
-
-      function resetBoard() {
-        if (!state.timeSelected) {
-          clickArea.innerHTML = '<span>Select Time</span><small>Choose 1s, 5s, or 10s</small>';
-          setOverlayVisible(true);
-        } else {
-          clickArea.innerHTML = `<span>${state.currentTime}s</span><small>Click to start your run</small>`;
-          setOverlayVisible(false);
-        }
-        clickArea.classList.remove('is-moving');
-        clickArea.style.left = '50%';
-        clickArea.style.top = '50%';
-        clickArea.style.right = 'auto';
-        clickArea.style.bottom = 'auto';
-        historyBoard.textContent = 'No runs yet. Select a timer and start clicking.';
-        finalEl.textContent = '—';
-        state.clicks = 0;
-        state.running = false;
-        state.finished = false;
-        state.startTime = 0;
-        state.elapsed = 0;
-        liveEl.textContent = '0.0';
-        avgEl.textContent = '0.0';
-        timeEl.textContent = '0.000';
-        clicksEl.textContent = '0';
-        barFill.style.height = '0%';
-      }
-
-      function setTime(seconds) {
-        state.duration = seconds * 1000;
-        state.currentTime = seconds;
-        state.timeSelected = true;
-        state.finished = false;
-        restartButton.disabled = true;
-        resetBoard();
-        updateButtons();
-      }
-
-      function stopMovement() {
-        if (state.moveFrame) {
-          cancelAnimationFrame(state.moveFrame);
-          state.moveFrame = null;
-        }
-        if (state.moveTimer) {
-          clearInterval(state.moveTimer);
-          state.moveTimer = null;
-        }
-      }
-
-      function getStageBounds() {
-        const stageRect = stage.getBoundingClientRect();
-        const clickRect = clickArea.getBoundingClientRect();
-        return {
-          maxX: Math.max(0, stageRect.width - clickRect.width),
-          maxY: Math.max(0, stageRect.height - clickRect.height)
-        };
-      }
-
-      function setPosition(x, y) {
-        const { maxX, maxY } = getStageBounds();
-        const clampedX = Math.max(0, Math.min(x, maxX));
-        const clampedY = Math.max(0, Math.min(y, maxY));
-        clickArea.style.left = `${clampedX}px`;
-        clickArea.style.top = `${clampedY}px`;
-        clickArea.classList.add('is-moving');
-      }
-
-      function startMovement() {
-        if (!state.realisticMode || !state.running) {
-          return;
-        }
-        stopMovement();
-        const duration = Math.max(120, 560 - Number(diffSlider.value) * 36);
-        let targetX = Math.random() * getStageBounds().maxX;
-        let targetY = Math.random() * getStageBounds().maxY;
-
-        const step = () => {
-          const currentX = Number(clickArea.style.left.replace('px', '')) || 0;
-          const currentY = Number(clickArea.style.top.replace('px', '')) || 0;
-          const speed = 0.08 + Number(diffSlider.value) * 0.02;
-          const nextX = currentX + (targetX - currentX) * speed;
-          const nextY = currentY + (targetY - currentY) * speed;
-          setPosition(nextX, nextY);
-
-          if (Math.abs(targetX - nextX) < 1 && Math.abs(targetY - nextY) < 1) {
-            targetX = Math.random() * getStageBounds().maxX;
-            targetY = Math.random() * getStageBounds().maxY;
-          }
-
-          state.moveFrame = requestAnimationFrame(step);
-        };
-
-        state.moveFrame = requestAnimationFrame(step);
-      }
-
-      function finishRun() {
-        state.running = false;
-        state.finished = true;
-        restartButton.disabled = false;
-        const totalSeconds = Math.max(state.currentTime, 0.001);
-        const currentCps = state.clicks / totalSeconds;
-        clickArea.innerHTML = `<span>${currentCps.toFixed(2)} CPS</span><small>Run complete</small>`;
-        finalEl.textContent = `${currentCps.toFixed(2)} CPS`;
-        historyBoard.textContent = `Last run: ${currentCps.toFixed(2)} CPS over ${state.currentTime}s.`;
-        setOverlayVisible(false);
-        stopMovement();
-      }
-
-      function animate() {
-        if (!state.running) {
-          return;
-        }
-
-        const now = performance.now();
-        state.elapsed = now - state.startTime;
-        updateStats();
-
-        if (state.elapsed >= state.duration) {
-          finishRun();
-          return;
-        }
-
-        requestAnimationFrame(animate);
-      }
-
-      function startRun() {
-        if (!state.duration || state.running || !state.timeSelected) {
-          return;
-        }
-
-        state.clicks = 0;
-        state.running = true;
-        state.finished = false;
-        restartButton.disabled = true;
-        state.startTime = performance.now();
-        state.elapsed = 0;
-        setOverlayVisible(false);
-        clickArea.innerHTML = '<span>0</span><small>Clicks</small>';
-        updateStats();
-        if (state.realisticMode) {
-          startMovement();
-        }
-        requestAnimationFrame(animate);
-      }
-
-      clickArea.addEventListener('click', function () {
-        if (state.finished || !state.timeSelected) {
-          return;
-        }
-        if (!state.running) {
-          startRun();
-          return;
-        }
-        state.clicks += 1;
-        clickArea.innerHTML = `<span>${state.clicks}</span><small>Clicks</small>`;
-        updateStats();
-      });
-
-      clickArea.addEventListener('contextmenu', function (event) {
-        if (!state.rightClickEnabled) {
-          event.preventDefault();
-        }
-      });
-
-      clickArea.addEventListener('auxclick', function (event) {
-        if (event.button === 1) {
-          event.preventDefault();
-        }
-      });
-
-      rightClickToggle.addEventListener('click', function () {
-        state.rightClickEnabled = !state.rightClickEnabled;
-        const label = rightClickToggle.querySelector('span');
-        label.textContent = state.rightClickEnabled ? 'ON' : 'OFF';
-      });
-
-      realisticToggle.addEventListener('click', function () {
-        state.realisticMode = !state.realisticMode;
-        const label = realisticToggle.querySelector('span');
-        label.textContent = state.realisticMode ? 'ON' : 'OFF';
-        if (!state.realisticMode) {
-          stopMovement();
-          clickArea.classList.remove('is-moving');
-        }
-      });
-
-      allTimesToggle.addEventListener('click', function () {
-        state.showExtraTimes = !state.showExtraTimes;
-        updateButtons();
-      });
-
-      timeButtons.forEach((button) => {
-        button.addEventListener('click', function () {
-          setTime(Number(button.dataset.time));
-        });
-      });
-
-      restartButton.addEventListener('click', function () {
-        if (!state.timeSelected) {
-          return;
-        }
-        startRun();
-      });
-
-      diffSlider.addEventListener('input', updateDifficultyLabel);
-
-      jumpToTest.addEventListener('click', function () {
-        document.getElementById('testSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-
-      classicModeButton.addEventListener('click', function () {
-        state.classicMode = !state.classicMode;
-        document.body.classList.toggle('classic-mode', state.classicMode);
-        classicModeButton.textContent = state.classicMode ? 'Classic mode enabled' : 'Use classic mode';
-        historyBoard.textContent = state.classicMode
-          ? 'Classic mode is enabled for a simpler visual layout.'
-          : 'No runs yet. Select a timer and start clicking.';
-      });
-
-      updateDifficultyLabel();
-      updateButtons();
-      resetBoard();
-    }());
-  </script>
+  <script src="cps.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

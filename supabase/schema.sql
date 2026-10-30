@@ -79,13 +79,13 @@ alter table public.products drop constraint if exists products_type_check;
 alter table public.products add constraint products_type_check check (type in ('credits','pass','lite','ultra'));
 
 insert into public.products (id, type, feature, name, credits, days, price_inr) values
-  ('credits-10',  'credits', null,             '10 credits',                     10,  0,  29),
-  ('credits-30',  'credits', null,             '30 credits',                     30,  0,  79),
-  ('credits-100', 'credits', null,             '100 credits',                   100,  0, 199),
-  ('credits-300', 'credits', null,             '300 credits',                   300,  0, 499),
-  ('rec-pass-1m', 'pass',    'recommendation', 'Recommendation Pass (1 month)',   0, 30,  99),
-  ('lite-1m',     'lite',    null,             'ProMouser Lite (1 month)',        0, 30, 149),
-  ('ultra-1m',    'ultra',   null,             'ProMouser Ultra (1 month)',       0, 30, 299)
+  ('credits-10',  'credits', null,             '10 credits',                     10,  0,  39),
+  ('credits-30',  'credits', null,             '30 credits',                     30,  0,  99),
+  ('credits-100', 'credits', null,             '100 credits',                   100,  0, 249),
+  ('credits-300', 'credits', null,             '300 credits',                   300,  0, 649),
+  ('rec-pass-1m', 'pass',    'recommendation', 'Recommendation Pass (1 month)',   0, 30, 199),
+  ('lite-1m',     'lite',    null,             'ProMouser Lite (1 month)',        0, 30, 349),
+  ('ultra-1m',    'ultra',   null,             'ProMouser Ultra (1 month)',       0, 30, 799)
 on conflict (id) do update set type = excluded.type, feature = excluded.feature, name = excluded.name, credits = excluded.credits,
   days = excluded.days, price_inr = excluded.price_inr;
 

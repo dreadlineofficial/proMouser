@@ -1,12 +1,53 @@
-# ProMouser redesign — notes (v5)
+# ProMouser redesign — notes (v6)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
+## What's new in v6
+
+- **CPS test v3** (`cps-test.html`, `cps.js`): rewritten from scratch.
+  - **Why the old one was glitchy:** it counted the browser's `click` event, which fires on release and gets dropped when a press ends off the button. The whole panel also lifted on hover, there was no right-click guard, text got selected on fast clicks, and leftover clicks after the timer started a new run.
+  - **How it counts now:** every press is counted from `mousedown`/`pointerdown` using the event's own timestamp, and only inside the run window. The run ends on a timer even if the tab stops drawing frames, and switching tabs mid-run restarts it instead of giving a wrong score.
+  - **Blocked inside the test:** the right-click menu ("Inspect", "Search"), text selection, drag, middle-click autoscroll and the back/forward side buttons. The right-click menu is also blocked page-wide during a run.
+  - **Options:** 1–60 s timers, left- or right-click mode, a moving-target mode, a short cooldown so trailing clicks don't start a new run, and <kbd>R</kbd> to restart.
+  - **Saved results:** personal bests per length, a rank, and run history, all in the browser.
+  - **Lite and Ultra:**
+    - a double-click count (two clicks registered < 30 ms apart)
+    - stray right/left clicks with timestamps, flagged live during the run
+    - peak CPS (best 1 s window), consistency, average/fastest gap, click-style guess, stamina
+    - a second-by-second CPS graph with markers
+  - **Ultra adds:** a progress chart across runs, plus CSV export of your history and of each run's clicks.
+  - **Free users** see a blurred preview with a Lite upsell.
+- **Test Hub** (`tests.html`) with 8 tests, plus 5 new pages driven by `tests.js`:
+  - reaction time (`reaction-test.html`), 5 rounds, catches early clicks
+  - aim trainer (`aim-trainer.html`): 20/30/50 targets, 3 sizes, time + accuracy
+  - polling rate (`polling-rate-test.html`): uses coalesced pointer events and snaps to 125…8000 Hz
+  - scroll wheel (`scroll-test.html`): flags reverse jumps from a worn encoder
+  - mouse buttons (`mouse-button-test.html`): all 5 buttons, hold time, chatter detection
+
+  The hub shows your personal bests. The nav "Tests" menu, footer, search and sitemap include the new pages.
+- **New prices** (placeholders): Lite **₹349/month**, Ultra **₹799/month**, Recommendation Pass **₹199**, credits 10 = ₹39 · 30 = ₹99 · 100 = ₹249 · 300 = ₹649. They're in `backend.js` and `supabase/schema.sql`. **If you already ran `schema.sql` on Supabase, run it again**: it updates the prices in place and keeps your users and data.
+- **Recommendation Assistant, round 3.** I tested it with 50 real-style questions (slang, typos, Hinglish, follow-ups) and fixed what it got wrong:
+  - **Mouse names:** bare names like "deathadder", "viper" and "superlight" now resolve. "g pro x superlight 2" no longer gets mistaken for the original Superlight.
+  - **Vague questions:** "best mouse", "which mouse should I buy" and "top 5 mice" get real picks straight away (best for FPS / 1.8 PvP / under ₹3,000) instead of only a question back.
+  - **New answer types:**
+    - "I have a G102, should I upgrade?": upgrades with what you'd gain
+    - "Is the Viper V3 Pro worth it?": value check against cheaper near-equals
+    - "is X good?": a verdict first
+    - "X vs Y which for valo": a direct "short answer" for that game
+  - **Follow-ups** like "and price?", "is it wireless?" and "alternatives" remember which mouse you're talking about.
+  - **New how-to answers:** more CPS; how to butterfly, jitter or drag click; fixing a double-clicking mouse; is 8K polling worth it; does the mouse matter for aim; what pros use; colours; quiet mice.
+  - **Bugs fixed:**
+    - "no budget" was read as "cheap".
+    - Brand-only or budget-only questions showed fake 0% scores.
+    - "best X" dumped an alphabetical list.
+    - The typo-fixer turned "matter"/"faster"/"right" into mouse words.
+  - **Also new:** Hinglish budgets ("2000 tak", "3k ke andar") and words (batao, chahiye, sasta) work, comfort and long-hours requests are understood, RGB filtering works, and so does "best sensor".
+
 ## What's new in v5
 
-- **ProMouser Ultra** (`ultra.html`): a third plan with a purple & black theme, at ₹299/month (placeholder, change it in `PM_CONFIG.ultra` in `backend.js` and in `products` in `supabase/schema.sql`). It includes everything in Lite, plus:
+- **ProMouser Ultra** (`ultra.html`): a third plan with a purple & black theme, at ₹799/month (placeholder, change it in `PM_CONFIG.ultra` in `backend.js` and in `products` in `supabase/schema.sql`). It includes everything in Lite, plus:
   - **Unlimited recommendations.** Runs never use credits.
   - **Saved profiles.** Up to 5 named setups on the Recommendations page; one click loads one.
   - **Price watchlist.** "Watch price" stars on every mouse page and shortlist card. The Elite Dashboard shows each watched mouse's price change since you saved it.
@@ -91,8 +132,8 @@ http://localhost:8000. Everything works from either.
 |---|---|
 | Free daily credits / cost per run / results | 5 / 1 / top 3 |
 | **Lite** daily credits / cost per run / results | **15** / 3 / all |
-| Lite price, Recommendation Pass price | **₹149 / month, ₹99 / 30 days** |
-| Credit packs | **10 = ₹29, 30 = ₹79, 100 = ₹199, 300 = ₹499** |
+| Lite price, Recommendation Pass price | **₹349 / month, ₹199 / 30 days** (Ultra ₹799 / month) |
+| Credit packs | **10 = ₹39, 30 = ₹99, 100 = ₹249, 300 = ₹649** |
 | Lite duration | 30 days, then it lapses (no auto-renew in the demo) |
 
 You asked for the free amount, 3 results, "drains faster", and pass = unlimited for a

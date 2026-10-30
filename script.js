@@ -48,6 +48,7 @@
     box: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>',
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/>',
     home: '<path d="m3 11 9-8 9 8M5 10v10h14V10"/>',
+    wheel: '<rect x="6" y="2.5" width="12" height="19" rx="6"/><path d="M12 6.5v4M9.5 15l2.5 2.5 2.5-2.5"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>'
   };
   const MAP = {
@@ -56,7 +57,7 @@
     Verdict: 'flag', Click: 'cursor', CPS: 'cursor', Light: 'feather', Weight: 'feather', Track: 'pulse', Poll: 'pulse', Time: 'clock', Versus: 'versus', Yes: 'check',
     Fix: 'sliders', Setup: 'sliders', Tools: 'sliders', Tips: 'spark', Tip: 'spark', Insight: 'spark', Style: 'spark', Clean: 'spark', Note: 'info', Help: 'info', Legacy: 'info',
     No: 'alert', Warn: 'alert', Care: 'heart', Hands: 'hand', Palm: 'hand', Claw: 'hand', Grip: 'hand', Ergo: 'hand', Hub: 'grid', More: 'grid', Office: 'grid',
-    Test: 'bars', Stats: 'bars', Size: 'ruler', Fit: 'ruler', Owner: 'user', Image: 'image', Home: 'home', Arrow: 'arrow'
+    Test: 'bars', Stats: 'bars', Scroll: 'wheel', Size: 'ruler', Fit: 'ruler', Owner: 'user', Image: 'image', Home: 'home', Arrow: 'arrow'
   };
   const svg = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[MAP[key] || key] || P.spark}</svg>`;
   window.PMIcon = svg;
@@ -206,8 +207,13 @@
       ['Hand grip guide', 'hand-grip.html', 'Palm, claw and fingertip grips explained'],
       ['Mouse tips', 'mouse-tips.html', 'DPI, polling rate, surface and lift-off settings'],
       ['Minecraft tips', 'minecraft-tips.html', 'Setups for builders and PvP players'],
-      ['Test hub', 'tests.html', 'Click speed and double-click tests'],
-      ['CPS test', 'cps-test.html', 'Clicks per second tester with realistic mode'],
+      ['Test hub', 'tests.html', 'CPS, reaction, aim, polling rate, scroll and button tests'],
+      ['CPS test', 'cps-test.html', 'Clicks per second, double clicks and stray right clicks'],
+      ['Reaction time test', 'reaction-test.html', 'Wait for green, then click as fast as you can'],
+      ['Aim trainer', 'aim-trainer.html', 'Hit targets fast: time, accuracy and bests'],
+      ['Polling rate test', 'polling-rate-test.html', 'Check how many Hz your mouse reports at'],
+      ['Scroll wheel test', 'scroll-test.html', 'Find a scroll wheel that jumps the wrong way'],
+      ['Mouse button test', 'mouse-button-test.html', 'Test every button and catch double-clicking switches'],
       ['Double click test', 'double-click-test.html', 'Check timing and consistency of double clicks'],
       ['Blog', 'blog/', 'Practical mouse guides'],
       ['How to choose a gaming mouse', 'blog/choosing-a-gaming-mouse.html', 'Grip, weight, wireless, DPI and budget explained'],

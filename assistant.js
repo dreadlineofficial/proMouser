@@ -34,8 +34,8 @@
 
   // aliases people actually type
   const ALIAS = {
-    'razer-deathadder-v3': ['deathadder v3', 'da v3', 'deathadder 3', 'dav3'],
-    'logitech-superlight-pro-x': ['superlite', 'super light', 'superlight pro x', 'gpx superlight', 'g pro x superlight', 'pro x superlight', 'superlight 1', 'superlight one', 'gpx'],
+    'razer-deathadder-v3': ['deathadder v3', 'da v3', 'deathadder 3', 'dav3', 'deathadder', 'death adder'],
+    'logitech-superlight-pro-x': ['superlight pro x', 'gpx superlight', 'g pro x superlight', 'pro x superlight', 'superlight 1', 'superlight one', 'gpx'],
     'glorious-model-o': ['model o', 'model 0', 'glorious o'],
     'logitech-g502-hero': ['g502 hero', 'g502', 'g 502'],
     'bloody-a70': ['a70', 'a 70'],
@@ -45,10 +45,10 @@
     'logitech-g304-lightspeed': ['g304', 'g305', 'g 304', 'g 305'],
     'logitech-g502-x': ['g502 x', 'g502x'],
     'logitech-g502-x-plus': ['g502 x plus', 'g502x plus', 'g502 x+'],
-    'logitech-g-pro-x-superlight-2': ['superlight 2', 'superlight2', 'gpx2', 'gpx 2', 'superlight two', 'superlite 2', 'super light 2'],
+    'logitech-g-pro-x-superlight-2': ['superlight', 'superlite', 'super light', 'g pro x superlight 2', 'gpx superlight 2', 'pro x superlight 2', 'superlight 2', 'superlight2', 'gpx2', 'gpx 2', 'superlight two', 'superlite 2', 'super light 2'],
     'logitech-g-pro-wireless': ['g pro wireless', 'gpw', 'pro wireless'],
     'logitech-g703-lightspeed': ['g703', 'g 703'],
-    'razer-viper-v3-pro': ['viper v3 pro', 'viper v3', 'v3 pro'],
+    'razer-viper-v3-pro': ['viper v3 pro', 'viper v3', 'v3 pro', 'viper', 'viper pro'],
     'razer-viper-mini': ['viper mini'],
     'razer-deathadder-essential': ['deathadder essential', 'da essential'],
     'razer-deathadder-v3-pro': ['deathadder v3 pro', 'da v3 pro'],
@@ -65,13 +65,13 @@
     'steelseries-aerox-3': ['aerox 3', 'aerox'],
     'hyperx-pulsefire-haste': ['pulsefire haste', 'haste'],
     'hyperx-pulsefire-haste-2': ['pulsefire haste 2', 'haste 2'],
-    'zowie-ec2-c': ['ec2-c', 'ec2 c', 'ec2'],
+    'zowie-ec2-c': ['ec2-c', 'ec2 c', 'ec2c', 'ec2', 'zowie'],
     'cooler-master-mm710': ['mm710', 'mm 710'],
     'endgame-gear-xm1r': ['xm1r', 'xm1'],
     'corsair-harpoon-rgb-pro': ['harpoon'],
     'corsair-m65-rgb-ultra': ['m65'],
-    'redragon-m711-cobra': ['m711', 'redragon cobra'],
-    'attack-shark-x3': ['attack shark x3', 'attack shark']
+    'redragon-m711-cobra': ['m711', 'redragon cobra', 'redragon'],
+    'attack-shark-x3': ['attack shark x3', 'attack shark', 'x3']
   };
   const BRAND_WORDS = m => m.brand.toLowerCase().split(' ');
   const ALIASES = [];
@@ -94,7 +94,7 @@
     return d[a.length][b.length];
   }
   // fix typos in mouse names ("deathader", "superlite") before matching
-  const COMMON = new Set(['wireless', 'mouse', 'minecraft', 'gaming', 'better', 'claw', 'light', 'weight', 'butterfly', 'button', 'buttons', 'hands', 'which', 'would', 'should', 'cheap', 'cheaper', 'lighter', 'under', 'about', 'there', 'their', 'small', 'large', 'model', 'compare', 'versus', 'between', 'click', 'clicking', 'sensor', 'great', 'price', 'really', 'something', 'heavy', 'heavier']);
+  const COMMON = new Set(['wireless', 'mouse', 'minecraft', 'gaming', 'better', 'claw', 'light', 'weight', 'butterfly', 'button', 'buttons', 'hands', 'which', 'would', 'should', 'cheap', 'cheaper', 'lighter', 'under', 'about', 'there', 'their', 'small', 'large', 'model', 'compare', 'versus', 'between', 'click', 'clicking', 'sensor', 'great', 'price', 'really', 'something', 'heavy', 'heavier', 'matter', 'faster', 'right', 'tight', 'night', 'fight', 'might', 'sight', 'water', 'later', 'after', 'other', 'order', 'master']);
   function spell(t) {
     return t.replace(/[a-z]{5,}/g, w => {
       if (COMMON.has(w) || VOCAB.includes(w)) return w;
@@ -143,10 +143,13 @@
     if (games.length) { p.games = games; }
     if (has(t, /\b1\.8\b|old pvp|legacy pvp|hypixel|bedwars|bed wars|skywars|butterfly|jitter|drag click|high cps/)) p.mcVersion = '1.8';
     if (has(t, /\b1\.(9|1\d|2\d)\b|cooldown|new pvp|modern pvp/)) p.mcVersion = '1.9+';
-    const b = money(t);
+    // Hinglish: "2000 tak", "3k ke andar", "5000 se kam" all mean "under"
+    const b = money(t.replace(/(\d+(?:\.\d+)?\s*k?)\s*(?:rs |rupees |₹ )?(?:tak|tk|ke andar|ke niche|ke neeche|se kam|ke under)\b/g, 'under $1'));
+    const noBudget = has(t, /\b(no budget|no limit|money is no|any price|premium|flagship|best money can buy|price doesn'?t matter|budget doesn'?t matter|money doesn'?t matter|any budget)\b/);
     if (b && b.max >= 300) { p.budgetMax = b.max; if (b.usd) said.push(`I read that budget as about ${inr(b.max)}.`); }
-    else if (has(t, /\b(cheap|cheapest|budget|affordable|low price|inexpensive|broke)\b/) && !has(t, /\bbudget (is|of)\b/)) p.cheap = true;
-    if (has(t, /\b(no budget|money is no|any price|premium|flagship|best money can buy|price doesn't matter|no limit)\b/)) { p.budgetMax = null; p.noBudget = true; }
+    else if (!noBudget && has(t, /\b(cheap|cheapest|budget|affordable|low price|inexpensive|broke|sasta|saste|sasti|kam price)\b/) && !has(t, /\bbudget (is|of)\b/)) p.cheap = true;
+    if (noBudget) { p.budgetMax = null; p.noBudget = true; }
+    if (has(t, /\b(long hours|all day|hours a day|long sessions?|comfortable|comfort|comfy|wrist pain|hand pain|carpal)\b/)) p.comfort = true;
     const wmax = t.match(/(?:under|below|less than|lighter than|max|at most)\s*(\d{2,3})\s*(?:g|gm|gms|grams?)\b/);
     if (wmax) { p.maxWeight = +wmax[1]; p.weight = 'light'; }
     else if (has(t, /\b(ultra ?light|ultralight|super light|lightweight|light weight|light mouse|light one|featherweight|as light as|lightest|light)\b/) && !has(t, /\b(light ?strike|lighting|rgb light)\b/)) p.weight = 'light';
@@ -166,6 +169,7 @@
     if (btn) p.minButtons = +btn[1];
     else if (has(t, /\b(lots of|many|tons of|loads of|extra|more) buttons\b|\bmacros?\b|\bmmo grid\b/)) p.minButtons = 8;
     if (has(t, /\bbutterfly\b/)) p.clickStyle = 'butterfly'; else if (has(t, /\bjitter\b/)) p.clickStyle = 'jitter'; else if (has(t, /\bdrag ?click/)) p.clickStyle = 'drag';
+    if ((p.clickStyle || has(t, /\b(high cps|more cps)\b/)) && !p.games) p.games = ['minecraft'];   // click techniques are a Minecraft thing
     if (has(t, /\b(symmetrical|ambidextrous|ambi)\b/)) p.shape = 'symmetrical'; else if (has(t, /\b(ergonomic|ergo|right[ -]handed shape)\b/)) p.shape = 'ergonomic';
     if (has(t, /\b(8k|8000 ?hz|4k polling|high polling|8000)\b/)) p.minPoll = 4000;
     const custom = []; if (has(t, /\brgb\b/)) custom.push('rgb'); if (has(t, /\bdebounce\b/)) custom.push('debounce'); if (has(t, /\b(adjustable|removable) weights?\b/)) custom.push('weights');
@@ -177,9 +181,9 @@
 
   const LABEL = {
     games: v => v.map(g => ({ fps: 'FPS', minecraft: 'Minecraft', mmo: 'MMO / MOBA', work: 'Work' })[g] || g).join(' + '),
-    mcVersion: v => (v === '1.8' ? '1.8 PvP' : '1.9+ combat'), budgetMax: v => 'Under ' + inr(v), cheap: () => 'Cheap', weight: v => cap(v) + ' weight', maxWeight: v => `Under ${v} g`,
+    mcVersion: v => (v === '1.8' ? '1.8 PvP' : '1.9+ combat'), budgetMax: v => 'Under ' + inr(v), cheap: () => 'Budget (under ₹3,000)', weight: v => cap(v) + ' weight', maxWeight: v => `Under ${v} g`,
     grip: v => cap(v) + ' grip', handLength: v => v + ' cm hand', handSize: v => cap(v) + ' hands', lefty: () => 'Left-handed', connection: v => cap(v),
-    minButtons: v => v + '+ buttons', clickStyle: v => cap(v) + ' clicking', shape: v => cap(v), minPoll: () => '4K+ polling', custom: v => v.map(c => ({ rgb: 'RGB', debounce: 'Debounce', weights: 'Weights' })[c]).join(', '), brands: v => v.join(' / ')
+    minButtons: v => v + '+ buttons', clickStyle: v => cap(v) + ' clicking', shape: v => cap(v), comfort: () => 'Comfort first', minPoll: () => '4K+ polling', custom: v => v.map(c => ({ rgb: 'RGB', debounce: 'Debounce', weights: 'Weights' })[c]).join(', '), brands: v => v.join(' / ')
   };
 
   /* =============================== 2. memory =============================== */
@@ -211,10 +215,26 @@
       if (p.brands && !p.brands.includes(m.brand)) return false;
       if (p.minPoll && m.poll < p.minPoll) return false;
       if (p.minButtons && (m.buttons || 0) < p.minButtons) return false;
+      if (p.shape && m.shape && m.shape.toLowerCase() !== p.shape) return false;
+      if (p.custom && p.custom.includes('rgb') && !m.custom.includes('rgb')) return false;
       return true;
     });
   }
-  const rank = p => PM.recommend(toEngine(p));
+  // overall quality from real specs, used when someone asks "best mouse" with nothing to personalise on
+  function merit(m) {
+    const sensor = m.ips == null ? .55 : m.ips >= 650 ? 1 : m.ips >= 400 ? .88 : m.ips >= 300 ? .75 : .6;
+    const weight = m.weight <= 65 ? 1 : m.weight <= 80 ? .85 : m.weight <= 100 ? .65 : .45;
+    return .3 * sensor + .2 * weight + .25 * (m.comfort / 5) + .15 * (m.cps.level / 5) + .1 * (m.poll >= 4000 ? 1 : .8);
+  }
+  // prefs the fit engine can score a mouse on (budget, connection and max weight only filter)
+  const SCORED = ['games', 'grip', 'weight', 'handLength', 'handSize', 'lefty', 'minButtons', 'custom', 'clickStyle', 'shape'];
+  const scorable = p => SCORED.some(k => p[k] && p[k] !== 'any' && !(Array.isArray(p[k]) && !p[k].length));
+  function rank(p) {
+    let list = scorable(p) ? PM.recommend(toEngine(p))
+      : MICE.map(m => ({ m, score: null, parts: [], pros: [m.bestFor + '.'], cons: [] })).sort((a, b) => merit(b.m) - merit(a.m));
+    if (p.comfort) list = list.map(r => ({ ...r, s2: (r.score ?? merit(r.m) * 100) + (r.m.comfort - 3) * 6 })).sort((a, b) => b.s2 - a.s2);
+    return list;
+  }
   const CLICK = { great: 'great', good: 'good', poor: 'not good' };
   const imgTag = (m, cls = '') => `<img class="${cls}" src="${PM.IMG(m, 480)}" alt="" loading="lazy">`;
 
@@ -239,11 +259,7 @@
 
   function recommend(o, opts = {}) {
     const p = ctx.prefs;
-    if (!['games', 'grip', 'weight', 'connection', 'budgetMax', 'cheap', 'handSize', 'handLength', 'lefty', 'minButtons', 'clickStyle', 'brands', 'maxWeight'].some(k => p[k] && !(Array.isArray(p[k]) && !p[k].length))) {
-      P(o, 'Happy to help! Let’s start with the big one: what do you mostly play?');
-      chips(o, ['FPS', 'I play FPS games'], ['Minecraft PvP', 'I play Minecraft 1.8 PvP'], ['Minecraft (1.9+)', 'I play Minecraft 1.20'], ['MMO / MOBA', 'I play MMOs'], ['Work', 'Mostly work and browsing']);
-      return o;
-    }
+    if (!Object.keys(LABEL).some(k => p[k] && !(Array.isArray(p[k]) && !p[k].length))) return quickPicks(o);
     let all = rank(p), list = hardFilter(all, p), relaxed = false;
     if (!list.length) { list = all; relaxed = true; }
     const start = opts.more ? ctx.offset : 0, pick = list.slice(start, start + 3);
@@ -257,7 +273,7 @@
     const top = pick[0].m;
     const gp = pick[0].parts.find(x => x.key === 'game');
     if (gp && gp.value < .5 && !opts.more) P(o, `<span class="a-note">None of the mice that pass your other must-haves is really built for ${esc(LABEL.games(p.games))}${p.lefty ? ': being left-handed rules out the ergonomic, button-heavy shapes' : p.budgetMax ? ': try a higher budget' : ''}. Remove a filter under “What I know about you” to see better matches.</span>`);
-    else if (pick[0].score < 62 && !opts.more) P(o, `<span class="a-note">These are the closest fits, but none matches everything well. Try removing a filter under “What I know about you”${p.lefty ? ' (left-handed rules out most ergonomic mice)' : ''}.</span>`);
+    else if (pick[0].score != null && pick[0].score < 62 && !opts.more) P(o, `<span class="a-note">These are the closest fits, but none matches everything well. Try removing a filter under “What I know about you”${p.lefty ? ' (left-handed rules out most ergonomic mice)' : ''}.</span>`);
     if ((p.games || []).includes('minecraft') && p.mcVersion !== '1.9+' && top.cps.level < 4) P(o, `<span class="a-note">Heads-up: for 1.8 PvP, the <a href="${root}mice/glorious-model-o.html">Glorious Model O</a> and <a href="${root}mice/bloody-a70.html">Bloody A70</a> have the most CPS potential, but they didn’t fit your other answers as well.</span>`);
     // ask the single most useful next question
     if (!p.games) { P(o, 'What do you mostly play? That changes the picks the most.'); chips(o, ['FPS', 'I play FPS games'], ['Minecraft PvP', 'I play Minecraft 1.8 PvP'], ['MMO / MOBA', 'I play MMOs'], ['Work', 'Mostly work and browsing']); }
@@ -265,6 +281,56 @@
     else if (!p.budgetMax && !p.cheap && !p.noBudget) { P(o, 'Got a budget?'); chips(o, ['Under ₹2,000', 'under ₹2000'], ['Under ₹5,000', 'under ₹5000'], ['Under ₹10,000', 'under ₹10000'], ['No limit', 'no budget limit']); }
     else if (!p.handLength && !p.handSize) { P(o, 'One more: how big are your hands? A centimetre measurement is best (wrist crease to middle fingertip).'); chips(o, ['Small', 'I have small hands'], ['Medium', 'medium hands'], ['Large', 'I have large hands'], ['18 cm', 'my hand is 18 cm']); }
     chips(o, ['Why #1?', 'Why the first one?'], pick.length > 1 && ['Compare top 2', 'Compare the first two'], ['Show more', 'Show more'], ['Cheaper', 'Cheaper'], !p.connection && ['Wireless only', 'Wireless only']);
+    return o;
+  }
+
+  // "what's the best mouse?" — answer straight away, then ask what they play
+  function quickPicks(o) {
+    const seen = new Set(), top = (p, label) => { const r = hardFilter(rank(p), p).find(x => !seen.has(x.m.id)); if (r) seen.add(r.m.id); return r && { ...r, score: null, pros: [label, r.m.bestFor + '.'] }; };
+    const picks = [top({ games: ['fps'] }, 'Best for FPS'), top({ games: ['minecraft'], mcVersion: '1.8' }, 'Best for 1.8 Minecraft PvP'), top({ cheap: true }, 'Best under ₹3,000')].filter(Boolean);
+    ctx.last = picks.map(r => r.m.id); ctx.focus = null;
+    P(o, 'There’s no single best mouse: it depends on what you play. Here are my quick picks:');
+    o.blocks.push({ t: 'html', html: `<div class="a-cards">${picks.map(card).join('')}</div>` });
+    P(o, 'Tell me what you play, how you hold your mouse and your budget, and I’ll make you a proper shortlist.');
+    chips(o, ['FPS', 'I play FPS games'], ['Minecraft PvP', 'I play Minecraft 1.8 PvP'], ['Minecraft (1.9+)', 'I play Minecraft 1.20'], ['MMO / MOBA', 'I play MMOs'], ['Work', 'Mostly work and browsing']);
+    return o;
+  }
+
+  // "I have a G102, should I upgrade?"
+  function upgrade(o, m, q) {
+    const games = (q.games && q.games.length) ? q.games : (ctx.prefs.games && ctx.prefs.games.length) ? ctx.prefs.games : m.games.slice(0, 1);
+    const p = { ...ctx.prefs, ...q, games }, mine = PM.fit(m, toEngine(p));
+    const gains = x => {
+      const g = [];
+      if (x.weight <= m.weight - 10) g.push(`${m.weight - x.weight} g lighter`);
+      if (x.connection === 'Wireless' && m.connection === 'Wired') g.push('wireless');
+      if ((x.ips || 0) >= (m.ips || 0) + 150) g.push('a much better sensor');
+      if (games.includes('minecraft') && x.cps.level > m.cps.level) g.push(`more CPS potential (${x.cps.level}/5 vs ${m.cps.level}/5)`);
+      if (x.poll > m.poll) g.push(`${num(x.poll)} Hz polling`);
+      if (x.comfort > m.comfort) g.push('more comfortable');
+      return g;
+    };
+    const ups = hardFilter(rank(p), p).filter(r => r.m.id !== m.id && r.score >= mine.score && gains(r.m).length >= 2).slice(0, 3);
+    ctx.focus = m.id;
+    if (!ups.length) { P(o, `<b>Honestly, keep it.</b> The ${esc(m.name)} is already a ${mine.score}% fit for ${esc(LABEL.games(games))}, and nothing in our list is clearly better for you without trade-offs.`); return o; }
+    P(o, `The ${esc(m.name)} is a <b>${mine.score}% fit</b> for ${esc(LABEL.games(games))}. ${mine.score >= 85 ? 'It’s still good, so only upgrade if one of these gains matters to you:' : 'An upgrade would make a real difference. These keep what works and fix what doesn’t:'}`);
+    ctx.last = ups.map(r => r.m.id);
+    o.blocks.push({ t: 'html', html: `<div class="a-cards">${ups.map((r, i) => card({ ...r, pros: gains(r.m).map(g => cap(g)) }, i)).join('')}</div>` });
+    chips(o, ['Compare with mine', `Compare the ${m.short} with ${ups[0].m.short}`], ['Cheaper upgrade', `Something cheaper than the ${ups[0].m.short}`]);
+    return o;
+  }
+
+  // "is the Viper V3 Pro worth it?"
+  function worth(o, m) {
+    ctx.focus = m.id;
+    const g = m.games[0], p = { games: [g] }, mine = PM.fit(m, toEngine(p)).score;
+    const cheaper = m.price ? MICE.filter(x => x.id !== m.id && x.price && x.price <= m.price * .65 && Math.abs(x.weight - m.weight) <= 12)
+      .map(x => ({ x, s: PM.fit(x, toEngine(p)).score })).filter(r => r.s >= mine - 6).sort((a, b) => a.x.price - b.x.price)[0] : null;
+    if (!m.price) P(o, `We don’t have a trusted price for the ${esc(m.name)} yet, so I can’t judge its value. It’s best for: ${esc(m.bestFor.toLowerCase())}.`);
+    else if (cheaper) P(o, `<b>It’s a great mouse, but you pay a lot for the last few percent.</b> At ${inr(m.price)}, the ${esc(m.name)} is a ${mine}% fit for ${esc(LABEL.games([g]))}. The <a href="${root + cheaper.x.page}">${esc(cheaper.x.name)}</a> gets ${cheaper.s}% for ${inr(cheaper.x.price)}, which is ${inr(m.price - cheaper.x.price)} less.`);
+    else P(o, `<b>Yes, if ${esc(LABEL.games([g]))} is your main thing.</b> At ${inr(m.price)} it’s a ${mine}% fit, and nothing much cheaper in our list matches it on weight and performance.`);
+    if (m.cps.level <= 2 && g !== 'minecraft') P(o, `<span class="a-note">Not for 1.8 Minecraft PvP though: ${esc(m.cps.note.split('. ')[0].toLowerCase())}.</span>`);
+    if (cheaper) { ctx.last = [cheaper.x.id]; chips(o, ['Compare them', `Compare the ${m.short} with ${cheaper.x.short}`]); }
     return o;
   }
 
@@ -342,9 +408,16 @@
     return o;
   }
 
-  function compare(o, ms) {
+  function compare(o, ms, q = {}) {
     ms = ms.slice(0, 4); ctx.last = ms.map(m => m.id); ctx.focus = null;
-    const p = toEngine(ctx.prefs), personal = (ctx.prefs.games || ctx.prefs.grip) ? ms.map(m => PM.fit(m, p).score) : null;
+    const pr = { ...ctx.prefs, ...q }, p = toEngine(pr), personal = scorable(pr) ? ms.map(m => PM.fit(m, p).score) : null;
+    if (personal) {
+      const i = personal.indexOf(Math.max(...personal)), sorted = [...personal].sort((a, b) => b - a), what = Object.entries(q).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ');
+      P(o, sorted[0] - sorted[1] <= 2 ? `<b>Short answer: it’s close${what ? ' for ' + esc(what) : ''}.</b> Both fit within a couple of points, so pick on price, weight or shape below.` : `<b>Short answer: the ${esc(ms[i].name)}${what ? ' for ' + esc(what) : ''}</b> (${personal[i]}% fit vs ${sorted[1]}%).`);
+    } else {
+      const ws = ms.map(merit), i = ws.indexOf(Math.max(...ws)), priced = ms.filter(m => m.price), cheap = priced.sort((a, b) => a.price - b.price)[0];
+      P(o, `<b>Short answer:</b> the ${esc(ms[i].short)} is the stronger all-rounder on paper${cheap && cheap !== ms[i] && ms[i].price && cheap.price < ms[i].price * .7 ? `, but the ${esc(cheap.short)} costs ${inr(ms[i].price - cheap.price)} less and is the better value` : ''}. Tell me what you play for a personal verdict.`);
+    }
     const rows = [
       ['Weight', m => m.weight, m => m.weight + ' g', -1], ['Price', m => m.price, m => (m.price ? inr(m.price) : '—'), -1], ['Polling', m => m.poll, m => num(m.poll) + ' Hz', 1],
       ['Max DPI', m => m.dpi, m => num(m.dpi), 0], ['Sensor', null, m => m.sensor || '—'], ['Connection', null, m => m.connection + (m.battery ? ` · ${m.battery} h` : '')],
@@ -373,13 +446,14 @@
     };
     const lines = ms.map(m => { const w = pickIf(m); return w.length ? `<b>${esc(m.short)}</b> if ${w.slice(0, 3).join(', ')}.` : null; }).filter(Boolean);
     if (lines.length) P(o, 'Pick the ' + lines.join('<br>Pick the '));
-    if (personal) { const i = personal.indexOf(Math.max(...personal)); P(o, `Based on what you’ve told me, the <b>${esc(ms[i].name)}</b> fits you best.`); }
-    else chips(o, ['Which suits me?', 'I play Minecraft and FPS with a claw grip']);
+    if (!personal) chips(o, ['For FPS?', `${ms[0].short} vs ${ms[1].short} for FPS`], ['For Minecraft?', `${ms[0].short} vs ${ms[1].short} for Minecraft PvP`]);
     chips(o, ['Open in compare lab', `@open:mice/compare.html?m=${ms.map(m => m.id).join(',')}`]);
     return o;
   }
 
   const SUPER = [
+    [/\b(best|top|most accurate|flawless) sensors?\b|\bsensor.*\bbest\b/, 'Top sensors', (a, b) => (b.ips || 0) - (a.ips || 0) || (b.dpi || 0) - (a.dpi || 0), m => (m.sensor || 'sensor n/a') + (m.ips ? ` · ${m.ips} IPS` : '')],
+    [/\btop (\d+|three|five|ten)\b|\btop (mice|picks|gaming mice)\b|\b(best rated|top rated|most popular|best overall|overall best)\b/, 'Top all-rounders', (a, b) => merit(b) - merit(a), m => m.bestFor],
     [/\b(lightest|least heavy)\b/, 'Lightest', (a, b) => a.weight - b.weight, m => m.weight + ' g'],
     [/\b(heaviest)\b/, 'Heaviest', (a, b) => b.weight - a.weight, m => m.weight + ' g'],
     [/\b(cheapest|lowest price|least expensive|most affordable)\b/, 'Cheapest', (a, b) => (a.price || 1e9) - (b.price || 1e9), m => inr(m.price)],
@@ -396,12 +470,13 @@
     let pool = MICE.filter(m => hardFilter([m], q).length && (!q.games || q.games.some(g => m.games.includes(g))));
     const style = (t.match(/\b(butterfly|drag|jitter)\b/) || [])[1];
     if (style) pool = pool.filter(m => ['great', 'good'].includes(m.clicking[style]));
-    const [, title, sort, show] = sup || [null, 'Matching mice', (a, b) => a.name.localeCompare(b.name), m => m.weight + ' g'];
+    const [, title, sort, show] = sup || [null, 'Matching mice', (a, b) => merit(b) - merit(a), m => m.weight + ' g'];
+    const want = +((t.match(/\btop (\d+)\b/) || [])[1] || { three: 3, five: 5, ten: 10 }[(t.match(/\btop (three|five|ten)\b/) || [])[1]] || 0);
     pool.sort(sort);
     if (!pool.length) { P(o, 'No mice in our list match all of that. Try loosening one filter.'); return o; }
-    const n = sup ? Math.min(6, pool.length) : Math.min(10, pool.length);
+    const n = Math.min(want || (sup ? 6 : 10), pool.length);
     ctx.last = pool.slice(0, n).map(m => m.id); ctx.focus = null;
-    const f = Object.entries(q).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v));
+    const f = Object.entries(q).filter(([k, v]) => v && LABEL[k] && !(sup && /Lightest|Heaviest/.test(title) && k === 'weight')).map(([k, v]) => LABEL[k](v));
     P(o, `<b>${title}${style ? ` for ${style} clicking` : ''}</b>${f.length ? ' · ' + esc(f.join(' · ')) : ''} (${pool.length} match${pool.length > 1 ? 'es' : ''}${pool.length > n ? `, showing ${n}` : ''}):`);
     o.blocks.push({ t: 'html', html: `<ol class="a-list">${pool.slice(0, n).map(m => `<li><a href="${root + m.page}">${imgTag(m)}<span><b>${esc(m.name)}</b><small>${esc(show(m))} · ${m.connection.toLowerCase()} · ${m.price ? inr(m.price) : 'no price'}</small></span></a></li>`).join('')}</ol>` });
     if (pool.length > n) chips(o, ['See them all', `@open:mice.html#catalog`]);
@@ -410,6 +485,16 @@
   }
 
   const CONCEPTS = [
+    [/double ?click(ing|s)?\b.*\b(fix|problem|issue|what (do|should|can) i do|broken|keeps|randomly|by itself|on its own)|\bmy mouse (is |keeps )?(double|clicking twice)|\bfix.*double ?click/, 'Fixing a mouse that double-clicks', 'That’s usually a worn switch “chattering”. In order: 1) Confirm it with the <a href="' + root + 'mouse-button-test.html">mouse button test</a>. 2) Raise the debounce time in your mouse software if it has one. 3) Blow compressed air into the gap under the button. 4) If it’s under warranty (Logitech and Razer give 2 years in India), claim it. 5) Handy with a soldering iron? A new Omron or Kailh switch costs under ₹100. Mice with optical switches can’t develop this fault.'],
+    [/\b(more|increase|improve|higher|boost|raise|get better) (my )?cps\b|\bcps (higher|up)\b|\bclick faster\b|\bhow to (get )?(fast|faster) click/, 'How to get more CPS', '1) Pick a technique: jitter (10–14 CPS) is easiest to learn, butterfly (15–25) needs a mouse that registers fast presses, drag (25+) needs a grippy button. 2) Use a mouse that supports it: the Glorious Model O for butterfly, the Bloody A70 for drag. 3) Practise in short bursts on the <a href="' + root + 'cps-test.html">CPS test</a>: five 5-second runs, then rest. 4) Keep your wrist relaxed: if it hurts, stop. Lite shows your double clicks and consistency so you can see what’s improving.', ['glorious-model-o', 'bloody-a70']],
+    [/how (do i|to|can i|do you|should i) butterfly/, 'How to butterfly click', 'Rest your index and middle fingers on the left button, then tap them one after the other, fast, like drumming. Each finger adds a click, so you get two clicks per “cycle”. Keep your wrist on the desk and your fingers relaxed. Start slowly for rhythm, then speed up. It needs a mouse with a crisp, low-debounce switch: the Glorious Model O is the classic choice.', ['glorious-model-o']],
+    [/how (do i|to|can i|do you|should i) jitter/, 'How to jitter click', 'Hold your hand in a claw over the mouse, tense your forearm and let your index finger vibrate on the left button. Keep the vibration small and keep breathing. Practise in 5-second bursts and stop if your wrist hurts. Light mice with a firm click work best.'],
+    [/how (do i|to|can i|do you|should i) drag ?click/, 'How to drag click', 'Put your finger on the top of the left button and drag it down slowly with firm pressure. Friction makes the finger skip, and each skip is a click. Grip tape or a slightly sweaty finger helps. The Bloody A70 and Logitech G102 are known drag clickers.', ['bloody-a70', 'logitech-g102-lightsync']],
+    [/\b(8 ?k|8000 ?hz|4 ?k|4000 ?hz|high polling)\b/, 'Is 4K / 8K polling worth it?', 'Only if you have a 240 Hz+ monitor and a fast PC. 8,000 Hz makes motion a touch smoother and cuts latency by under 1 ms, but it uses noticeably more CPU and drains wireless batteries faster. On a 60–144 Hz screen you won’t feel it. 1,000 Hz is still the right default for most players.', ['razer-viper-v3-pro']],
+    [/(does|do|will) (the |a |my |your )?mouse (really )?(matter|make a difference|help|improve)|better mouse.*(aim|better player)|mouse.*(improve|help).*aim/, 'Does your mouse matter for aim?', 'A bit, but less than practice. A good mouse removes problems: a flawless sensor, a weight you can control and a shape that fits your grip. Going from a heavy, ill-fitting office mouse to a light gaming mouse is a big jump. Going from a ₹3,000 gaming mouse to a ₹15,000 one is a small one. Fix sensitivity and practise with the <a href="' + root + 'aim-trainer.html">aim trainer</a> first.'],
+    [/\b(quiet|quietest|silent|noise|noisy|loud)\b/, 'Quiet mice', 'We don’t measure click noise yet, so I can’t rank our mice by how loud they are. If quiet matters most, look for mice sold as “silent”: they use dampened switches. They’re great for offices and late nights, but a poor match for jitter or butterfly clicking.'],
+    [/\b(white|black|pink|blue|red|purple|colou?rs?|colou?rway)\b(?!.*\b(theme|site|website)\b)/, 'Colours', 'We don’t track colours yet. Plenty of the mice here come in white or other colours, including the Logitech G PRO X Superlight 2, the Glorious Model O, the Razer Viper V3 Pro and the Logitech G102. Check the seller’s listing for what’s in stock.'],
+    [/\b(pros?|professional|esports?|streamers?|youtubers?|technoblade|tenz|s1mple|dream|shroud|zywoo|players?)\b.*\b(use|using|uses|play with)\b|\bwhat (mouse|mice) (do|does) (pros|professional)/, 'What do pros use?', 'We don’t track individual players’ setups, so I won’t guess anyone’s mouse. As a general picture: in pro FPS, light wireless mice dominate, and the Logitech G PRO X Superlight 2 and Razer Viper V3 Pro are the most common. Zowie’s EC series is a long-time Counter-Strike favourite. In 1.8 Minecraft PvP, the Glorious Model O and Bloody A70 are the community’s go-to CPS mice.', ['logitech-g-pro-x-superlight-2', 'razer-viper-v3-pro', 'glorious-model-o']],
     [/\b(dpi|cpi)\b/, 'DPI (or CPI)', 'How far the cursor moves per inch of mouse movement. It’s sensitivity, not accuracy. Most good players use 400–1,600 DPI and tune in-game sensitivity. A 30,000 DPI sensor isn’t “more accurate” than a 12,000 one at the settings you’ll actually use.'],
     [/\bpolling\b|\bhz\b|\breport rate\b/, 'Polling rate', 'How often the mouse reports to your PC each second. 1,000 Hz (1 ms) is the gaming standard. 4,000–8,000 Hz feels a touch smoother on high-refresh monitors but uses more CPU and battery. It won’t fix aim on its own.'],
     [/\bips\b|tracking speed/, 'IPS (tracking speed)', 'The fastest swipe the sensor can follow without losing track. Anything above ~250 IPS is plenty for almost everyone; low-sensitivity FPS players benefit from 400+.'],
@@ -441,6 +526,8 @@
       else if (pos && ctx.last[ord[pos[1]]]) refs = [byId[ctx.last[ord[pos[1]]]]];
       else if (/\b(it|this|that|this one|that one|this mouse|that mouse|the mouse)\b/.test(t) && ctx.focus && !/\b(recommend|suggest|need|want|looking for|buy|pick|choose|help me|instead|other)\b/.test(t) && t.trim().split(' ').length <= 12) refs = [byId[ctx.focus]];
       else if (/\bwhy\b.*\b(first|#1|number one|top)\b/.test(t) && ctx.last[0]) refs = [byId[ctx.last[0]]];
+      else if (ctx.focus && t.trim().split(' ').length <= 7 && !/\b(i have|i play|i use|my hands?|my budget|recommend|suggest|list|show me|mice)\b/.test(t)
+        && (FACT.some(([re]) => re.test(t)) || /\b(alternatives?|similar|cheaper|lighter|heavier|worth|good for|any good|upgrade)\b/.test(t))) refs = [byId[ctx.focus]];
     }
     said.forEach(s => P(o, `<span class="a-note">${esc(s)}</span>`));
 
@@ -451,29 +538,41 @@
     if (/\b(what can you do|help me use|how do you work|who are you|are you (an )?ai)\b/.test(t)) { P(o, `I’m ProMouser’s recommendation assistant. I run in your browser on our spec data for ${MICE.length} mice, so I don’t make things up from the internet. Ask me to pick a mouse, compare mice, check if a mouse suits you, list mice by a spec, or explain terms like DPI or debounce.`); chips(o, ['Pick for me', 'Help me choose a mouse'], ['G102 vs Model O', 'G102 vs Model O'], ['What is debounce?', 'What is debounce?']); return o; }
 
     // concepts ("what is dpi", "explain butterfly clicking")
-    const askConcept = /\b(what('?s| is| are| does)|explain|meaning|mean|how (do|does|to)|difference between|tell me about)\b/.test(t);
+    const askConcept = /\b(what('?s| is| are| does)|explain|meaning|mean|how (do|does|to|can|should)|difference between|tell me about|worth it|is it worth|matter|what (do|should|can) i do|fix|tips?|do pros|pros use|(do|does) [a-z0-9]+ use|quiet\w*|silent|colou?r|white)\b/.test(t);
     if (askConcept && refs.length === 0) {
       const c = CONCEPTS.find(([re]) => re.test(t));
-      if (c) { P(o, `<b>${c[1]}</b>`); P(o, c[2]); chips(o, ['Recommend me a mouse', 'Help me choose a mouse']); return o; }
+      if (c) {
+        P(o, `<b>${c[1]}</b>`); P(o, c[2]);
+        if (c[3]) { ctx.last = c[3]; o.blocks.push({ t: 'html', html: `<div class="a-cards">${c[3].map(id => card({ m: byId[id], pros: [byId[id].bestFor + '.'] }, 0)).join('')}</div>` }); }
+        chips(o, ['Recommend me a mouse', 'Help me choose a mouse']); return o;
+      }
     }
 
     // compare
-    if (refs.length >= 2 && (/\b(vs|versus|compare|comparison|or|better|difference|between|against|which)\b/.test(t) || mentioned.length >= 2)) return compare(o, refs);
+    if (refs.length >= 2 && (/\b(vs|versus|compare|comparison|or|better|difference|between|against|which)\b/.test(t) || mentioned.length >= 2)) return compare(o, refs, q);
 
     // one mouse: facts, suitability, alternatives, overview
     if (refs.length === 1) {
       const m = refs[0]; ctx.focus = m.id;
+      if (/\b(upgrade|replace|should i (switch|change)|new mouse|better mouse)\b/.test(t) || (/\b(i have|i own|i use|i'?m using|i got|my current)\b/.test(t) && /\b(better|switch|should i)\b/.test(t))) return upgrade(o, m, q);
+      if (/\b(worth (it|the money|buying|the price)|value for money|overpriced|over priced)\b/.test(t)) return worth(o, m);
       if (/\b(alternative|alternatives|similar|instead|like the|like it|cheaper|lighter|heavier|wireless version|wired version|other options|something like|but wireless|but wired|an? wireless|an? wired)\b/.test(t) && !/\b(is it|is the|does it|does the)\b/.test(t)) return alternatives(o, m, t);
       if (/\bwhy\b/.test(t)) {
-        const r = PM.fit(m, toEngine(ctx.prefs));
-        P(o, `Why the <b>${esc(m.name)}</b>? It scored <b>${r.score}%</b> for you:`);
+        const pr = { ...ctx.prefs, ...q };
+        if (!scorable(pr)) {
+          P(o, `Why people pick the <b>${esc(m.name)}</b>: ${esc(m.bestFor.toLowerCase())}.`);
+          P(o, `${m.weight} g · ${esc(m.sensor || 'sensor not published')} · ${num(m.poll)} Hz · ${m.connection.toLowerCase()}${m.price ? ' · ' + inr(m.price) : ''}. For Minecraft: ${esc(m.cps.note)}`);
+          chips(o, ['Is it good for me?', `Is the ${m.short} good for me?`]); return o;
+        }
+        const r = PM.fit(m, toEngine(pr));
+        P(o, `Why the <b>${esc(m.name)}</b>? It scores <b>${r.score}%</b> for ${esc(Object.entries(pr).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ') || 'you')}:`);
         o.blocks.push({ t: 'html', html: `<div class="a-break">${r.parts.map(x => `<div><span>${esc(x.label)}</span><i><b style="width:${Math.round(x.value * 100)}%"></b></i><em>${Math.round(x.value * 100)}%</em></div>`).join('')}</div>` });
         if (r.pros.length) P(o, '✓ ' + r.pros.map(esc).join('<br>✓ '));
         if (r.cons.length) P(o, '<span class="a-note">⚠ ' + r.cons.map(esc).join('<br>⚠ ') + '</span>');
         return o;
       }
       const suitQ = { ...q }; delete suitQ.budgetMax;
-      const asksSuit = /\b(good|bad|okay|ok|decent|worth|suitable|suit|fit|work|recommend(ed)?|right|can (it|i|the)|able to|for)\b/.test(t) && (q.games || q.grip || q.handSize || q.handLength || q.lefty || q.clickStyle || q.weight);
+      const asksSuit = (q.clickStyle && /\b(can|does|will|is|good|able)\b/.test(t)) || /\b(good|bad|okay|ok|decent|worth|suitable|suit|fit|work|recommend(ed)?|right|can (it|i|the)|able to|for)\b/.test(t) && (q.games || q.grip || q.handSize || q.handLength || q.lefty || q.clickStyle || q.weight);
       if (asksSuit) {
         if (q.clickStyle && !q.games) suitQ.games = ['minecraft'];
         if (q.clickStyle) {
@@ -486,6 +585,10 @@
       }
       const facts = FACT.filter(([re]) => re.test(t));
       if (facts.length && !/\btell me about|overview|review|thoughts|opinion\b/.test(t)) { facts.slice(0, 3).forEach(([, f]) => P(o, f(m))); chips(o, ['More about it', `Tell me about the ${m.name}`], ['Is it good for me?', `Is the ${m.short} good for me?`]); return o; }
+      if (/\b(good|any good|decent|bad|solid|trash|reliable)\b/.test(t)) {
+        const g = m.games[0], sc = PM.fit(m, toEngine({ games: [g] })).score;
+        P(o, `<b>${sc >= 85 ? 'Yes' : sc >= 70 ? 'Yes, with trade-offs' : 'It’s okay'}</b>: it’s a ${sc}% fit for ${esc(LABEL.games([g]))}, its main use${m.price ? `, at ${inr(m.price)}` : ''}. Tell me what you play for a personal verdict.`);
+      }
       return overview(o, m);
     }
 
@@ -500,12 +603,12 @@
 
     // lists and superlatives
     const sup = SUPER.find(([re]) => re.test(t));
-    const wantsList = /\b(list|show( me)? (all|every)|all the|which (mice|mouse|ones)|what (mice|mouse))\b/.test(t) && !/\b(should|best for me|recommend)\b/.test(t);
+    const wantsList = (/\b(list|show( me)? (all|every)|all the|which (mice|mouse|ones)|what (mice|mouse))\b/.test(t) || (q.brands && !/\b(best|recommend|suggest)\b/.test(t))) && !/\b(should|best|good|recommend|suggest|for me|buy)\b/.test(t);
     if (sup || wantsList) return listing(o, t, q, sup);
 
     // recommendation (anything that told us something about the user)
     const learned = Object.keys(follow).length > 0;
-    if (learned || /\b(recommend|suggest|best|which mouse|what mouse|need a|looking for|want a|buy|choose|pick|help me)\b/.test(t)) {
+    if (learned || /\b(recommend|suggest|best|which mouse|what mouse|need a|looking for|want a|buy|choose|pick|help me|batao|bata do|chahiye|lena hai|konsa|kaunsa|kon sa|acha|accha|achha|sabse)\b/.test(t)) {
       if (follow.games) ctx.prefs.games = /\b(also|too|as well|plus|on top)\b/.test(t) ? [...new Set([...(ctx.prefs.games || []), ...follow.games])] : follow.games;   // replace unless adding
       if (ctx.prefs.games && !ctx.prefs.games.includes('minecraft') && !follow.mcVersion) delete ctx.prefs.mcVersion;
       Object.entries(follow).forEach(([k, v]) => { if (k !== 'games') ctx.prefs[k] = v; });
@@ -517,6 +620,7 @@
     }
 
     // couldn't place it
+    if (/\b(mouse|mice|mouses)\b/.test(t)) return quickPicks(o);
     P(o, 'I’m not sure I followed that. I can recommend a mouse, compare mice, answer spec questions or explain terms. For example:');
     chips(o, ['Best mouse for Minecraft under ₹3,000', 'Best mouse for Minecraft under ₹3000'], ['Viper V3 Pro vs Superlight 2', 'Viper V3 Pro vs Superlight 2'], ['Is the G102 good for butterfly?', 'Can the G102 butterfly click?'], ['What is polling rate?', 'What is polling rate?']);
     return o;
