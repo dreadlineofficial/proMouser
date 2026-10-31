@@ -13,7 +13,7 @@
 
    Storage keys (listed in privacy.html):
      pm_users    demo accounts      pm_session  signed-in user id
-     pm_plan     'free' | 'lite' | 'ultra' (so the plan's theme can apply before the page paints)
+     pm_plan     'free' | 'basic' | 'lite' | 'ultra' (so the plan's theme can apply before the page paints)
    ===================================================================== */
 (function () {
   'use strict';
@@ -21,15 +21,20 @@
   /* ---------- plans, credits and prices (edit freely; ₹ placeholders) ---------- */
   const DAY = 86400000;
   const CONFIG = window.PM_CONFIG = {
-    free: { dailyCredits: 5, resultsLimit: 3, costPerRecommendation: 1 },
-    // Lite and Ultra are one-time payments: pay once, keep the plan for life.
-    lite: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 3,
-      product: { id: 'lite-lifetime', type: 'lite', name: 'ProMouser Lite (lifetime)', price: 699 } },
-    // Ultra: everything in Lite, purple theme, recommendations never cost credits, plus the Ultra-only features below.
-    ultra: { dailyCredits: 15, resultsLimit: Infinity, costPerRecommendation: 0, maxProfiles: 5, maxWatch: 30, turboDays: 30,
-      product: { id: 'ultra-lifetime', type: 'ultra', name: 'ProMouser Ultra (lifetime)', price: 1119 } },
+    free: { dailyCredits: 5, resultsLimit: 3, costPerRecommendation: 1, historyLimit: 12 },
+    // Basic, Lite and Ultra are one-time payments: pay once, keep the plan for life.
+    // Basic: 2 more credits a day, top 5 matches, the match breakdown and "check any mouse".
+    basic: { dailyCredits: 7, resultsLimit: 5, costPerRecommendation: 1, historyLimit: 30,
+      product: { id: 'basic-lifetime', type: 'basic', name: 'ProMouser Basic (lifetime)', price: 599 } },
+    // Lite: everything in Basic, every match, advanced preferences, blue theme, advanced CPS stats, test history.
+    lite: { dailyCredits: 20, resultsLimit: Infinity, costPerRecommendation: 2, historyLimit: 50,
+      product: { id: 'lite-lifetime', type: 'lite', name: 'ProMouser Lite (lifetime)', price: 2499 } },
+    // Ultra: everything in Lite, purple theme, recommendations never cost credits, statistics for every test,
+    // a year of ProMouser Turbo, plus the Ultra-only features below.
+    ultra: { dailyCredits: 30, resultsLimit: Infinity, costPerRecommendation: 0, historyLimit: 100, maxProfiles: 10, maxWatch: 50, turboDays: 365,
+      product: { id: 'ultra-lifetime', type: 'ultra', name: 'ProMouser Ultra (lifetime)', price: 3199 } },
     // ProMouser Turbo: the monthly plan for ProMouser Online (gradient names, profile themes, battle pass, a Turbo mouse).
-    // Same account on both sites. Buying Ultra adds 30 days of Turbo.
+    // Same account on both sites. Buying Ultra adds a year (365 days) of Turbo.
     turbo: { onlineUrl: 'https://dreadlineofficial.github.io/ProMouser-Online/',
       product: { id: 'turbo-1m', type: 'turbo', name: 'ProMouser Turbo (1 month)', price: 199, days: 30 } },
     // Credits work for everything. A pass covers ONE feature: right now that's recommendations.
@@ -48,21 +53,24 @@
   CONFIG.pass = CONFIG.passes[0];   // the pass the shop features
 
   /* ---------- plan tiers: free < lite < ultra, and which features each unlocks ---------- */
-  const RANK = { free: 0, lite: 1, ultra: 2 };
+  const RANK = { free: 0, basic: 1, lite: 2, ultra: 3 };
   const FEATURES = {
-    advanced: 'lite', allResults: 'lite', breakdown: 'lite',                                    // Lite and up
-    freeRecs: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra'   // Ultra only
+    breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
+    advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
+    freeRecs: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
     tierOf: u => (u && u.plan && RANK[u.plan.tier] != null ? u.plan.tier : 'free'),
     has: (u, f) => RANK[PLAN.tierOf(u)] >= RANK[FEATURES[f] || 'free'],
     cfg: u => CONFIG[PLAN.tierOf(u)] || CONFIG.free,
-    label: t => ({ free: 'Free', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra' })[t] || 'Free',
-    short: t => ({ free: 'Free', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
-    paid: t => t === 'lite' || t === 'ultra',
-    applyTheme(t) { if (PLAN.paid(t)) document.documentElement.dataset.plan = t; else delete document.documentElement.dataset.plan; }
+    label: t => ({ free: 'Free', basic: 'ProMouser Basic', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra' })[t] || 'Free',
+    short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
+    paid: t => t === 'basic' || t === 'lite' || t === 'ultra',
+    themed: t => t === 'lite' || t === 'ultra',   // Basic keeps the default red theme
+    applyTheme(t) { if (PLAN.themed(t)) document.documentElement.dataset.plan = t; else delete document.documentElement.dataset.plan; }
   };
+  const trimLog = log => Object.fromEntries(Object.entries(log || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), (Array.isArray(v) ? v : []).slice(0, 60).map(s => ({ at: +s.at || 0, v: +s.v || 0, ...(s.k ? { k: String(s.k).slice(0, 24) } : {}) }))]));
   const passFor = feature => CONFIG.passes.find(p => p.feature === feature);
   const KEY_USERS = 'pm_users', KEY_SESSION = 'pm_session', KEY_PLAN = 'pm_plan';
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -148,12 +156,13 @@
     /* Ultra extras: watchlist [{id, price, at}], saved profiles [{name, prefs}], assistant memory (prefs object) */
     async updateExtras(patch) {
       const u = current(); if (!u) throw new Error('Please sign in first.');
-      const need = { watchlist: 'watchlist', profiles: 'profiles', memory: 'memory' };
+      const need = { watchlist: 'watchlist', profiles: 'profiles', memory: 'memory', testLog: 'testLog' };
       Object.keys(patch).forEach(k => { if (need[k] && !PLAN.has(u, need[k])) { const e = new Error('That’s a ProMouser Ultra feature.'); e.code = 'NEEDS_ULTRA'; throw e; } });
       const C = CONFIG.ultra;
       if (patch.watchlist) u.extras.watchlist = patch.watchlist.slice(0, C.maxWatch);
       if (patch.profiles) u.extras.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) u.extras.memory = patch.memory;
+      if (patch.testLog) u.extras.testLog = trimLog(patch.testLog);
       saveUser(u); emit(); return clean(u);
     },
     async updateProfile(patch) {
@@ -195,7 +204,7 @@
         const qty = it.qty || 1;
         if (it.type === 'credits') u.credits.purchased += it.credits * qty;
         if (it.type === 'pass') { const P = passFor(it.feature || 'recommendation'); const base = passActive(u, P.feature) ? u.passes[P.feature] : now; u.passes[P.feature] = base + P.days * DAY * qty; }
-        if (it.type === 'lite' || it.type === 'ultra') {   // one-time: the plan is yours for life, and never downgrades
+        if (it.type === 'basic' || it.type === 'lite' || it.type === 'ultra') {   // one-time: the plan is yours for life, and never downgrades
           if (PLAN.RANK[it.type] > PLAN.RANK[u.plan.tier] || (u.plan.tier === it.type && u.plan.renewsAt)) u.plan = { tier: it.type, since: u.plan.tier === it.type ? (u.plan.since || now) : now };
           u.credits.daily = Math.max(u.credits.daily, CONFIG[it.type].dailyCredits);
           if (it.type === 'ultra') u.turboUntil = Math.max(u.turboUntil || 0, now) + CONFIG.ultra.turboDays * DAY;
@@ -213,7 +222,7 @@
       u.cpsBest = u.cpsBest || {};
       if (!(u.cpsBest[seconds] >= cps)) { u.cpsBest[seconds] = Math.round(cps * 100) / 100; saveUser(u); }
     },
-    async addHistory(entry) { const u = current(); if (!u) return; u.history.unshift({ id: uid('r'), at: Date.now(), ...entry }); u.history = u.history.slice(0, 12); saveUser(u); emit(); },
+    async addHistory(entry) { const u = current(); if (!u) return; u.history.unshift({ id: uid('r'), at: Date.now(), ...entry }); u.history = u.history.slice(0, PLAN.cfg(u).historyLimit || 12); saveUser(u); emit(); },
     newOrderId() { return uid('PM'); },
 
     /* developer tools (dev.js only loads on localhost). Same calls exist in Supabase mode, limited to developer accounts. */

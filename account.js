@@ -156,7 +156,7 @@
           <a role="menuitem" href="${root}account.html">My account</a>
           <a role="menuitem" href="${root}recommendations.html">Recommendations</a>
           <a role="menuitem" href="${root}shop.html">Shop &amp; credits</a>
-          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens.html">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra.html" class="upsell">Go Ultra</a>`}${t === 'free' ? `<a role="menuitem" href="${root}lite.html" class="upsell">Upgrade to Lite</a>` : ''}
+          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens.html">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra.html" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite.html" class="upsell">Upgrade to Lite</a>` : ''}
           <button role="menuitem" type="button" data-auth="signout">Sign out</button>
         </div>
       </div>`;
@@ -175,7 +175,7 @@
   /* ---------- Ultra gate: friendly upsell when a non-Ultra user tries an Ultra feature ---------- */
   function ultraGate(what) {
     openModal(`<div class="auth-head"><span class="ultra-badge">Ultra</span><h2>${esc(what)} is part of <em>ProMouser Ultra</em></h2></div>
-      <p class="panel-note">Ultra adds a purple &amp; black theme, unlimited recommendations, saved profiles, a price watchlist, the sensitivity converter, shortlist export and an assistant that remembers you — plus everything in Lite.</p>
+      <p class="panel-note">Ultra adds unlimited recommendations, statistics for every test, a year of ProMouser Turbo, saved profiles, a price watchlist, the sensitivity converter, shortlist export and an assistant that remembers you — plus everything in Lite and Basic.</p>
       <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra.html">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
     const c = $('#pmOverlay [data-close]'); c && c.addEventListener('click', () => closeModal());
   }
@@ -224,8 +224,8 @@
             <div><span>Purchased credits</span><b>${bal.purchased}</b><em>never expire</em></div>
             <div><span>Recommendation Pass</span><b>${bal.recPass ? 'Active' : '—'}</b><em>${bal.recPass ? 'free recommendations until ' + fmtDate(bal.recPassUntil) : 'unlimited recommendations for 1 month'}</em></div>
           </div>
-          <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : ''} and shows ${t === 'lite' ? 'every match' : 'your top ' + CFG.free.resultsLimit}.`}</p>
-          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? '' : `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
+          <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
+          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic.html">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
         </article>
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
           <form id="prefsForm" class="pref-form">

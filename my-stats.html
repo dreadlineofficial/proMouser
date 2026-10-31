@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js" data-root="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My stats — ProMouser</title>
+  <meta name="description" content="Your results from every ProMouser mouse test in one place, with full statistics on ProMouser Ultra." />
+  <link rel="canonical" href="https://promouser.website/my-stats.html" />
+  <meta name="theme-color" content="#07070a" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ProMouser" />
+  <meta property="og:title" content="My stats — ProMouser" />
+  <meta property="og:description" content="Your results from every ProMouser mouse test in one place, with full statistics on ProMouser Ultra." />
+  <meta property="og:url" content="https://promouser.website/my-stats.html" />
+  <meta property="og:image" content="https://promouser.website/assets/images/hero-banner.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="alternate icon" href="assets/icons/favicon.png" type="image/png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <script>document.documentElement.classList.remove('no-js');try{var pl=localStorage.getItem('pm_plan');if(pl==='lite'||pl==='ultra')document.documentElement.dataset.plan=pl;}catch(e){}try{document.documentElement.dataset.mode=localStorage.getItem('pm_mode')==='hub'?'hub':'recommend';}catch(e){document.documentElement.dataset.mode='recommend';}</script>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="ambient" aria-hidden="true"><div class="spot"></div><div class="grain"></div></div>
+
+  <div class="announcement-bar" id="announcementBar">
+    <span>New: <strong>ProMouser Online</strong>. Play games, duel friends in CPS and collect 3D mice —</span>
+    <a href="https://dreadlineofficial.github.io/ProMouser-Online/" target="_blank" rel="noopener">Play now</a>
+    <button class="close-banner" id="closeBanner" aria-label="Close" type="button">✕</button>
+  </div>
+
+  <header class="site-header" id="siteHeader">
+    <nav class="nav-container" aria-label="Primary">
+      <a href="index.html" class="nav-logo" aria-label="ProMouser home">
+        <img src="assets/icons/favicon.png" alt="" class="logo-icon" width="34" height="34">
+        ProMouser
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li class="has-dropdown">
+          <a href="mice.html" aria-controls="nav-menu-1" aria-expanded="false">Mice <span class="chevron">▾</span></a>
+          <ul class="dropdown" id="nav-menu-1"><li><a href="mice.html"><span class="dd-ico" data-icon="Stats"></span><span class="dd-txt"><b>All mice &amp; stats</b><small>Catalogue, spec map, full spec table</small></span></a></li><li><a href="mice/first-person-shooters.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>FPS mice</b><small>Fast aim and clean tracking</small></span></a></li><li><a href="mice/minecraft.html"><span class="dd-ico" data-icon="MC"></span><span class="dd-txt"><b>Minecraft mice</b><small>Building, PvP and clicking</small></span></a></li><li><a href="mice/compare.html"><span class="dd-ico" data-icon="Versus"></span><span class="dd-txt"><b>Compare mice</b><small>Up to four mice side by side</small></span></a></li><li><a href="mice/extra.html"><span class="dd-ico" data-icon="More"></span><span class="dd-txt"><b>Extra picks</b><small>Budget and legacy pages</small></span></a></li></ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="tests.html" aria-controls="nav-menu-2" aria-expanded="false">Tests <span class="chevron">▾</span></a>
+          <ul class="dropdown" id="nav-menu-2"><li><a href="tests.html"><span class="dd-ico" data-icon="Hub"></span><span class="dd-txt"><b>Test hub <span class="badge">New</span></b><small>All 8 mouse tests in one place</small></span></a></li><li><a href="cps-test.html"><span class="dd-ico" data-icon="Click"></span><span class="dd-txt"><b>CPS test</b><small>Double clicks, stray clicks, graphs</small></span></a></li><li><a href="reaction-test.html"><span class="dd-ico" data-icon="Speed"></span><span class="dd-txt"><b>Reaction time</b><small>Wait for green, then click</small></span></a></li><li><a href="aim-trainer.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>Aim trainer</b><small>Speed and accuracy</small></span></a></li><li><a href="polling-rate-test.html"><span class="dd-ico" data-icon="Poll"></span><span class="dd-txt"><b>Polling rate</b><small>How many Hz your mouse reports</small></span></a></li><li><a href="sens.html"><span class="dd-ico" data-icon="Aim"></span><span class="dd-txt"><b>Sensitivity converter <span class="badge">Ultra</span></b><small>Same aim in every game</small></span></a></li></ul>
+        </li>
+        <li data-only="hub"><a href="mouse-ai.html">Ask</a></li>
+        <li data-only="hub"><a href="my-stats.html">My stats</a></li>
+        <li class="has-dropdown">
+          <a href="blog/" aria-controls="nav-menu-3" aria-expanded="false">Guides <span class="chevron">▾</span></a>
+          <ul class="dropdown" id="nav-menu-3"><li><a href="hand-grip.html"><span class="dd-ico" data-icon="Grip"></span><span class="dd-txt"><b>Hand grip guide</b><small>Palm, claw and fingertip</small></span></a></li><li><a href="mouse-tips.html"><span class="dd-ico" data-icon="Tips"></span><span class="dd-txt"><b>Mouse tips</b><small>DPI, polling, surface, lift-off</small></span></a></li><li><a href="minecraft-tips.html"><span class="dd-ico" data-icon="MC"></span><span class="dd-txt"><b>Minecraft tips</b><small>Setups for builders and PvP</small></span></a></li><li><a href="blog/"><span class="dd-ico" data-icon="Guide"></span><span class="dd-txt"><b>Blog</b><small>Practical mouse guides</small></span></a></li></ul>
+        </li>
+        <li class="has-dropdown nav-rec" data-only="recommend">
+          <a href="recommendations.html" aria-controls="nav-menu-5" aria-expanded="false">Recommend <span class="chevron">▾</span></a>
+          <ul class="dropdown" id="nav-menu-5"><li><a href="recommendations.html"><span class="dd-ico" data-icon="AI"></span><span class="dd-txt"><b>Recommendations</b><small>Credits-based personal shortlist</small></span></a></li><li><a href="mouse-ai.html"><span class="dd-ico" data-icon="Help"></span><span class="dd-txt"><b>Recommendation Assistant</b><small>Ask questions, compare mice</small></span></a></li><li><a href="elite.html"><span class="dd-ico" data-icon="Stats"></span><span class="dd-txt"><b>Elite Dashboard</b><small>Your credits, runs and matches</small></span></a></li><li><a href="basic.html"><span class="dd-ico" data-icon="Value"></span><span class="dd-txt"><b>ProMouser Basic <span class="badge">New</span></b><small>More credits, top 5, check any mouse</small></span></a></li><li><a href="lite.html"><span class="dd-ico" data-icon="Elite"></span><span class="dd-txt"><b>ProMouser Lite</b><small>More preferences, blue theme</small></span></a></li><li><a href="ultra.html"><span class="dd-ico" data-icon="Pro"></span><span class="dd-txt"><b>ProMouser Ultra <span class="badge">New</span></b><small>Everything, purple theme</small></span></a></li></ul>
+        </li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a class="nav-online" href="https://dreadlineofficial.github.io/ProMouser-Online/" target="_blank" rel="noopener">Online <span class="nav-new">New</span></a></li>
+        <li class="has-dropdown">
+          <a href="about.html" aria-controls="nav-menu-4" aria-expanded="false">More <span class="chevron">▾</span></a>
+          <ul class="dropdown" id="nav-menu-4"><li><a href="about.html"><span class="dd-ico" data-icon="Owner"></span><span class="dd-txt"><b>About us</b><small>What ProMouser stands for</small></span></a></li><li><a href="elite.html"><span class="dd-ico" data-icon="Stats"></span><span class="dd-txt"><b>Elite Dashboard</b><small>Your credits, runs and matches</small></span></a></li><li><a href="image-gen.html"><span class="dd-ico" data-icon="Image"></span><span class="dd-txt"><b>Image generation <span class="badge">New</span></b><small>Visual ideas for setups</small></span></a></li><li><a href="contact.html"><span class="dd-ico" data-icon="Help"></span><span class="dd-txt"><b>Contact</b><small>Feedback and corrections</small></span></a></li><li><a href="privacy.html"><span class="dd-ico" data-icon="Protect"></span><span class="dd-txt"><b>Privacy policy</b><small>What the site stores</small></span></a></li><li><a href="terms.html"><span class="dd-ico" data-icon="Note"></span><span class="dd-txt"><b>Terms of use</b><small>Using ProMouser</small></span></a></li></ul>
+        </li>
+      </ul>
+
+      <div class="nav-actions">
+        <div id="accountSlot" class="account-slot"></div>
+        <button class="nav-search-btn" id="navSearchBtn" aria-label="Search (Ctrl+K)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span class="lbl-txt">Search</span><kbd>Ctrl K</kbd>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Menu" aria-controls="navLinks" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="search-overlay" id="searchOverlay">
+      <div class="search-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" placeholder="Search ProMouser…" id="searchInput" autocomplete="off" aria-label="Search ProMouser" />
+        <button id="closeSearch" aria-label="Close search" type="button">✕</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <section class="about-section page-hero" id="stats">
+      <div class="container">
+        <div class="section-header reveal"><span class="section-label">My stats</span><h1>All your results, <em>one page</em></h1>
+          <p>Every test you finish is saved here. ProMouser Ultra turns it into full statistics for every test: trend charts, averages, consistency, improvement, your percentile and CSV export, synced to your account.</p></div>
+        <div class="ms-jump reveal"><a class="chip" href="#ms-cps">CPS</a><a class="chip" href="#ms-reaction">Reaction</a><a class="chip" href="#ms-aim">Aim</a><a class="chip" href="#ms-doubleclick">Double click</a><a class="chip" href="#ms-polling">Polling</a><a class="chip" href="#ms-scroll">Scroll</a><a class="chip" href="#ms-buttons">Buttons</a></div>
+        <div class="ms-list">
+          <div id="ms-cps"><section data-tstats="cps"></section><a class="ms-go" href="cps-test.html">Take the CPS test →</a></div>
+          <div id="ms-reaction"><section data-tstats="reaction"></section><a class="ms-go" href="reaction-test.html">Take the reaction test →</a></div>
+          <div id="ms-aim"><section data-tstats="aim"></section><a class="ms-go" href="aim-trainer.html">Open the aim trainer →</a></div>
+          <div id="ms-doubleclick"><section data-tstats="doubleclick"></section><a class="ms-go" href="double-click-test.html">Run the double click test →</a></div>
+          <div id="ms-polling"><section data-tstats="polling"></section><a class="ms-go" href="polling-rate-test.html">Check your polling rate →</a></div>
+          <div id="ms-scroll"><section data-tstats="scroll"></section><a class="ms-go" href="scroll-test.html">Test your scroll wheel →</a></div>
+          <div id="ms-buttons"><section data-tstats="buttons"></section><a class="ms-go" href="mouse-button-test.html">Test your buttons →</a></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="assets/icons/favicon.png" alt="" class="logo-icon" width="34" height="34" loading="lazy">
+        <strong>ProMouser</strong>
+        <p>The mouse guide built for gamers, by gamers.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <a href="mice.html">Browse Mice</a>
+          <a href="mice/compare.html">Compare Mice</a>
+          <a href="hand-grip.html">Hand Grip</a>
+          <a href="mouse-tips.html">Mouse Tips</a>
+          <a href="minecraft-tips.html">Minecraft Tips</a>
+        </div>
+        <div class="footer-col">
+          <h5>Tools</h5>
+          <a href="cps-test.html">CPS Test</a>
+          <a href="double-click-test.html">Double Click Test</a>
+          <a href="tests.html">Test Hub</a>
+          <a href="recommendations.html">Recommendations</a>
+          <a href="mouse-ai.html">Recommendation Assistant</a>
+          <a href="https://dreadlineofficial.github.io/ProMouser-Online/" target="_blank" rel="noopener">ProMouser Online ↗</a>
+          <a href="shop.html">Shop &amp; ProMouser Lite</a>
+          <a href="image-gen.html">Image Generator</a>
+        </div>
+        <div class="footer-col">
+          <h5>About</h5>
+          <a href="about.html">About Us</a>
+          <a href="account.html">My account</a>
+          <a href="elite.html">Elite Dashboard</a>
+          <a href="blog/">Blog</a>
+          <a href="contact.html">Contact</a>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+          <a href="https://www.youtube.com/@ProMouser" target="_blank" rel="noopener noreferrer">YouTube</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ProMouser · Specifications and prices can change — confirm with the manufacturer or seller before buying.</p>
+    </div>
+  </footer>
+
+  <script src="supabase-config.js"></script>
+  <script src="backend.js"></script>
+  <script src="backend-supabase.js"></script>
+  <script src="account.js"></script>
+  <script src="teststats.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

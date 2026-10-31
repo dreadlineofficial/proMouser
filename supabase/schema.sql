@@ -21,10 +21,13 @@ create or replace function public.pm_today() returns date
 language sql stable set search_path = '' as $$ select (now() at time zone 'Asia/Kolkata')::date $$;
 
 create or replace function public.pm_allowance(p_plan text) returns int
-language sql immutable set search_path = '' as $$ select case when p_plan in ('lite','ultra') then 15 else 5 end $$;
+language sql immutable set search_path = '' as $$ select case p_plan when 'ultra' then 30 when 'lite' then 20 when 'basic' then 7 else 5 end $$;
+
+create or replace function public.pm_rank(p_plan text) returns int
+language sql immutable set search_path = '' as $$ select case p_plan when 'ultra' then 3 when 'lite' then 2 when 'basic' then 1 else 0 end $$;
 
 create or replace function public.pm_cost(p_plan text) returns int
-language sql immutable set search_path = '' as $$ select case when p_plan = 'ultra' then 0 when p_plan = 'lite' then 3 else 1 end $$;   -- Ultra: recommendations are free
+language sql immutable set search_path = '' as $$ select case when p_plan = 'ultra' then 0 when p_plan = 'lite' then 2 else 1 end $$;   -- Ultra: recommendations are free
 
 -- ---------------------------------------------------------------- tables
 create table if not exists public.profiles (
@@ -47,11 +50,11 @@ create table if not exists public.credit_balances (
   purchased  int  not null default 0 check (purchased >= 0)
 );
 
--- plans: free < lite < ultra (named constraints so re-running this file upgrades older installs)
+-- plans: free < basic < lite < ultra (named constraints so re-running this file upgrades older installs)
 alter table public.profiles drop constraint if exists profiles_plan_check;
-alter table public.profiles add constraint profiles_plan_check check (plan in ('free','lite','ultra'));
--- Lite and Ultra are one-time (lifetime) purchases: plan_renews_at stays null for them.
--- ProMouser Turbo is the monthly plan for ProMouser Online; buying Ultra adds 30 days of it.
+alter table public.profiles add constraint profiles_plan_check check (plan in ('free','basic','lite','ultra'));
+-- Basic, Lite and Ultra are one-time (lifetime) purchases: plan_renews_at stays null for them.
+-- ProMouser Turbo is the monthly plan for ProMouser Online; buying Ultra adds a year (365 days) of it.
 alter table public.profiles add column if not exists turbo_until timestamptz;
 -- CPS test personal bests per test length ("5": 9.4), shown on ProMouser Online profiles
 alter table public.profiles add column if not exists cps_best jsonb not null default '{}'::jsonb;
@@ -81,7 +84,7 @@ create table if not exists public.products (
   check ((type = 'pass') = (feature is not null))
 );
 alter table public.products drop constraint if exists products_type_check;
-alter table public.products add constraint products_type_check check (type in ('credits','pass','lite','ultra','turbo','item'));
+alter table public.products add constraint products_type_check check (type in ('credits','pass','basic','lite','ultra','turbo','item'));
 -- passes name the feature they cover; ProMouser Online items name the item they grant
 alter table public.products drop constraint if exists products_check;
 alter table public.products drop constraint if exists products_feature_check;
@@ -93,8 +96,9 @@ insert into public.products (id, type, feature, name, credits, days, price_inr) 
   ('credits-100', 'credits', null,             '100 credits',                   100,  0, 249),
   ('credits-300', 'credits', null,             '300 credits',                   300,  0, 649),
   ('rec-pass-1m', 'pass',    'recommendation', 'Recommendation Pass (1 month)',   0, 30, 199),
-  ('lite-lifetime',  'lite',  null,          'ProMouser Lite (lifetime)',       0,  0,  699),
-  ('ultra-lifetime', 'ultra', null,          'ProMouser Ultra (lifetime)',      0,  0, 1119),
+  ('basic-lifetime', 'basic', null,          'ProMouser Basic (lifetime)',      0,  0,  599),
+  ('lite-lifetime',  'lite',  null,          'ProMouser Lite (lifetime)',       0,  0, 2499),
+  ('ultra-lifetime', 'ultra', null,          'ProMouser Ultra (lifetime)',      0,  0, 3199),
   ('turbo-1m',       'turbo', null,          'ProMouser Turbo (1 month)',       0, 30,  199)
 on conflict (id) do update set type = excluded.type, feature = excluded.feature, name = excluded.name, credits = excluded.credits,
   days = excluded.days, price_inr = excluded.price_inr, active = true;
@@ -186,7 +190,7 @@ declare p public.profiles;
 begin
   select * into p from public.profiles where id = p_user for update;
   if not found then return; end if;
-  if p.plan in ('lite','ultra') and p.plan_renews_at is not null and p.plan_renews_at < now() then
+  if p.plan in ('basic','lite','ultra') and p.plan_renews_at is not null and p.plan_renews_at < now() then
     update public.profiles set plan = 'free', plan_cancelled = false where id = p_user;
     p.plan := 'free';
   end if;
@@ -303,14 +307,14 @@ begin
     elsif pr.type = 'pass' then
       insert into public.user_passes (user_id, feature, until) values (p_user, pr.feature, now() + make_interval(days => pr.days * n))
         on conflict (user_id, feature) do update set until = greatest(public.user_passes.until, now()) + make_interval(days => pr.days * n);
-    elsif pr.type in ('lite','ultra') then   -- one-time: the plan is kept for life and never downgrades
+    elsif pr.type in ('basic','lite','ultra') then   -- one-time: the plan is kept for life and never downgrades
       update public.profiles set plan_cancelled = false, plan_renews_at = null,
         plan_since = case when plan = pr.type then coalesce(plan_since, now()) else now() end,
         plan = pr.type
-        where id = p_user and not (plan = 'ultra' and pr.type = 'lite');
+        where id = p_user and public.pm_rank(plan) <= public.pm_rank(pr.type);
       update public.credit_balances set daily = greatest(daily, public.pm_allowance(pr.type)) where user_id = p_user;
       if pr.type = 'ultra' then
-        update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + interval '30 days' where id = p_user;
+        update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + interval '365 days' where id = p_user;
       end if;
     elsif pr.type = 'turbo' then
       update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + make_interval(days => pr.days * n) where id = p_user;

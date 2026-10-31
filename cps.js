@@ -177,6 +177,7 @@
     if (run.pb) store.best[key] = { cps: run.cps, at: run.at };
     store.runs = [run, ...store.runs].slice(0, 50);
     save();
+    window.PMStats && PMStats.record('cps', run.cps, `${run.d}s${run.btn ? ' · right' : ''}${run.moving ? ' · moving' : ''}`);
     if (!run.btn && !run.moving && B && B.saveCpsBest && B.getUser && B.getUser()) B.saveCpsBest(run.d, run.cps).catch(() => {});   // standard runs count for your profile
     last = { r, run, clicks: S.clicks.slice() };
     $('#cBig').textContent = fmt(r.cps, 2) + ' CPS';

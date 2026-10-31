@@ -665,7 +665,25 @@
     if (!opts.quiet) { ctx.log.push(text); save(); remember(); }
     busy = false;
   }
-  const DEFAULT_CHIPS = [['Pick a mouse for me', 'Help me choose a mouse'], ['Best for Minecraft 1.8', 'Best mouse for Minecraft 1.8 PvP'], ['FPS under ₹5,000', 'Best FPS mouse under ₹5000'], ['Model O vs G102', 'Model O vs G102'], ['Lightest wireless', 'Lightest wireless mice'], ['What is debounce?', 'What is debounce?']];
+  const REC_CHIPS = [['Pick a mouse for me', 'Help me choose a mouse'], ['Best for Minecraft 1.8', 'Best mouse for Minecraft 1.8 PvP'], ['FPS under ₹5,000', 'Best FPS mouse under ₹5000'], ['Model O vs G102', 'Model O vs G102'], ['Lightest wireless', 'Lightest wireless mice'], ['What is debounce?', 'What is debounce?']];
+  const HUB_CHIPS = [['How heavy is the Viper V3 Pro?', 'How heavy is the Viper V3 Pro?'], ['Which mice have 8,000 Hz?', 'Which mice have 8000 Hz polling?'], ['Model O vs G102', 'Model O vs G102'], ['Can the G102 butterfly click?', 'Can the G102 butterfly click?'], ['Lightest wireless', 'Lightest wireless mice'], ['What is polling rate?', 'What is polling rate?']];
+  const hubMode = () => document.documentElement.dataset.mode === 'hub';
+  let DEFAULT_CHIPS = hubMode() ? HUB_CHIPS : REC_CHIPS;
+  /* Hub mode: the same assistant, introduced as a mouse knowledge base rather than a recommender */
+  const COPY = {
+    recommend: { label: 'Recommendation Assistant', h1: 'Ask me anything about <em>mice</em>', p: null, ph: 'e.g. Minecraft PvP, claw grip, under ₹3,000' },
+    hub: { label: 'Mouse Assistant', h1: 'Ask anything about <em>any mouse</em>', p: `Specs, sensors, weights, prices, click styles and head-to-head comparisons for all ${MICE.length} mice on ProMouser. Answers come straight from our spec data.`, ph: 'e.g. How heavy is the Viper V3 Pro?' }
+  };
+  const hero = document.querySelector('#assistant .section-header'), origP = hero && hero.querySelector('p') ? hero.querySelector('p').innerHTML : '';
+  function applyMode() {
+    const c = COPY[hubMode() ? 'hub' : 'recommend'];
+    if (hero) { hero.querySelector('.section-label').textContent = c.label; hero.querySelector('h1').innerHTML = c.h1; hero.querySelector('p').innerHTML = c.p || origP; }
+    const inp = document.getElementById('asstInput'); if (inp) inp.placeholder = c.ph;
+    const tl = document.querySelector('.asst-try .try-list');
+    if (tl) tl.innerHTML = (hubMode() ? HUB_CHIPS : REC_CHIPS).map(([l, q]) => `<button type="button" data-q="${esc(q)}">${esc(l)}</button>`).join('');
+    DEFAULT_CHIPS = hubMode() ? HUB_CHIPS : REC_CHIPS;
+  }
+  applyMode(); document.addEventListener('pm:mode', applyMode);
 
   form.addEventListener('submit', e => { e.preventDefault(); const v = input.value; input.value = ''; ask(v); });
   host.addEventListener('click', e => {

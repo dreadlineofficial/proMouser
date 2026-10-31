@@ -61,7 +61,8 @@
   };
   const svg = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[MAP[key] || key] || P.spark}</svg>`;
   window.PMIcon = svg;
-  $$('[data-icon]').forEach(el => { if (!el.firstElementChild) el.innerHTML = svg(el.dataset.icon); });
+  window.PMIcons = (r = document) => $$('[data-icon]', r).forEach(el => { if (!el.firstElementChild) el.innerHTML = svg(el.dataset.icon); });
+  window.PMIcons();
 
   /* ── SCROLL PROGRESS + HEADER STATE ── */
   const bar = document.createElement('div');
@@ -109,6 +110,59 @@
       try { sessionStorage.setItem('pm_banner_closed', '1'); } catch (e) { /* storage unavailable */ }
     });
     addEventListener('resize', setH);
+  })();
+
+  /* ── MODES: Recommend (help me pick a mouse) or Hub (mice, tests, stats). Saved in localStorage "pm_mode"
+     and, when signed in, in the account's prefs. The <head> script applies it before the first paint. ── */
+  (function () {
+    const KEY = 'pm_mode', B = () => window.PMBackend;
+    const cur = () => (doc.dataset.mode === 'hub' ? 'hub' : 'recommend');
+    const stored = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+    const paint = () => $$('.mode-switch button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === cur())));
+    function set(m, { save = true, flash = true } = {}) {
+      m = m === 'hub' ? 'hub' : 'recommend';
+      const changed = m !== cur(); doc.dataset.mode = m;
+      try { localStorage.setItem(KEY, m); } catch (e) { /* storage off */ }
+      paint(); document.dispatchEvent(new CustomEvent('pm:mode', { detail: m }));
+      if (save) { try { const b = B(); if (b && b.getUser && b.getUser()) b.updateProfile({ prefs: { mode: m } }).catch(() => {}); } catch (e) { /* not signed in */ } }
+      if (changed && flash) {
+        let f = $('.mode-flash'); if (!f) { f = document.createElement('div'); f.className = 'mode-flash'; f.setAttribute('role', 'status'); document.body.appendChild(f); }
+        f.innerHTML = m === 'hub' ? '<b>Hub mode</b><span>Mice, tests, stats and a mouse assistant</span>' : '<b>Recommend mode</b><span>Find the right mouse for you</span>';
+        f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');
+      }
+    }
+    const html = cls => `<div class="mode-switch ${cls}" role="group" aria-label="How you use ProMouser"><button type="button" data-mode="recommend" title="Find the right mouse for you">Recommend</button><button type="button" data-mode="hub" title="Mice, tests, stats and a mouse assistant">Hub</button></div>`;
+    const actions = $('.nav-actions'), links = $('#navLinks');
+    if (actions) actions.insertAdjacentHTML('afterbegin', html('in-bar'));
+    if (links) { const li = document.createElement('li'); li.className = 'mode-li'; li.innerHTML = html('in-menu'); links.prepend(li); }
+    document.addEventListener('click', e => { const b = e.target.closest('.mode-switch button, [data-set-mode]'); if (!b) return; e.preventDefault(); set(b.dataset.mode || b.dataset.setMode); closeChooser(); });
+    paint();
+
+    // a signed-in account remembers the mode across devices (only when this browser hasn't chosen yet)
+    const fromAccount = () => { try { const u = B() && B().getUser && B().getUser(), m = u && u.prefs && u.prefs.mode; if (m && !stored()) set(m, { save: false, flash: false }); } catch (e) { /* no backend */ } };
+    fromAccount(); if (B() && B().on) B().on(fromAccount);
+
+    // first visit to the home page: ask which ProMouser they want
+    function closeChooser() { const c = $('.mode-chooser'); if (c) { c.classList.remove('open'); setTimeout(() => c.remove(), 300); document.body.style.overflow = ''; } }
+    const home = !root && /(^|\/)(index\.html)?$/.test(location.pathname);
+    if (home && !stored() && !/[?&]nochooser/.test(location.search)) setTimeout(() => {
+      if (stored()) return;
+      const c = document.createElement('div'); c.className = 'mode-chooser'; c.setAttribute('role', 'dialog'); c.setAttribute('aria-modal', 'true'); c.setAttribute('aria-labelledby', 'mcTitle');
+      c.innerHTML = `<div class="mc-card"><span class="section-label">Welcome to ProMouser</span><h2 id="mcTitle">How do you want to use <em>ProMouser</em>?</h2>
+        <div class="mc-opts">
+          <button type="button" class="mc-opt" data-set-mode="recommend"><span class="mc-ico" data-icon="AI"></span><b>Recommend</b><small>Help me pick a mouse</small>
+            <ul><li>Personal recommendations</li><li>The Recommendation Assistant</li><li>Plans with more matches and preferences</li></ul></button>
+          <button type="button" class="mc-opt hub" data-set-mode="hub"><span class="mc-ico" data-icon="Hub"></span><b>Hub</b><small>I’m here for the mice and the tests</small>
+            <ul><li>Every mouse, specs and comparisons</li><li>Mouse tests with your stats</li><li>Ask anything about any mouse</li></ul></button>
+        </div><p class="mc-note">You can switch any time with the <b>Recommend / Hub</b> toggle in the top bar.</p>
+        <button type="button" class="mc-skip" data-set-mode="recommend">Skip for now</button></div>`;
+      document.body.appendChild(c); if (window.PMIcons) window.PMIcons(c);
+      requestAnimationFrame(() => c.classList.add('open')); document.body.style.overflow = 'hidden';
+      c.addEventListener('click', e => { if (e.target === c) set('recommend', { flash: false }), closeChooser(); });
+      document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { set('recommend', { flash: false }); closeChooser(); document.removeEventListener('keydown', esc); } });
+      const first = $('.mc-opt', c); first && first.focus();
+    }, 700);
+    window.PMMode = { get: cur, set };
   })();
 
   /* ── MOBILE MENU + DROPDOWN ARIA ── */

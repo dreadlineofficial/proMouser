@@ -67,7 +67,7 @@
       id: s.id, name: s.name, email: s.email, createdAt: ms(s.created_at), onboarded: !!s.onboarded,
       prefs: Object.assign({ games: [], weight: 'any', grip: 'any', connection: 'any' }, s.prefs || {}),
       plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
-      extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null },
+      extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null, testLog: ex.testLog || {} },
       turboUntil: ms(s.turbo_until), cpsBest: s.cps_best || {},
       credits: { date: s.credits.date, daily: s.credits.daily, purchased: s.credits.purchased },
       passes,
@@ -83,7 +83,7 @@
     const [st, ord, runs] = await Promise.all([
       c.rpc('get_my_state'),
       c.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
-      c.from('recommendation_runs').select('id, data, created_at').order('created_at', { ascending: false }).limit(12)
+      c.from('recommendation_runs').select('id, data, created_at').order('created_at', { ascending: false }).limit(100)
     ]);
     if (st.error) throw fail(friendly(st.error));
     setUser(toUser(st.data, ord.data || [], runs.data || []));
@@ -149,6 +149,7 @@
       if (patch.watchlist) ex.watchlist = patch.watchlist.slice(0, C.maxWatch);
       if (patch.profiles) ex.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) ex.memory = patch.memory;
+      if (patch.testLog) ex.testLog = Object.fromEntries(Object.entries(patch.testLog).slice(0, 12).map(([k, v]) => [k, (v || []).slice(0, 60)]));
       setUser(Object.assign(clone(u), { extras: ex }));   // show it straight away
       const { error } = await (await ready).from('profiles').update({ extras: ex }).eq('id', u.id);
       if (error) { await refresh().catch(() => {}); throw fail(/NEEDS_ULTRA/.test(error.message) ? 'That’s a ProMouser Ultra feature.' : friendly(error), 'NEEDS_ULTRA'); }

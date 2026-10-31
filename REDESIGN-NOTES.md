@@ -1,14 +1,45 @@
-# ProMouser redesign — notes (v7)
+# ProMouser redesign — notes (v8)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v7
+## What's new in v8
+
+- **Two ways to use ProMouser.** A **Recommend / Hub** toggle sits in the top bar (and the
+  mobile menu). First-time visitors to the home page are asked which they want.
+  - **Recommend** is the site as before: recommendations, the Recommendation Assistant, plans.
+  - **Hub** is for people who are here for the mice: the home page becomes a mouse hub
+    (search with filters like “wireless under 60 g”, mouse of the day, your test bests,
+    spec record holders), the nav gains **Ask** and **My stats**, and the assistant
+    introduces itself as a **Mouse Assistant** for questions about any mouse.
+  - The choice is saved in `localStorage` (`pm_mode`) and in the account's `prefs.mode`.
+    Pages mark mode-specific parts with `data-only="recommend"` or `data-only="hub"`.
+- **New plans** (all one-time, never downgrade):
+
+  | | Basic ₹599 | Lite ₹2,499 | Ultra ₹3,199 |
+  |---|---|---|---|
+  | Daily credits | 7 | 20 | 30 |
+  | Credits per recommendation | 1 | 2 | 0 (unlimited) |
+  | Results | Top 5 | Every match | Every match |
+  | Extras | Match breakdown, check any mouse, 30-run history | + advanced preferences, advanced CPS stats, bests on every test, blue theme | + statistics for every test, **1 year of Turbo**, profiles (10), watchlist (50), sensitivity converter, export, assistant memory, purple theme |
+
+  New page `basic.html`; `lite.html`, `ultra.html` and the shop were rewritten around one
+  comparison table (`tools/plans.py` regenerates the plan pages; `tools/test-plans-modes.js` is a Playwright check of plans, stats and modes).
+- **Statistics for every test** (`teststats.js`): every test records its sessions. Ultra gets
+  a full panel under each test (trend chart, average, median, consistency, improvement,
+  percentile, best by mode, CSV export), saved to the account in `extras.testLog`.
+  Lite sees personal bests and recent sessions. New page `my-stats.html` shows all seven.
+- **Fix:** Ultra accounts now get the advanced recommendation preferences (the form only
+  checked for Lite before).
+- **Supabase:** re-run `schema.sql` (adds the `basic` plan, new prices, credits, `pm_rank`,
+  365 days of Turbo with Ultra) and `dev-tools.sql`.
+
+## v7
 
 - **Domain:** canonical links, the sitemap, robots.txt and the docs now use **promouser.website**.
 - **New prices:**
-  - **Lite** is a one-time **₹699** and **Ultra** a one-time **₹1,119**. Both are yours for life,
+  - (superseded in v8) **Lite** was a one-time **₹699** and **Ultra** a one-time **₹1,119**. Both are yours for life,
     with nothing to cancel.
   - Buying Lite on an Ultra account never downgrades it.
   - Ultra now includes **1 month of ProMouser Turbo**.

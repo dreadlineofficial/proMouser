@@ -82,7 +82,7 @@
   const placeholder = () => `<div class="panel out-empty"><div class="out-ico" aria-hidden="true">${window.PMIcon ? window.PMIcon('chip') : ''}</div><h3>Your shortlist appears here</h3><p>Choose what you play and how you like your mouse, then generate. We match your answers against every mouse on ProMouser.</p></div>`;
 
   function readForm() {
-    const f = new FormData($('#recsForm')), lite = B.getUser().plan.tier === 'lite';
+    const f = new FormData($('#recsForm')), lite = B.has('advanced');
     const p = { games: f.getAll('games'), weight: f.get('weight') || 'any', grip: f.get('grip') || 'any', connection: f.get('connection') || 'any' };
     if (lite) Object.assign(p, { handSize: f.get('handSize') || 'any', handLength: $('#useLen').checked ? +$('#handLen').value : null, lefty: f.has('lefty'), mcVersion: p.games.includes('minecraft') ? (f.get('mcVersion') || 'any') : 'any', budgetMax: $('#noBudget').checked ? null : +$('#budget').value,
       minButtons: +(f.get('minButtons') || 0), custom: f.getAll('custom'), clickStyle: f.get('clickStyle') || 'any', shape: f.get('shape') || 'any' });
@@ -204,17 +204,40 @@
       <div class="game-panels${multi ? ' multi' : ''}${panels.length > 2 ? ' many' : ''}">${panelHtml}</div>
       ${hidden > 0 ? `<div class="upsell-card slim"><div class="upsell-body static"><span class="plan-tag lite">Lite</span><h4>${hidden} more match${hidden > 1 ? 'es' : ''} hidden</h4><p>Lite shows every mouse in every panel with a full breakdown, and adds hand size, Minecraft version, budget, buttons and customisation preferences.</p>
         <a class="btn btn-primary btn-sm" href="${root}lite.html">Unlock with Lite</a></div></div>` : ''}
+      ${checkAnyHtml()}
       <p class="fine">Matches come from published specs and editorial fit estimates for your answers. They aren’t a ranking of overall quality — read the reviews and try before you buy if you can.</p>`;
     $$('.game-panel', out).forEach(gp => {
       const cards = $$('.result-card', gp), btn = $('[data-more]', gp); if (!btn) return;
       cards.slice(FOLD).forEach(c => (c.hidden = true));
       btn.addEventListener('click', () => { cards.forEach(c => (c.hidden = false)); btn.remove(); });
     });
+    bindCheckAny(p);
     A.syncWatch && A.syncWatch();
     $$('.result-card', out).forEach((c, i) => { if (animate && !reduce) c.animate([{ opacity: 0, transform: 'translateY(26px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 700, delay: 120 + i * 90, easing: EASE, fill: 'backwards' }); });
     $$('.score-meter i', out).forEach((el, i) => { el.style.width = '0%'; requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDelay = (animate ? 250 + i * 90 : 0) + 'ms'; el.style.width = el.dataset.w + '%'; })); });
     $$('[data-count-to]', out).forEach(el => { const to = +el.dataset.countTo; PM.tween(animate ? 1100 : 1, t => { el.textContent = Math.round(to * t) + '%'; }); });
     if (animate) { out.focus({ preventScroll: true }); out.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }
+  }
+
+  /* ---------- Basic and up: check any mouse against these answers ---------- */
+  function checkAnyHtml() {
+    const open = B.has('checkAny');
+    return `<section class="panel check-any"><div class="ca-head"><div><span class="plan-tag basic">Basic</span><h4>Check any mouse</h4>
+      <p class="panel-note">Already have a mouse in mind? See how it scores for these answers, where it would rank, and what holds it back.</p></div>
+      ${open ? `<select id="caPick" aria-label="Pick a mouse"><option value="">Pick a mouse…</option>${PM.MICE.slice().sort((a, b) => a.name.localeCompare(b.name)).map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>`
+        : `<a class="btn btn-primary btn-sm" href="${root}basic.html">Unlock with Basic</a>`}</div><div id="caOut"></div></section>`;
+  }
+  function bindCheckAny(p) {
+    const sel = $('#caPick'); if (!sel) return;
+    sel.addEventListener('change', () => {
+      const all = PM.recommend(p), i = all.findIndex(r => r.m.id === sel.value), r = all[i], top = all[0], box = $('#caOut');
+      if (!r) { box.innerHTML = ''; return; }
+      const gaps = r.parts.map((x, k) => ({ label: x.label, d: ((top.parts[k] || {}).value || 0) - x.value })).filter(x => x.d > .08).sort((a, b) => b.d - a.d).slice(0, 3);
+      box.innerHTML = `<div class="ca-res"><img src="${PM.IMG(r.m, 480)}" alt="" width="84" height="84"><div><b>${esc(r.m.name)}</b><span>${r.score}% match · would rank <b>#${i + 1}</b> of ${all.length}</span>
+        ${i === 0 ? '<p>This is your top match. Good choice.</p>' : `<p>${top.score - r.score} points behind your top pick, the <a href="${root}${top.m.page}">${esc(top.m.name)}</a>.${gaps.length ? ' It loses most on ' + gaps.map(g => g.label.toLowerCase()).join(', ') + '.' : ''}</p>`}
+        ${r.cons.length ? `<ul class="heads-up">${r.cons.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div></div>
+        <div class="bk">${r.parts.map(x => `<div><span>${esc(x.label)}</span><div class="bk-bar"><i style="width:${Math.round(x.value * 100)}%"></i></div><b>${Math.round(x.value * 100)}%</b></div>`).join('')}</div>`;
+    });
   }
 
   function resultCard(r, i, lite, game, compact) {
@@ -229,7 +252,7 @@
         ${pros.length ? `<ul class="why">${pros.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
         ${cons.length ? `<ul class="heads-up">${cons.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
         <div class="chips"><span class="chip">${m.weight} g</span><span class="chip">${num(m.poll)} Hz</span><span class="chip">${m.price ? inr(m.price) : 'Price n/a'}</span>${mc ? `<span class="chip accent">CPS: ${esc(m.cps.label)}</span>` : ''}</div>
-        ${lite ? `<details class="breakdown"><summary>Match breakdown</summary><div class="bk">${r.parts.map(x => `<div><span>${esc(x.label)}</span><div class="bk-bar"><i style="width:${Math.round(x.value * 100)}%"></i></div><b>${Math.round(x.value * 100)}%</b></div>`).join('')}</div></details>` : ''}
+        ${B.has('breakdown') ? `<details class="breakdown"><summary>Match breakdown</summary><div class="bk">${r.parts.map(x => `<div><span>${esc(x.label)}</span><div class="bk-bar"><i style="width:${Math.round(x.value * 100)}%"></i></div><b>${Math.round(x.value * 100)}%</b></div>`).join('')}</div></details>` : ''}
         <div class="rc-actions"><a class="rc-link" href="${root}${m.page}">Read the review →</a><button class="watch-btn mini" type="button" data-watch="${m.id}" data-price="${m.price || ''}" aria-pressed="false">${STAR}<span class="wl">Watch price</span></button></div>
       </div></article>`;
   }

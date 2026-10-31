@@ -99,7 +99,7 @@ ProMouser Online uses this same Supabase project, so one account works on both s
 2. Put the same URL and key in ProMouser Online's `supabase-config.js`.
 3. Add the Online site's address to **Authentication → URL Configuration → Redirect URLs**.
 
-Lite and Ultra are one-time (lifetime) purchases. Ultra also adds 30 days of **ProMouser Turbo**
+Basic, Lite and Ultra are one-time (lifetime) purchases. Ultra also adds a year (365 days) of **ProMouser Turbo**
 (`profiles.turbo_until`), which ProMouser Online reads. CPS test personal bests are saved to
 `profiles.cps_best` and shown on Online profiles.
 

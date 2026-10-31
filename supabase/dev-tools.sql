@@ -30,7 +30,7 @@ create or replace function public.dev_set_plan(p_tier text) returns void
 language plpgsql security definer set search_path = '' as $$
 declare uid uuid := public.pm_require_dev();
 begin
-  if p_tier in ('lite','ultra') then
+  if p_tier in ('basic','lite','ultra') then
     update public.profiles set plan = p_tier, plan_cancelled = false, plan_since = now(), plan_renews_at = null where id = uid;
     update public.credit_balances set daily = public.pm_allowance(p_tier) where user_id = uid;
   elsif p_tier = 'free' then

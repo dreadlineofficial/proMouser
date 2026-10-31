@@ -59,6 +59,7 @@
         const avg = Math.round(times.reduce((a, x) => a + x, 0) / times.length);
         const pb = !store.reaction || avg < store.reaction.best;
         if (pb) { store.reaction = { best: avg, at: Date.now() }; save(); $('#rBest').textContent = avg + ' ms'; }
+        window.PMStats && PMStats.record('reaction', avg, ROUNDS + ' rounds');
         $('#rNote').textContent = avg < 180 ? 'Elite reactions. Esports-level.' : avg < 230 ? 'Fast. Better than most players.' : avg < 300 ? 'Normal human range. Warm up and try again.' : 'Slower than usual. Make sure you’re rested and focused.';
         set('done', avg + ' ms average', pb ? 'New personal best! Click to go again' : 'Click to go again');
       }
@@ -120,6 +121,7 @@
         store.aim = store.aim || {};
         const pb = !store.aim[cfgKey()] || ms < store.aim[cfgKey()];
         if (pb) { store.aim[cfgKey()] = Math.round(ms); save(); }
+        window.PMStats && PMStats.record('aim', ms / opt.n, `${opt.n} targets · ${opt.size}`);
         sync();
         $('#aNote').textContent = (pb ? 'New personal best! ' : '') + (acc < 0.8 ? 'Slow down a little: accuracy under 80% loses fights.' : ms / opt.n < 450 ? 'Fast and accurate. Try smaller targets.' : 'Clean. Now try to keep that accuracy while going faster.');
         $('#aMsg').hidden = false; $('#aMsg').innerHTML = `<b>${fmt(ms / 1000, 2)} s · ${Math.round(acc * 100)}%</b><small>Click the target to go again</small>`;
@@ -169,7 +171,9 @@
       $('#pBars').innerHTML = bars.map(v => `<i style="height:${Math.max(4, (v / top) * 100).toFixed(0)}%"></i>`).join('');
       if (!store.polling || est > store.polling.hz) { store.polling = { hz: est, at: Date.now() }; save(); }
     });
-    $('#pReset').addEventListener('click', () => { last = 0; iv = []; peak = 0; bars = []; ['#pRate', '#pNow', '#pPeak'].forEach(s => { $(s).textContent = '—'; }); $('#pN').textContent = '0'; $('#pBars').innerHTML = ''; $('#pMsg').textContent = 'Move your mouse in fast circles here'; });
+    const logP = () => { if (iv.length > 500) window.PMStats && PMStats.record('polling', nearest(1000 / median(iv))); };
+    addEventListener('pagehide', logP);
+    $('#pReset').addEventListener('click', () => { logP(); last = 0; iv = []; peak = 0; bars = []; ['#pRate', '#pNow', '#pPeak'].forEach(s => { $(s).textContent = '—'; }); $('#pN').textContent = '0'; $('#pBars').innerHTML = ''; $('#pMsg').textContent = 'Move your mouse in fast circles here'; });
   };
 
   /* ---------- scroll wheel ---------- */
@@ -203,7 +207,9 @@
       show();
     }, { passive: false });
     stage.addEventListener('mousedown', e => { if (e.button === 1) { e.preventDefault(); mid++; show(); } });
-    $('#sReset').addEventListener('click', () => { ev = []; down = up = jumps = mid = smooth = 0; show(); $('#sMsg').textContent = 'Scroll here, one notch at a time'; $('#sSmall').textContent = 'Scroll down 20 notches, then up 20'; });
+    const logS = () => { if (down + up >= 20) window.PMStats && PMStats.record('scroll', jumps / (down + up) * 100); };
+    addEventListener('pagehide', logS);
+    $('#sReset').addEventListener('click', () => { logS(); ev = []; down = up = jumps = mid = smooth = 0; show(); $('#sMsg').textContent = 'Scroll here, one notch at a time'; $('#sSmall').textContent = 'Scroll down 20 notches, then up 20'; });
     show();
   };
 
@@ -241,7 +247,9 @@
     stage.addEventListener('mouseup', up);
     stage.addEventListener('mouseleave', () => stage.querySelectorAll('.mb.on').forEach(x => x.classList.remove('on')));
     stage.addEventListener('wheel', e => { e.preventDefault(); const w = $('#bWheel'); w.dataset.dir = e.deltaY > 0 ? 'down' : 'up'; w.classList.remove('spin'); void w.offsetWidth; w.classList.add('spin'); }, { passive: false });
-    $('#bReset').addEventListener('click', reset);
+    const logB = () => { const v = Object.values(data), n = v.reduce((a, d) => a + d.n, 0); if (n >= 10) window.PMStats && PMStats.record('buttons', v.reduce((a, d) => a + d.chatter, 0), n + ' presses'); };
+    addEventListener('pagehide', logB);
+    $('#bReset').addEventListener('click', () => { logB(); reset(); });
   };
 
   document.querySelectorAll('[data-test]').forEach(el => { const f = TESTS[el.dataset.test]; if (f) f(el); });
