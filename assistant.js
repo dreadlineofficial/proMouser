@@ -244,6 +244,10 @@
   const imgTag = (m, cls = '') => `<img class="${cls}" src="${PM.IMG(m, 480)}" alt="" loading="lazy">`;
 
   /* =============================== 4. response builders =============================== */
+  // match %: a fit word by default, the exact % when "Show match %" is on (html.show-pct)
+  const FW = s => (s >= 85 ? 'great' : s >= 70 ? 'good' : s >= 55 ? 'okay' : 'weak');
+  const FIT = s => `<span class="word-only">a ${FW(s)} fit</span><span class="pct-only">${/^(8|11|18)/.test(String(s)) ? 'an' : 'a'} ${s}% fit</span>`;
+  const PCT = t => `<span class="pct-only">${t}</span>`;
   const R = () => ({ blocks: [], chips: [] });
   const P = (o, html) => o.blocks.push({ t: 'p', html });
   const chips = (o, ...cs) => o.chips.push(...cs.filter(Boolean));
@@ -254,7 +258,7 @@
     return `<article class="a-card" style="--d:${i * 90}ms">
       <a class="a-img" href="${root + m.page}">${imgTag(m)}</a>
       <div class="a-main">
-        <div class="a-top"><div><small>${esc(m.brand)}</small><h4><a href="${root + m.page}">${esc(m.name)}</a></h4></div>${score != null ? `<span class="a-score"><b>${score}%</b><small>fit</small></span>` : ''}</div>
+        <div class="a-top"><div><small>${esc(m.brand)}</small><h4><a href="${root + m.page}">${esc(m.name)}</a></h4></div>${score != null ? `<span class="a-score"><b class="pct-only">${score}%</b><b class="word-only">${FW(score).replace(/^./, c => c.toUpperCase())}</b><small>fit</small></span>` : ''}</div>
         ${pros.length ? `<ul class="a-why">${pros.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : `<p class="a-best">${esc(m.bestFor)}.</p>`}
         ${cons.length ? `<p class="a-con">${esc(cons[0])}</p>` : ''}
         <div class="a-tags"><span>${m.weight} g</span><span>${m.connection}</span><span>${m.price ? inr(m.price) : 'price n/a'}</span><span title="Minecraft CPS potential">CPS ${PM.CPS_DOTS(m.cps.level)}</span></div>
@@ -317,8 +321,8 @@
     };
     const ups = hardFilter(rank(p), p).filter(r => r.m.id !== m.id && r.score >= mine.score && gains(r.m).length >= 2).slice(0, 3);
     ctx.focus = m.id;
-    if (!ups.length) { P(o, `<b>Honestly, keep it.</b> The ${esc(m.name)} is already a ${mine.score}% fit for ${esc(LABEL.games(games))}, and nothing in our list is clearly better for you without trade-offs.`); return o; }
-    P(o, `The ${esc(m.name)} is a <b>${mine.score}% fit</b> for ${esc(LABEL.games(games))}. ${mine.score >= 85 ? 'It’s still good, so only upgrade if one of these gains matters to you:' : 'An upgrade would make a real difference. These keep what works and fix what doesn’t:'}`);
+    if (!ups.length) { P(o, `<b>Honestly, keep it.</b> The ${esc(m.name)} is already ${FIT(mine.score)} for ${esc(LABEL.games(games))}, and nothing in our list is clearly better for you without trade-offs.`); return o; }
+    P(o, `The ${esc(m.name)} is <b>${FIT(mine.score)}</b> for ${esc(LABEL.games(games))}. ${mine.score >= 85 ? 'It’s still good, so only upgrade if one of these gains matters to you:' : 'An upgrade would make a real difference. These keep what works and fix what doesn’t:'}`);
     ctx.last = ups.map(r => r.m.id);
     o.blocks.push({ t: 'html', html: `<div class="a-cards">${ups.map((r, i) => card({ ...r, pros: gains(r.m).map(g => cap(g)) }, i)).join('')}</div>` });
     chips(o, ['Compare with mine', `Compare the ${m.short} with ${ups[0].m.short}`], ['Cheaper upgrade', `Something cheaper than the ${ups[0].m.short}`]);
@@ -332,8 +336,8 @@
     const cheaper = m.price ? MICE.filter(x => x.id !== m.id && x.price && x.price <= m.price * .65 && Math.abs(x.weight - m.weight) <= 12)
       .map(x => ({ x, s: PM.fit(x, toEngine(p)).score })).filter(r => r.s >= mine - 6).sort((a, b) => a.x.price - b.x.price)[0] : null;
     if (!m.price) P(o, `We don’t have a trusted price for the ${esc(m.name)} yet, so I can’t judge its value. It’s best for: ${esc(m.bestFor.toLowerCase())}.`);
-    else if (cheaper) P(o, `<b>It’s a great mouse, but you pay a lot for the last few percent.</b> At ${inr(m.price)}, the ${esc(m.name)} is a ${mine}% fit for ${esc(LABEL.games([g]))}. The <a href="${root + cheaper.x.page}">${esc(cheaper.x.name)}</a> gets ${cheaper.s}% for ${inr(cheaper.x.price)}, which is ${inr(m.price - cheaper.x.price)} less.`);
-    else P(o, `<b>Yes, if ${esc(LABEL.games([g]))} is your main thing.</b> At ${inr(m.price)} it’s a ${mine}% fit, and nothing much cheaper in our list matches it on weight and performance.`);
+    else if (cheaper) P(o, `<b>It’s a great mouse, but you pay a lot for the last few percent.</b> At ${inr(m.price)}, the ${esc(m.name)} is ${FIT(mine)} for ${esc(LABEL.games([g]))}. The <a href="${root + cheaper.x.page}">${esc(cheaper.x.name)}</a> gets ${cheaper.s}% for ${inr(cheaper.x.price)}, which is ${inr(m.price - cheaper.x.price)} less.`);
+    else P(o, `<b>Yes, if ${esc(LABEL.games([g]))} is your main thing.</b> At ${inr(m.price)} it’s ${FIT(mine)}, and nothing much cheaper in our list matches it on weight and performance.`);
     if (m.cps.level <= 2 && g !== 'minecraft') P(o, `<span class="a-note">Not for 1.8 Minecraft PvP though: ${esc(m.cps.note.split('. ')[0].toLowerCase())}.</span>`);
     if (cheaper) { ctx.last = [cheaper.x.id]; chips(o, ['Compare them', `Compare the ${m.short} with ${cheaper.x.short}`]); }
     return o;
@@ -347,7 +351,7 @@
     P(o, `<b>Minecraft:</b> ${esc(m.cps.label)} (${m.cps.level}/5). ${esc(m.cps.note)}`);
     if (m.caveat) P(o, `<span class="a-note">⚠ ${esc(m.caveat)}</span>`);
     if (m.buy) P(o, `<a href="${m.buy}" target="_blank" rel="noopener">Find it on Amazon${m.price ? ' · ' + inr(m.price) : ''} ↗</a>`);
-    if (personal) P(o, `For you it’s a <b>${r.score}% fit</b>${r.pros.length ? ': ' + esc(r.pros.slice(0, 2).join('; ').toLowerCase()) : ''}.${r.cons.length ? ' Watch out: ' + esc(r.cons[0].toLowerCase()) + '.' : ''}`);
+    if (personal) P(o, `For you it’s <b>${FIT(r.score)}</b>${r.pros.length ? ': ' + esc(r.pros.slice(0, 2).join('; ').toLowerCase()) : ''}.${r.cons.length ? ' Watch out: ' + esc(r.cons[0].toLowerCase()) + '.' : ''}`);
     chips(o, ['What makes it good?', `What makes the ${m.short} good?`], ['Downsides?', `What are the downsides of the ${m.short}?`], ['Cheaper alternative', `Something cheaper than the ${m.short}`], ['Compare it', `Compare the ${m.short} with ${similar(m)[0].short}`], ['Full page', `@open:${m.page}`]);
     return o;
   }
@@ -385,14 +389,14 @@
     const p = { ...ctx.prefs, ...q };
     const r = PM.fit(m, toEngine(p));
     const verdict = r.score >= 82 ? 'Yes, it’s a strong fit' : r.score >= 66 ? 'It works, with a few trade-offs' : 'Not really';
-    let html = `<b>${verdict}</b> (${r.score}% fit for ${esc(Object.entries(q).filter(([k]) => LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ') || 'you')}).`;
+    let html = `<b>${verdict}</b> (${FIT(r.score)} for ${esc(Object.entries(q).filter(([k]) => LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ') || 'you')}).`;
     if ((q.games || []).includes('minecraft') || q.clickStyle) html += ` ${esc(m.cps.note)}`;
     P(o, html);
     if (r.pros.length) P(o, '✓ ' + r.pros.slice(0, 3).map(esc).join('<br>✓ '));
     if (r.cons.length) P(o, '<span class="a-note">⚠ ' + r.cons.slice(0, 2).map(esc).join('<br>⚠ ') + '</span>');
     if (r.score < 70) {
       const alt = hardFilter(rank(p), p).find(x => x.m.id !== m.id);
-      if (alt) { P(o, `A better fit for that would be the <b>${esc(alt.m.name)}</b> (${alt.score}%).`); o.blocks.push({ t: 'html', html: `<div class="a-cards">${card(alt, 0)}</div>` }); ctx.last = [alt.m.id]; }
+      if (alt) { P(o, `A better fit for that would be the <b>${esc(alt.m.name)}</b>${PCT(` (${alt.score}%)`)}.`); o.blocks.push({ t: 'html', html: `<div class="a-cards">${card(alt, 0)}</div>` }); ctx.last = [alt.m.id]; }
     }
     chips(o, ['Show me alternatives', `Alternatives to the ${m.short}`], ['Compare', `Compare the ${m.short} with ${similar(m)[0].short}`]);
     return o;
@@ -416,7 +420,7 @@
     }
     ctx.last = list.map(x => x.id); ctx.focus = null; ctx.pair = [list[0].id, m.id];
     P(o, `Mice ${what} the <b>${esc(m.name)}</b> (${m.weight} g · ${m.price ? inr(m.price) : 'no price'}), closest in shape and use first${keepDC && list[0].cps.verified ? ', keeping ones that also double-click' : ''}:`);
-    const note = x => [x.price && m.price && x.price < m.price ? `${inr(m.price - x.price)} cheaper.` : null, x.cps.verified && !m.cps.verified ? 'Double-clicks, unlike the ' + m.short + '.' : !x.cps.verified && m.cps.verified ? 'Capped: it won’t double-click like the ' + m.short + '.' : null, x.caveat ? '⚠ ' + x.caveat : x.bestFor + '.'].filter(Boolean);
+    const note = x => [x.price && m.price && x.price < m.price ? `${inr(m.price - x.price)} cheaper.` : null, x.cps.verified && !m.cps.verified ? 'Double-clicks, unlike the ' + m.short + '.' : !x.cps.verified && m.cps.verified ? 'Can’t double-click like the ' + m.short + '.' : null, x.caveat ? '⚠ ' + x.caveat : x.bestFor + '.'].filter(Boolean);
     o.blocks.push({ t: 'html', html: `<div class="a-cards">${list.map((x, i) => card({ m: x, pros: note(x) }, i)).join('')}</div>` });
     chips(o, ['What would I lose?', `How is the ${m.short} better than the ${list[0].short}?`]);
     chips(o, ['Compare with the first', `Compare the ${m.short} with ${list[0].short}`]);
@@ -428,7 +432,7 @@
     const pr = { ...ctx.prefs, ...q }, p = toEngine(pr), personal = scorable(pr) ? ms.map(m => PM.fit(m, p).score) : null;
     if (personal) {
       const i = personal.indexOf(Math.max(...personal)), sorted = [...personal].sort((a, b) => b - a), what = Object.entries(q).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ');
-      P(o, sorted[0] - sorted[1] <= 2 ? `<b>Short answer: it’s close${what ? ' for ' + esc(what) : ''}.</b> Both fit within a couple of points, so pick on price, weight or shape below.` : `<b>Short answer: the ${esc(ms[i].name)}${what ? ' for ' + esc(what) : ''}</b> (${personal[i]}% fit vs ${sorted[1]}%).`);
+      P(o, sorted[0] - sorted[1] <= 2 ? `<b>Short answer: it’s close${what ? ' for ' + esc(what) : ''}.</b> Both fit within a couple of points, so pick on price, weight or shape below.` : `<b>Short answer: the ${esc(ms[i].name)}${what ? ' for ' + esc(what) : ''}</b>${PCT(` (${personal[i]}% fit vs ${sorted[1]}%)`)}.`);
     } else {
       const ws = ms.map(merit), i = ws.indexOf(Math.max(...ws)), priced = ms.filter(m => m.price), cheap = priced.sort((a, b) => a.price - b.price)[0];
       P(o, `<b>Short answer:</b> the ${esc(ms[i].short)} is the stronger all-rounder on paper${cheap && cheap !== ms[i] && ms[i].price && cheap.price < ms[i].price * .7 ? `, but the ${esc(cheap.short)} costs ${inr(ms[i].price - cheap.price)} less and is the better value` : ''}. Tell me what you play for a personal verdict.`);
@@ -440,11 +444,11 @@
       ['Grips', null, m => m.grips.map(cap).join(', ')], ['Minecraft CPS', m => m.cps.level, m => `${PM.CPS_DOTS(m.cps.level)}`, 1],
       ['Butterfly / jitter / drag', null, m => ['butterfly', 'jitter', 'drag'].map(k => ({ great: '★', good: '✓', poor: '✗' })[m.clicking[k]] || '?').join(' / ')]
     ];
-    if (personal) rows.unshift(['Fit for you', (m, i) => personal[i], (m, i) => personal[i] + '%', 1]);
+    if (personal) rows.unshift(['Fit for you', (m, i) => personal[i], (m, i) => FW(personal[i]).replace(/^./, c => c.toUpperCase()), 1], ['Match %', (m, i) => personal[i], (m, i) => personal[i] + '%', 1]);
     const table = `<div class="a-table-wrap"><table class="a-table"><thead><tr><th></th>${ms.map(m => `<th><a href="${root + m.page}">${imgTag(m, 'a-th-img')}<span>${esc(m.short)}</span></a></th>`).join('')}</tr></thead><tbody>${rows.map(([label, val, fmt, dir]) => {
       const vs = val ? ms.map((m, i) => val(m, i)) : null; let best = null;
       if (vs && dir && vs.every(v => v != null) && new Set(vs).size > 1) best = dir > 0 ? Math.max(...vs) : Math.min(...vs);
-      return `<tr><th>${label}</th>${ms.map((m, i) => `<td class="${best != null && vs[i] === best ? 'win' : ''}">${esc(String(fmt(m, i)))}</td>`).join('')}</tr>`;
+      return `<tr${label === 'Match %' ? ' class="pct-row"' : ''}><th>${label}</th>${ms.map((m, i) => `<td class="${best != null && vs[i] === best ? 'win' : ''}">${esc(String(fmt(m, i)))}</td>`).join('')}</tr>`;
     }).join('')}</tbody></table></div>`;
     o.blocks.push({ t: 'html', html: table });
     { const ws = personal || ms.map(merit), wi = ws.indexOf(Math.max(...ws)); if (ms.length === 2) ctx.pair = [ms[wi].id, ms[1 - wi].id]; }
@@ -505,10 +509,10 @@
 
   const CONCEPTS = [
     [/double ?click(ing|s)?\b.*\b(fix|problem|issue|what (do|should|can) i do|broken|keeps|randomly|by itself|on its own)|\bmy mouse (is |keeps )?(double|clicking twice)|\bfix.*double ?click/, 'Fixing a mouse that double-clicks', 'That’s usually a worn switch “chattering”. In order: 1) Confirm it with the <a href="' + root + 'mouse-button-test.html">mouse button test</a>. 2) Raise the debounce time in your mouse software if it has one. 3) Blow compressed air into the gap under the button. 4) If it’s under warranty (Logitech and Razer give 2 years in India), claim it. 5) Handy with a soldering iron? A new Omron or Kailh switch costs under ₹100. Mice with optical switches can’t develop this fault.'],
-    [/\b(more|increase|improve|higher|boost|raise|get better) (my )?cps\b|\bcps (higher|up)\b|\bclick faster\b|\bhow to (get )?(fast|faster) click/, 'How to get more CPS', '1) Pick a technique: jitter (10–14 CPS) is easiest to learn, butterfly (15–25) needs a mouse that registers fast presses, drag (25+) needs a grippy button. 2) Use a mouse that can double-click: most mice are capped. ProMouser has verified only six: the Glorious Model O, Model O- and Model D, the Bloody A70, the HyperX Pulsefire Haste 2 and the ₹498 Ant Esports GM320. 3) Practise in short bursts on the <a href="' + root + 'cps-test.html">CPS test</a>: five 5-second runs, then rest. 4) Keep your wrist relaxed: if it hurts, stop. Lite shows your double clicks and consistency so you can see what’s improving.', VERIFIED_IDS.slice(0, 3)],
+    [/\b(more|increase|improve|higher|boost|raise|get better) (my )?cps\b|\bcps (higher|up)\b|\bclick faster\b|\bhow to (get )?(fast|faster) click/, 'How to get more CPS', '1) Pick a technique: jitter (10–14 CPS) is easiest to learn, butterfly (15–25) needs a mouse that registers fast presses, drag (25+) needs a grippy button. 2) Use a mouse that can double-click: most mice are capped. ProMouser has verified seven: the Glorious Model O, Model O- and Model D, the Bloody A70, the HyperX Pulsefire Haste 2, the Attack Shark X3 and the ₹498 Ant Esports GM320. 3) Practise in short bursts on the <a href="' + root + 'cps-test.html">CPS test</a>: five 5-second runs, then rest. 4) Keep your wrist relaxed: if it hurts, stop. Lite shows your double clicks and consistency so you can see what’s improving.', VERIFIED_IDS.slice(0, 3)],
     [/how (do i|to|can i|do you|should i) butterfly/, 'How to butterfly click', 'Rest your index and middle fingers on the left button, then tap them one after the other, fast, like drumming. Each finger adds a click, so you get two clicks per “cycle”. Keep your wrist on the desk and your fingers relaxed. Start slowly for rhythm, then speed up. It only adds clicks on a mouse that can double-click: the Glorious Model O is the classic choice, and the Ant Esports GM320 is the budget one.', ['glorious-model-o', 'ant-esports-gm320']],
     [/how (do i|to|can i|do you|should i) jitter/, 'How to jitter click', 'Hold your hand in a claw over the mouse, tense your forearm and let your index finger vibrate on the left button. Keep the vibration small and keep breathing. Practise in 5-second bursts and stop if your wrist hurts. Light mice with a firm click work best.'],
-    [/how (do i|to|can i|do you|should i) drag ?click/, 'How to drag click', 'Put your finger on the top of the left button and drag it down slowly with firm pressure. Friction makes the finger skip, and each skip is a click. Grip tape helps. It only works on a mouse that isn’t capped: the Bloody A70 is the classic drag clicker. Most mice, including the Logitech G102, merge those skips into single clicks.', ['bloody-a70']],
+    [/how (do i|to|can i|do you|should i) drag ?click/, 'How to drag click', 'Put your finger on the top of the left button and drag it down slowly with firm pressure. Friction makes the finger skip, and each skip is a click. Grip tape helps. It only works on a mouse that isn’t capped: the Bloody A70 is the classic drag clicker, and the Redragon M711 Cobra drag clicks too. Most mice, including the Logitech G102, merge those skips into single clicks.', ['bloody-a70', 'redragon-m711-cobra']],
     [/\b(8 ?k|8000 ?hz|4 ?k|4000 ?hz|high polling)\b/, 'Is 4K / 8K polling worth it?', 'Only if you have a 240 Hz+ monitor and a fast PC. 8,000 Hz makes motion a touch smoother and cuts latency by under 1 ms, but it uses noticeably more CPU and drains wireless batteries faster. On a 60–144 Hz screen you won’t feel it. 1,000 Hz is still the right default for most players.', ['razer-viper-v3-pro']],
     [/(does|do|will) (the |a |my |your )?mouse (really )?(matter|make a difference|help|improve)|better mouse.*(aim|better player)|mouse.*(improve|help).*aim/, 'Does your mouse matter for aim?', 'A bit, but less than practice. A good mouse removes problems: a flawless sensor, a weight you can control and a shape that fits your grip. Going from a heavy, ill-fitting office mouse to a light gaming mouse is a big jump. Going from a ₹3,000 gaming mouse to a ₹15,000 one is a small one. Fix sensitivity and practise with the <a href="' + root + 'aim-trainer.html">aim trainer</a> first.'],
     [/\b(quiet|quietest|silent|noise|noisy|loud)\b/, 'Quiet mice', 'We don’t measure click noise yet, so I can’t rank our mice by how loud they are. If quiet matters most, look for mice sold as “silent”: they use dampened switches. They’re great for offices and late nights, but a poor match for jitter or butterfly clicking.'],
@@ -518,7 +522,7 @@
     [/\bpolling\b|\bhz\b|\breport rate\b/, 'Polling rate', 'How often the mouse reports to your PC each second. 1,000 Hz (1 ms) is the gaming standard. 4,000–8,000 Hz feels a touch smoother on high-refresh monitors but uses more CPU and battery. It won’t fix aim on its own.'],
     [/\bips\b|tracking speed/, 'IPS (tracking speed)', 'The fastest swipe the sensor can follow without losing track. Anything above ~250 IPS is plenty for almost everyone; low-sensitivity FPS players benefit from 400+.'],
     [/\bdebounce\b/, 'Debounce', 'A short delay a mouse waits after each click before it accepts another, so a bouncing switch doesn’t register twice. Most brands fix it at a safe, longer value, which merges fast butterfly and drag clicks into single clicks: that’s why most mice are capped. Glorious lets you lower it towards 0 ms, so one quick press can register as two clicks.', VERIFIED_IDS.slice(0, 3)],
-    [/\bbutterfly\b/, 'Butterfly clicking', 'Alternating two fingers on one button so you get two clicks per “cycle”. It only adds CPS on a mouse that can double-click. ProMouser has verified six: the Glorious Model O, O- and D, the Bloody A70, the HyperX Pulsefire Haste 2 and the Ant Esports GM320. Every other mouse is capped.', VERIFIED_IDS.slice(0, 3)],
+    [/\bbutterfly\b/, 'Butterfly clicking', 'Alternating two fingers on one button so you get two clicks per “cycle”. It only adds CPS on a mouse that can double-click. ProMouser has verified seven: the Glorious Model O, O- and D, the Bloody A70, the HyperX Pulsefire Haste 2, the Attack Shark X3 and the Ant Esports GM320. Every other mouse can’t double-click.', VERIFIED_IDS.slice(0, 3)],
     [/\bjitter\b/, 'Jitter clicking', 'Tensing your arm so one finger vibrates on the button. It works on most mice with a firm, crisp click; lighter mice are easier to keep steady.'],
     [/\bdrag ?click/, 'Drag clicking', 'Dragging a finger across the button so friction makes it bounce and register many clicks. It needs a grippy button and a mouse that isn’t capped: the Bloody A70 is the classic drag clicker. On a capped mouse the skips merge into single clicks, however good your technique.', ['bloody-a70']],
     [/\bcps\b/, 'CPS (clicks per second)', 'How many clicks you register per second. In 1.8 Minecraft PvP it decides trades. Normal clicking is ~6–8 CPS, jitter ~10–14, butterfly 15–25+, drag 25+. Test yours with the <a href="' + root + 'cps-test.html">CPS test</a>.'],
@@ -537,10 +541,10 @@
     P(o, '<b>Why most mice are capped</b>');
     P(o, 'Butterfly, jitter and drag clicking all hit one button many times, a few milliseconds apart. Whether those presses count is up to the mouse:');
     P(o, '• <b>Debounce.</b> A mechanical switch’s contacts bounce for a few milliseconds when pressed, so the firmware waits a set time after each click and ignores anything inside that window. Fast butterfly and drag presses land inside it and get merged into one click. That window is the cap.<br>• <b>Why brands keep it high.</b> Worn switches start double-clicking by themselves, the number one reason mice get returned. A longer, fixed debounce hides that, so most brands don’t let you lower it.<br>• <b>Optical switches</b> (most Razer mice, Logitech’s LIGHTFORCE) read the press with light and never bounce, so one press is always exactly one click.<br>• A mouse that <b>double-clicks</b> has a short enough delay that one quick press can register twice. That’s how butterfly clicking reaches 20+ CPS.');
-    P(o, `ProMouser has verified only ${VERIFIED.length} mice that double-click; every other mouse is rated <b>Capped CPS</b> until a person has checked it. <a href="${root}mice/minecraft.html#capped">Read the full explainer →</a>`);
+    P(o, `ProMouser has verified only ${VERIFIED.length} mice that double-click; every other mouse is listed as <b>can’t double-click</b> until a person has checked it. <a href="${root}mice/minecraft.html#capped">Read the full explainer →</a>`);
     o.blocks.push({ t: 'html', html: `<div class="a-cards">${VERIFIED.slice(0, 3).map((m, i) => card({ m, pros: [m.bestFor + '.'] }, i)).join('')}</div>` });
     ctx.last = VERIFIED.slice(0, 3).map(m => m.id);
-    chips(o, ['All 6 double-clickers', 'Which mice can double click?'], ['Cheapest double-clicker', 'Cheapest mouse that can double click'], ['Is the G102 capped?', 'Is the G102 capped?']);
+    chips(o, [`All ${VERIFIED.length} double-clickers`, 'Which mice can double click?'], ['Cheapest double-clicker', 'Cheapest mouse that can double click'], ['Is the G102 capped?', 'Is the G102 capped?']);
     return o;
   }
   function verifiedList(o, q, t) {
@@ -549,7 +553,7 @@
     if (byPrice) pool = pool.slice().sort((a, b) => (a.price || 1e9) - (b.price || 1e9));
     if (!pool.length) { P(o, `None of the ${VERIFIED.length} verified double-clickers matches that. Try loosening a filter.`); return o; }
     ctx.last = pool.map(m => m.id); ctx.focus = null;
-    P(o, `<b>The ${VERIFIED.length} mice ProMouser has verified can double-click</b>${pool.length < VERIFIED.length ? ` (${pool.length} match your filters)` : ''}. Every other mouse on the site is capped.`);
+    P(o, `<b>The ${VERIFIED.length} mice ProMouser has verified can double-click</b>${pool.length < VERIFIED.length ? ` (${pool.length} match your filters)` : ''}. Every other mouse can’t double-click.`);
     o.blocks.push({ t: 'html', html: `<ol class="a-list">${pool.map(m => `<li><a href="${root + m.page}">${imgTag(m)}<span><b>${esc(m.name)}</b><small>${esc(m.cps.label)} · ${m.weight} g · ${m.connection.toLowerCase()} · ${m.price ? inr(m.price) : 'no price'}${m.caveat ? ' · build and skates a step below' : ''}</small></span></a></li>`).join('')}</ol>` });
     P(o, '<span class="a-note">Why only these? Most brands use a fixed debounce or optical switches, which merge fast presses into single clicks. Ask me “why are most mice capped?”</span>');
     chips(o, ['Why are the rest capped?', 'Why are most mice capped?'], ['Model O vs GM320', 'Model O vs GM320'], ['Cheapest one', 'Cheapest mouse that can double click']);
@@ -559,7 +563,7 @@
     ctx.focus = m.id;
     if (m.cps.verified) P(o, `<b>No, the ${esc(m.name)} isn’t capped.</b> ProMouser has verified that it double-clicks, so butterfly and jitter clicks register extra clicks. ${esc(m.cps.note)}`);
     else {
-      P(o, `<b>Yes, treat the ${esc(m.name)} as capped.</b> ${esc(m.cps.note)}`);
+      P(o, m.cps.drag ? `<b>Partly.</b> The ${esc(m.name)} can’t double-click, but it drag clicks well. ${esc(m.cps.note)}` : `<b>Yes. The ${esc(m.name)} can’t double-click.</b> ${esc(m.cps.note)}`);
       const alt = VERIFIED.filter(x => x.price).sort((a, b) => Math.abs(a.price - (m.price || 3000)) - Math.abs(b.price - (m.price || 3000)))[0];
       if (alt) P(o, `Closest double-clicker on price: the <a href="${root + alt.page}">${esc(alt.name)}</a> (${inr(alt.price)}).`);
     }
@@ -570,7 +574,7 @@
   // what A does better than B, in plain words (only real, meaningful differences)
   function edges(a, b, prefs) {
     const out = [], p = prefs && scorable(prefs) ? toEngine(prefs) : null;
-    if (a.cps.verified && !b.cps.verified) out.push(`<b>It double-clicks</b> (verified by ProMouser); the ${esc(b.short)} is capped, so butterfly and drag clicks can’t add extra CPS on it`);
+    if (a.cps.verified && !b.cps.verified) out.push(`<b>It double-clicks</b> (verified by ProMouser); the ${esc(b.short)} can’t double-click, so butterfly clicks can’t add extra CPS on it`);
     if (b.weight - a.weight >= 5) out.push(`<b>${b.weight - a.weight} g lighter</b> (${a.weight} g vs ${b.weight} g), so it’s quicker to flick and less tiring`);
     if (a.price && b.price && a.price <= b.price * .9) out.push(`<b>${inr(b.price - a.price)} cheaper</b> (${inr(a.price)} vs ${inr(b.price)})`);
     if (a.poll > b.poll) out.push(`<b>${num(a.poll)} Hz polling</b> vs ${num(b.poll)} Hz, a touch smoother on high-refresh screens`);
@@ -581,15 +585,15 @@
     if (a.comfort - b.comfort >= 1) out.push(`<b>More comfortable</b> for long sessions (we rate it ${a.comfort}/5 vs ${b.comfort}/5)`);
     if (a.lefty && !b.lefty) out.push('<b>Works for left-handers</b>, with side buttons on both sides');
     if (a.customLevel - b.customLevel >= 2) out.push('<b>More to tune</b> in its software');
-    if (p) { const fa = PM.fit(a, p), fb = PM.fit(b, p); fa.parts.forEach((x, i) => { const y = fb.parts[i]; if (y && x.value - y.value >= .15 && !['weight', 'budget', 'connection'].includes(x.key)) out.push(`<b>Fits your ${esc(x.label.toLowerCase())} better</b> (${Math.round(x.value * 100)}% vs ${Math.round(y.value * 100)}%)`); }); }
+    if (p) { const fa = PM.fit(a, p), fb = PM.fit(b, p); fa.parts.forEach((x, i) => { const y = fb.parts[i]; if (y && x.value - y.value >= .15 && !['weight', 'budget', 'connection'].includes(x.key)) out.push(`<b>Fits your ${esc(x.label.toLowerCase())} better</b>${PCT(` (${Math.round(x.value * 100)}% vs ${Math.round(y.value * 100)}%)`)}`); }); }
     return out;
   }
   function better(o, a, b) {
     const pr = ctx.prefs, sc = scorable(pr) ? [PM.fit(a, toEngine(pr)).score, PM.fit(b, toEngine(pr)).score] : null;
     const win = edges(a, b, pr), lose = edges(b, a, pr);
     ctx.focus = a.id; ctx.pair = [a.id, b.id];
-    if (sc && sc[1] > sc[0] + 2) P(o, `<span class="a-note">Honest answer: for what you told me, the ${esc(b.short)} actually fits you better (${sc[1]}% vs ${sc[0]}%). Here’s where each one wins.</span>`);
-    P(o, win.length ? `<b>Why the ${esc(a.name)} beats the ${esc(b.name)}${sc ? ` for you (${sc[0]}% vs ${sc[1]}%)` : ''}:</b>` : `<b>The ${esc(a.name)} doesn’t clearly beat the ${esc(b.name)}</b> on anything we measure.`);
+    if (sc && sc[1] > sc[0] + 2) P(o, `<span class="a-note">Honest answer: for what you told me, the ${esc(b.short)} actually fits you better${PCT(` (${sc[1]}% vs ${sc[0]}%)`)}. Here’s where each one wins.</span>`);
+    P(o, win.length ? `<b>Why the ${esc(a.name)} beats the ${esc(b.name)}${sc ? ` for you${PCT(` (${sc[0]}% vs ${sc[1]}%)`)}` : ''}:</b>` : `<b>The ${esc(a.name)} doesn’t clearly beat the ${esc(b.name)}</b> on anything we measure.`);
     if (win.length) P(o, '✓ ' + win.slice(0, 5).join('<br>✓ '));
     if (lose.length) P(o, `<b>Where the ${esc(b.short)} wins:</b><br>` + lose.slice(0, 3).join('<br>'));
     [a, b].filter(m => m.caveat).forEach(m => P(o, `<span class="a-note">⚠ ${esc(m.short)}: ${esc(m.caveat)}</span>`));
@@ -619,7 +623,7 @@
   function weaknessList(m) {
     const w = [];
     if (m.caveat) w.push(esc(m.caveat.replace(/\.$/, '').toLowerCase()));
-    if (!m.cps.verified) w.push('capped for 1.8 Minecraft CPS (not verified to double-click)');
+    if (!m.cps.verified) w.push(m.cps.drag ? 'it drag clicks, but can’t double-click for butterfly' : 'it can’t double-click, so it’s capped for 1.8 Minecraft CPS');
     if (m.weight >= 95) w.push(`heavy at ${m.weight} g`);
     if (m.price && m.price >= 10000) w.push(`expensive at ${inr(m.price)}`);
     if (m.comfort <= 2) w.push('not the most comfortable for long sessions');
@@ -712,7 +716,7 @@
           chips(o, ['Is it good for me?', `Is the ${m.short} good for me?`]); return o;
         }
         const r = PM.fit(m, toEngine(pr));
-        P(o, `Why the <b>${esc(m.name)}</b>? It scores <b>${r.score}%</b> for ${esc(Object.entries(pr).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ') || 'you')}:`);
+        P(o, `Why the <b>${esc(m.name)}</b>? It’s <b>${FIT(r.score)}</b> for ${esc(Object.entries(pr).filter(([k, v]) => v && LABEL[k]).map(([k, v]) => LABEL[k](v)).join(' · ') || 'you')}:`);
         o.blocks.push({ t: 'html', html: `<div class="a-break">${r.parts.map(x => `<div><span>${esc(x.label)}</span><i><b style="width:${Math.round(x.value * 100)}%"></b></i><em>${Math.round(x.value * 100)}%</em></div>`).join('')}</div>` });
         if (r.pros.length) P(o, '✓ ' + r.pros.map(esc).join('<br>✓ '));
         if (r.cons.length) P(o, '<span class="a-note">⚠ ' + r.cons.map(esc).join('<br>⚠ ') + '</span>');
@@ -734,7 +738,7 @@
       if (facts.length && !/\btell me about|overview|review|thoughts|opinion\b/.test(t)) { facts.slice(0, 3).forEach(([, f]) => P(o, f(m))); chips(o, ['More about it', `Tell me about the ${m.name}`], ['Is it good for me?', `Is the ${m.short} good for me?`]); return o; }
       if (/\b(good|any good|decent|bad|solid|trash|reliable)\b/.test(t)) {
         const g = m.games[0], sc = PM.fit(m, toEngine({ games: [g] })).score;
-        P(o, `<b>${sc >= 85 ? 'Yes' : sc >= 70 ? 'Yes, with trade-offs' : 'It’s okay'}</b>: it’s a ${sc}% fit for ${esc(LABEL.games([g]))}, its main use${m.price ? `, at ${inr(m.price)}` : ''}. Tell me what you play for a personal verdict.`);
+        P(o, `<b>${sc >= 85 ? 'Yes' : sc >= 70 ? 'Yes, with trade-offs' : 'It’s okay'}</b>: it’s ${FIT(sc)} for ${esc(LABEL.games([g]))}, its main use${m.price ? `, at ${inr(m.price)}` : ''}. Tell me what you play for a personal verdict.`);
       }
       return overview(o, m);
     }
@@ -828,9 +832,9 @@
   function paintMeter() {
     let el = $('#aiMeter', host); if (!el) { el = document.createElement('p'); el.id = 'aiMeter'; el.className = 'ai-meter'; form.after(el); }
     const s = meter.status(), n = AI.questionsPerCredit;
-    el.innerHTML = s.unlimited ? '<span class="ultra-chip">Ultra</span> Unlimited questions'
+    el.innerHTML = `<button class="pct-toggle" type="button" data-pct-toggle aria-pressed="${!!(window.PMPct && PMPct.on())}"><i></i>Show match %</button> · ` + (s.unlimited ? '<span class="ultra-chip">Ultra</span> Unlimited questions'
       : s.guest ? `${s.left} free question${s.left === 1 ? '' : 's'} left today · <button type="button" class="linkish" data-auth="signin">Sign in</button> for more`
-      : `${s.left ? `${s.left} question${s.left === 1 ? '' : 's'} left on this credit` : `Your next question uses 1 credit`} · 1 credit = ${n} questions · ${s.credits} credit${s.credits === 1 ? '' : 's'} · <a href="${root}ultra.html">Unlimited with Ultra</a>`;
+      : `${s.left ? `${s.left} question${s.left === 1 ? '' : 's'} left on this credit` : `Your next question uses 1 credit`} · 1 credit = ${n} questions · ${s.credits} credit${s.credits === 1 ? '' : 's'} · <a href="${root}ultra.html">Unlimited with Ultra</a>`);
   }
   async function ask(text, opts = {}) {
     text = String(text || '').trim(); if (!text || busy) return;

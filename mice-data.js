@@ -81,8 +81,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "dims": [
@@ -158,8 +158,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "dims": [
@@ -316,8 +316,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "dims": [
@@ -460,8 +460,8 @@ window.PM_MICE = [
     "customLevel": 1,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "dims": [
@@ -536,8 +536,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "dims": [
@@ -614,9 +614,10 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
-      "verified": false
+      "label": "Can’t double-click",
+      "note": "Tested by ProMouser: it can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false,
+      "tested": true
     },
     "lefty": false,
     "art": {
@@ -691,8 +692,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -767,8 +768,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -843,8 +844,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -919,8 +920,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -997,8 +998,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": true,
@@ -1073,8 +1074,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -1147,8 +1148,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -1222,8 +1223,8 @@ window.PM_MICE = [
     "customLevel": 1,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -1297,8 +1298,8 @@ window.PM_MICE = [
     "customLevel": 1,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -1371,8 +1372,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -1447,8 +1448,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -1521,8 +1522,8 @@ window.PM_MICE = [
     "customLevel": 1,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -1596,8 +1597,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -1824,8 +1825,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
       "verified": false
     },
     "lefty": false,
@@ -1902,8 +1903,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
       "verified": false
     },
     "lefty": false,
@@ -1977,8 +1978,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
       "verified": false
     },
     "lefty": false,
@@ -2055,8 +2056,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2135,8 +2136,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2209,8 +2210,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2284,8 +2285,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2430,8 +2431,8 @@ window.PM_MICE = [
     "customLevel": 0,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2505,8 +2506,8 @@ window.PM_MICE = [
     "customLevel": 1,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2579,8 +2580,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
       "verified": false
     },
     "lefty": false,
@@ -2656,8 +2657,8 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2733,8 +2734,8 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "label": "Can’t double-click",
+      "note": "It can’t double-click. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
       "verified": false
     },
     "lefty": false,
@@ -2788,7 +2789,7 @@ window.PM_MICE = [
     "clicking": {
       "butterfly": "poor",
       "jitter": "good",
-      "drag": "poor"
+      "drag": "great"
     },
     "price": 1299,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2797,7 +2798,7 @@ window.PM_MICE = [
       "Budget",
       "RGB"
     ],
-    "bestFor": "The classic cheap RGB gaming mouse",
+    "bestFor": "The classic cheap RGB mouse, and it drag clicks",
     "comfort": 3,
     "handSize": [
       "medium",
@@ -2810,10 +2811,12 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
-      "verified": false
+      "level": 3,
+      "label": "Drag clicks",
+      "verified": false,
+      "drag": true,
+      "tested": true,
+      "note": "Verified by ProMouser to drag click well, so it’s a cheap pick for bridging. Butterfly clicking doesn’t add much on it, though."
     },
     "lefty": false,
     "art": {
@@ -2864,9 +2867,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "poor",
-      "jitter": "good",
-      "drag": "poor"
+      "butterfly": "great",
+      "jitter": "great",
+      "drag": "good"
     },
     "price": 2799,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2887,10 +2890,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 1,
-      "label": "Capped CPS",
-      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
-      "verified": false
+      "level": 4,
+      "label": "Double clicks",
+      "verified": true,
+      "note": "Verified by ProMouser to double-click, so butterfly and jitter clicks register extra clicks, in a 49 g wireless shell for under ₹3,000."
     },
     "lefty": false,
     "art": {
@@ -2982,6 +2985,86 @@ window.PM_MICE = [
       "shape": "ergo",
       "body": "black",
       "glow": "#ff2bd6",
+      "holes": false,
+      "sides": "left"
+    }
+  },
+  {
+    "id": "kreo-hawk",
+    "name": "Kreo Hawk",
+    "short": "Hawk",
+    "brand": "Kreo",
+    "page": "mice/kreo-hawk.html",
+    "img": "kreo-hawk",
+    "weight": 110,
+    "dpi": 12400,
+    "ips": null,
+    "accel": 30,
+    "poll": 1000,
+    "connection": "Wired",
+    "battery": null,
+    "buttons": 8,
+    "sensor": "PixArt PAW3327",
+    "switches": null,
+    "shape": "Ergonomic",
+    "hand": "Right-handed",
+    "grips": [
+      "palm",
+      "claw"
+    ],
+    "games": [
+      "work",
+      "fps",
+      "mmo"
+    ],
+    "clicking": {
+      "butterfly": "poor",
+      "jitter": "good",
+      "drag": "poor"
+    },
+    "price": 1199,
+    "priceNote": "Flipkart",
+    "buy": "https://www.flipkart.com/search?q=kreo+hawk+gaming+mouse",
+    "rating": null,
+    "tags": [
+      "Budget",
+      "Comfort"
+    ],
+    "bestFor": "A comfy budget ergonomic mouse with RGB",
+    "variantNote": "Kreo lists about 110 g and 125 × 80 × 46 mm. Prices vary between ₹1,149 and ₹1,433 by seller.",
+    "verify": [
+      "weight and dimensions from Kreo's product page",
+      "CPS: tested by ProMouser, it can't double-click"
+    ],
+    "series": 6,
+    "comfort": 4,
+    "handSize": [
+      "medium",
+      "large"
+    ],
+    "custom": [
+      "software",
+      "macros",
+      "rgb"
+    ],
+    "customLevel": 2,
+    "cps": {
+      "level": 1,
+      "label": "Can’t double-click",
+      "verified": false,
+      "tested": true,
+      "note": "Tested by ProMouser: it can’t double-click, so butterfly and drag clicks merge into single clicks. A comfortable everyday and FPS mouse rather than a 1.8 PvP clicker."
+    },
+    "dims": [
+      125,
+      80,
+      46
+    ],
+    "lefty": false,
+    "art": {
+      "shape": "ergo",
+      "body": "black",
+      "glow": "#8b5cf6",
       "holes": false,
       "sides": "left"
     }

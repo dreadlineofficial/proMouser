@@ -172,6 +172,15 @@
     window.PMMode = { get: cur, set };
   })();
 
+  /* ── MATCH %: results show a fit word (Great / Good / Okay / Weak) by default; a "Show match %" switch
+     shows exact percentages instead. Saved in localStorage "pm_show_pct". ── */
+  (function () {
+    const KEY = 'pm_show_pct', on = () => { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
+    const paint = () => { doc.classList.toggle('show-pct', on()); $$('[data-pct-toggle]').forEach(b => b.setAttribute('aria-pressed', String(on()))); };
+    document.addEventListener('click', e => { if (!e.target.closest('[data-pct-toggle]')) return; try { localStorage.setItem(KEY, on() ? '0' : '1'); } catch (err) { /* storage off */ } paint(); });
+    paint(); window.PMPct = { paint, on };
+  })();
+
   /* ── MOBILE MENU + DROPDOWN ARIA ── */
   (function () {
     const burger = $('#hamburger'), links = $('#navLinks');
@@ -222,7 +231,7 @@
       ['Browse mice', 'mice.html', 'Every mouse with spec sheets, filters and a spec map'],
       ['Compare mice', 'mice/compare.html', 'Up to four mice side by side'],
       ['FPS mice', 'mice/first-person-shooters.html', 'Best mice for fast aim: Valorant, CS2, Fortnite, TF2'],
-      ['Minecraft mice', 'mice/minecraft.html', 'The 6 verified double-clickers first, and why most mice are capped'],
+      ['Minecraft mice', 'mice/minecraft.html', 'The 7 verified double-clickers first, and why most mice can’t double-click'],
       ['Extra picks', 'mice/extra.html', 'Budget and legacy mouse pages'],
       /*mice:start*/
       ["Razer DeathAdder V3", "mice/razer-deathadder-v3.html", "59 g · wired · Fast, precise FPS aim"],
@@ -261,9 +270,10 @@
       ["Endgame Gear XM1r", "mice/endgame-gear-xm1r.html", "63 g · wired · Crisp, low-latency clicks for FPS and jitter clicking"],
       ["Corsair Harpoon RGB Pro", "mice/corsair-harpoon-rgb-pro.html", "85 g · wired · A small, grippy budget mouse"],
       ["Corsair M65 RGB Ultra", "mice/corsair-m65-rgb-ultra.html", "97 g · wired · Tunable weight and a sniper button"],
-      ["Redragon M711 Cobra", "mice/redragon-m711-cobra.html", "100 g · wired · The classic cheap RGB gaming mouse"],
+      ["Redragon M711 Cobra", "mice/redragon-m711-cobra.html", "100 g · wired · The classic cheap RGB mouse, and it drag clicks"],
       ["Attack Shark X3", "mice/attack-shark-x3.html", "49 g · wireless · A flagship sensor at 49 g for very little money"],
       ["Ant Esports GM320", "mice/ant-esports-gm320.html", "120 g · wired · Double-clicking on a tight budget"],
+      ["Kreo Hawk", "mice/kreo-hawk.html", "110 g · wired · A comfy budget ergonomic mouse with RGB"],
       /*mice:end*/
       ['ProMouser AI', 'mouse-ai.html', 'Ask questions and compare mice, grounded in ProMouser pages'],
       ['Hand grip guide', 'hand-grip.html', 'Palm, claw and fingertip grips explained'],

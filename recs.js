@@ -200,7 +200,7 @@
     out.innerHTML = `
       <div class="results-head"><div><span class="section-label">Your shortlist</span><h3>${multi ? `Best mice for your ${panels.length} games` : `Best for ${esc(GAME(panels[0].game).label)}`}</h3>${exportRow()}</div>
         <div class="chips">${summarise(p).map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div></div>
-      ${both ? `<a class="both-banner" href="${root}${both.m.page}"><img src="${PM.IMG(both.m, 480)}" alt="" width="54" height="54"><span><small>One mouse for ${panels.map(x => esc(GAME(x.game).label)).join(' and ')}</small><b>${esc(both.m.name)}</b></span><em>${both.score}% fit</em></a>` : ''}
+      ${both ? `<a class="both-banner" href="${root}${both.m.page}"><img src="${PM.IMG(both.m, 480)}" alt="" width="54" height="54"><span><small>One mouse for ${panels.map(x => esc(GAME(x.game).label)).join(' and ')}</small><b>${esc(both.m.name)}</b></span><em><span class="pct-only">${both.score}% </span><span class="word-only">${FW(both.score)} </span>fit</em></a>` : ''}
       <div class="game-panels${multi ? ' multi' : ''}${panels.length > 2 ? ' many' : ''}">${panelHtml}</div>
       ${hidden > 0 ? `<div class="upsell-card slim"><div class="upsell-body static"><span class="plan-tag lite">Lite</span><h4>${hidden} more match${hidden > 1 ? 'es' : ''} hidden</h4><p>Lite shows every mouse in every panel with a full breakdown, and adds hand size, Minecraft version, budget, buttons and customisation preferences.</p>
         <a class="btn btn-primary btn-sm" href="${root}lite.html">Unlock with Lite</a></div></div>` : ''}
@@ -233,8 +233,8 @@
       const all = PM.recommend(p), i = all.findIndex(r => r.m.id === sel.value), r = all[i], top = all[0], box = $('#caOut');
       if (!r) { box.innerHTML = ''; return; }
       const gaps = r.parts.map((x, k) => ({ label: x.label, d: ((top.parts[k] || {}).value || 0) - x.value })).filter(x => x.d > .08).sort((a, b) => b.d - a.d).slice(0, 3);
-      box.innerHTML = `<div class="ca-res"><img src="${PM.IMG(r.m, 480)}" alt="" width="84" height="84"><div><b>${esc(r.m.name)}</b><span>${r.score}% match · would rank <b>#${i + 1}</b> of ${all.length}</span>
-        ${i === 0 ? '<p>This is your top match. Good choice.</p>' : `<p>${top.score - r.score} points behind your top pick, the <a href="${root}${top.m.page}">${esc(top.m.name)}</a>.${gaps.length ? ' It loses most on ' + gaps.map(g => g.label.toLowerCase()).join(', ') + '.' : ''}</p>`}
+      box.innerHTML = `<div class="ca-res"><img src="${PM.IMG(r.m, 480)}" alt="" width="84" height="84"><div><b>${esc(r.m.name)}</b><span><span class="word-only">${FW(r.score)} match</span><span class="pct-only">${r.score}% match</span> · would rank <b>#${i + 1}</b> of ${all.length}</span>
+        ${i === 0 ? '<p>This is your top match. Good choice.</p>' : `<p>Behind your top pick<span class="pct-only"> by ${top.score - r.score} points</span>, the <a href="${root}${top.m.page}">${esc(top.m.name)}</a>.${gaps.length ? ' It loses most on ' + gaps.map(g => g.label.toLowerCase()).join(', ') + '.' : ''}</p>`}
         ${r.cons.length ? `<ul class="heads-up">${r.cons.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div></div>
         <div class="bk">${r.parts.map(x => `<div><span>${esc(x.label)}</span><div class="bk-bar"><i style="width:${Math.round(x.value * 100)}%"></i></div><b>${Math.round(x.value * 100)}%</b></div>`).join('')}</div>`;
     });
@@ -247,7 +247,7 @@
       <div class="rc-rank">${i + 1}</div>
       <div class="rc-img"><img src="${PM.IMG(m, 480)}" alt="${esc(m.name)}" loading="lazy"></div>
       <div class="rc-main">
-        <div class="rc-top"><div><span class="mc-brand">${esc(m.brand)}</span><h4>${esc(m.name)}</h4></div><div class="rc-score"><b data-count-to="${r.score}">0%</b><small>match</small></div></div>
+        <div class="rc-top"><div><span class="mc-brand">${esc(m.brand)}</span><h4>${esc(m.name)}</h4></div><div class="rc-score"><b class="pct-only" data-count-to="${r.score}">0%</b><b class="word-only fitword">${FW(r.score)}</b><small>match</small></div></div>
         <div class="score-meter"><i data-w="${r.score}"></i></div>
         ${pros.length ? `<ul class="why">${pros.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
         ${cons.length ? `<ul class="heads-up">${cons.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
@@ -259,7 +259,8 @@
 
   /* ---------- Ultra: export, saved profiles ---------- */
   const STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
-  const exportRow = () => `<div class="export-row"><button class="btn btn-ghost btn-sm" type="button" data-export="print">Print / save PDF</button><button class="btn btn-ghost btn-sm" type="button" data-export="copy">Copy shortlist</button>${B.has('export') ? '' : '<span class="ultra-chip">Ultra</span>'}</div>`;
+  const exportRow = () => `<div class="export-row"><button class="btn btn-ghost btn-sm" type="button" data-export="print">Print / save PDF</button><button class="btn btn-ghost btn-sm" type="button" data-export="copy">Copy shortlist</button>${B.has('export') ? '' : '<span class="ultra-chip">Ultra</span>'}<button class="pct-toggle" type="button" data-pct-toggle aria-pressed="${!!(window.PMPct && PMPct.on())}"><i></i>Show match %</button></div>`;
+  const FW = s => (s >= 85 ? 'Great' : s >= 70 ? 'Good' : s >= 55 ? 'Okay' : 'Weak');   // fit word shown when match % is off
   function shortlistText() {
     if (!lastResults) return '';
     const { panels, p } = lastResults, lim = B.resultsLimit();

@@ -1,5 +1,6 @@
 # Applies ProMouser's verified double-click list to the static pages.
-# Only mice with cps.verified = true in mice-data.js double-click; every other mouse is "Capped CPS".
+# Only mice with cps.verified = true in mice-data.js double-click; every other mouse "can’t double-click"
+# (cps.drag = drag clicks but doesn't butterfly well; cps.tested = ProMouser tested it itself).
 # Re-runnable: updates mouse cards everywhere, each review page's CPS spots, the Minecraft guide,
 # and (re)generates the Ant Esports GM320 page. Usage: python3 tools/cps_truth.py
 import json, re, glob, os, subprocess, html as H
@@ -27,8 +28,8 @@ def cps_section(m, pre):
         small = f'Verified by ProMouser to double-click. Only {len(VER)} mice on ProMouser are: {e(VER_NAMES)}.'
         meter = f'<span class="cps-dots">{dots(c["level"])}</span><b>{e(c["label"])}</b><small>{small}</small><a class="btn btn-outline btn-sm" href="{pre}mice/minecraft.html#verified">See the verified double-clickers</a>'
     else:
-        h2 = '<em>Capped</em> CPS'
-        meter = f'<span class="cps-dots">{dots(1)}</span><b>Capped CPS</b><small>For 1.8 PvP pick a verified double-clicker: {e(VER_NAMES)}.</small><a class="btn btn-outline btn-sm" href="{pre}mice/minecraft.html#capped">Why most mice are capped</a>'
+        h2 = 'Drag clicks, <em>not</em> butterfly' if c.get('drag') else 'Can’t <em>double-click</em>'
+        meter = f'<span class="cps-dots">{dots(c["level"])}</span><b>{e(c["label"])}</b><small>{"Great for bridging. " if c.get("drag") else ""}For butterfly clicking in 1.8 PvP, pick one that double-clicks: {e(VER_NAMES)}.</small><a class="btn btn-outline btn-sm" href="{pre}mice/minecraft.html#capped">Why most mice are capped</a>'
     return (f'<section class="about-section" id="cps"><div class="container"><div class="cps-callout reveal{" capped" if not c.get("verified") else ""}"><div><span class="section-label">Minecraft CPS</span>'
             f'<h2>{h2}</h2><p>{e(c["note"])}</p></div><div class="cps-callout-meter">{meter}</div></div></div></section>')
 
@@ -65,7 +66,9 @@ def patch_cards(t):
     return re.sub(r'<article class="mouse-card[^"]*"[^>]*>.*?</article>', one, t, flags=re.S)
 
 # ---------------------------------------------------------------- 2. review pages
-CAPPED_CON = '<li class="con"><b>Capped CPS</b><span>Not verified by ProMouser to double-click, so butterfly and drag clicks won’t add extra clicks. For 1.8 PvP pick a verified double-clicker.</span></li>'
+CAPPED_CON = '<li class="con"><b>Can’t double-click</b><span>Butterfly and drag clicks won’t add extra clicks, so for 1.8 PvP pick a mouse that double-clicks.</span></li>'
+DRAG_CON = '<li class="con"><b>Weak for butterfly clicking</b><span>It drag clicks well, but butterfly clicking doesn’t add much on it.</span></li>'
+CON_RE = r'<li class="con"><b>(?:Weak for butterfly clicking|Not built for double-clicking|Capped CPS|Can’t double-click)</b><span>[^<]*</span></li>'
 VER_PRO = '<li class="pro"><b>Verified double-clicker</b><span>ProMouser has confirmed it double-clicks, so butterfly and jitter clicks register extra clicks.</span></li>'
 def patch_page(path, m):
     t = open(path).read(); c = m['cps']; o = OLD.get(m['id'])
@@ -76,12 +79,14 @@ def patch_page(path, m):
     if c.get('verified'):
         t = re.sub(r'<li class="pro"><b>Strong clicker</b><span>[^<]*</span></li>', '', t)
         if 'Verified double-clicker' not in t: t = t.replace('<h3>Why you’d pick it</h3><ul>', '<h3>Why you’d pick it</h3><ul>' + VER_PRO, 1)
+        t = re.sub(CON_RE, '', t)
     else:
         t = re.sub(r'<li class="pro"><b>Strong clicker</b><span>[^<]*</span></li>', '', t)
-        t = t.replace('<span>Lower debounce lets fast butterfly and jitter clicks register.</span>', '<span>You can tune the click delay in software, though ProMouser hasn’t verified it double-clicks.</span>')
-        t = re.sub(r'<li class="con"><b>(?:Weak for butterfly clicking|Not built for double-clicking|Capped CPS)</b><span>[^<]*</span></li>', '', t)
-        t = t.replace('<h3>Think twice if…</h3><ul>', '<h3>Think twice if…</h3><ul>' + CAPPED_CON, 1)
-        t = t.replace('<p>It performs well across butterfly, jitter, and drag clicking, especially when paired with the right settings.</p>', '<p>Its clicks are crisp, but like most mice it isn’t verified to double-click, so butterfly and drag clicking top out early. Great for jitter clicking and 1.9+ combat.</p>')
+        for old in ('<span>Lower debounce lets fast butterfly and jitter clicks register.</span>', '<span>You can tune the click delay in software, though ProMouser hasn’t verified it double-clicks.</span>'):
+            t = t.replace(old, '<span>You can tune the click delay in software, though it still can’t double-click.</span>')
+        t = re.sub(CON_RE, '', t)
+        t = t.replace('<h3>Think twice if…</h3><ul>', '<h3>Think twice if…</h3><ul>' + (DRAG_CON if c.get('drag') else CAPPED_CON), 1)
+        t = t.replace('<p>It performs well across butterfly, jitter, and drag clicking, especially when paired with the right settings.</p>', '<p>Its clicks are crisp, but like most mice it can’t double-click, so butterfly and drag clicking top out early. Great for jitter clicking and 1.9+ combat.</p>')
         t = t.replace('Built to support butterfly, jitter, and drag clicking without feeling heavy or sluggish', 'Light enough for fast jitter clicking without feeling sluggish')
         t = t.replace(' · Drag clicking</span>', '</span>')
     if o and o['bestFor'] != m['bestFor']: t = t.replace(e(o['bestFor']), e(m['bestFor'])).replace(o['bestFor'], m['bestFor'])
@@ -160,6 +165,72 @@ def gm320_page():
     tail = src[src.index('</main>') + len('</main>'):]
     open('mice/ant-esports-gm320.html', 'w').write(head + main + tail)
 
+def kreo_page():
+    m = BY['kreo-hawk']; src = open('mice/bloody-a70.html').read()
+    head = src[:src.index('<main')].replace('Bloody A70 — ProMouser', 'Kreo Hawk — ProMouser').replace('bloody-a70', 'kreo-hawk')
+    desc = 'Kreo Hawk: a comfortable ₹1,199 ergonomic gaming mouse with a PixArt 3327 sensor, 8 buttons and RGB. ProMouser tested it: it can’t double-click. Specs and where to buy.'
+    head = re.sub(r'(<meta (?:name|property)="(?:og:)?description" content=")[^"]*', lambda x: x.group(1) + desc, head)
+    spec = [('Weight', '110 g', ''), ('Max DPI', '12,400', ''), ('Tracking speed', 'Not published', 'na'), ('Max acceleration', '30 G', ''), ('Polling rate', '1,000 Hz', ''), ('Connection', 'Wired', ''),
+            ('Battery life', 'None (wired)', ''), ('Programmable buttons', '8', ''), ('Sensor', 'PixArt PAW3327', ''), ('Switches', 'Not published', 'na'), ('Shape', 'Ergonomic · Right-handed', ''), ('Size', '125 × 80 × 46 mm', ''),
+            ('Best grips', 'Palm / Claw', ''), ('Minecraft CPS potential', f'{m["cps"]["label"]} (1/5)', ''), ('Lowest trusted price', '~₹1,199 · Flipkart', ''), ('ProMouser rating', 'Not published', 'na')]
+    rel = [BY[i] for i in ('logitech-g102-lightsync', 'razer-deathadder-essential', 'ant-esports-gm320', 'redragon-m711-cobra', 'glorious-model-d', 'razer-deathadder-v3')]
+    relh = ''.join(f'<a href="../{r["page"]}" class="reveal"><img src="../assets/images/mice/{r["img"]}{".svg" if r["img"].startswith("art/") else "-480.webp"}" alt="" width="52" height="64" loading="lazy"><span><b>{e(r["short"])}</b><small>{r["weight"]} g · {num(r["poll"])} Hz</small></span></a>' for r in rel)
+    fc = lambda ic, h4, p: f'<div class="feature-card"><div class="fc-icon" data-icon="{ic}"></div><h4>{h4}</h4><p>{p}</p></div>'
+    main = f'''<main id="main" tabindex="-1">
+
+    <section class="review-hero" id="overview">
+      <div class="container review-grid" style="--c:var(--s6)">
+        <div class="review-copy">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../mice.html">Mice</a><span>/</span><span>Kreo</span></nav>
+          <span class="section-label">Kreo · Budget · Comfort</span>
+          <h1 class="review-title">Kreo Hawk</h1>
+          <p class="review-tagline">A comfy, budget <em>ergonomic</em> mouse with a proper sensor.</p>
+          <p class="review-intro">The Kreo Hawk is an Indian-brand wired mouse with a sculpted right-hand shape, a thumb rest, 8 programmable buttons and a PixArt 3327 sensor for around ₹1,199. It’s comfortable for long sessions and fine for FPS. ProMouser tested it for Minecraft clicking: it can’t double-click, so it isn’t a 1.8 PvP pick.</p>
+          <div class="hero-quick"><div><span>Weight</span><b>110<small> g</small></b></div><div><span>Max DPI</span><b>12,400<small></small></b></div><div><span>Polling</span><b>1,000<small> Hz</small></b></div><div><span>Minecraft CPS</span><b>{e(m["cps"]["label"])}<small></small></b></div><div><span>Price</span><b>~₹1,199<small></small></b></div></div>
+          <div class="hero-cta">
+<a class="btn btn-primary" href="{m["buy"]}" target="_blank" rel="noopener noreferrer">Find it on Flipkart</a>
+<a class="btn btn-ghost" href="../mice.html">Browse all mice</a>
+</div>
+          <div class="hero-cta" style="margin-top:.6rem"><button class="watch-btn" type="button" data-watch="kreo-hawk" data-price="1199" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span class="wl">Watch price</span></button></div>
+        </div>
+        <div class="review-stage" style="--c:var(--s6)">
+          <div class="stage-badge"><i></i>Kreo Hawk</div>
+          {picture(m, "../", "(max-width: 960px) 90vw, 520px", eager=True)}
+        </div>
+      </div>
+    </section>
+    <div class="container"><nav class="pill-nav" aria-label="On this page"><div class="inner"><a href="#overview">Overview</a><a href="#stats">Stats</a><a href="#details">Details</a><a href="#verdict">Our take</a><a href="#buy">Where to buy</a></div></nav></div>
+    {cps_section(m, "../")}
+    <section class="stats-section" id="stats">
+      <div class="container" style="--c:var(--s6)">
+        <div class="section-header reveal"><span class="section-label">Spec sheet</span><h2>The <em>numbers</em>, explained</h2>
+          <p>What each spec means in plain English, and who the Hawk suits. We don’t rank mice against each other — the right one depends on your hands, games and budget.</p></div>
+        <div class="statboard" data-mouse-profile="kreo-hawk"></div>
+        <div style="margin-top:20px" class="reveal"><dl class="spec-table">{"".join(f'<div><dt>{a}</dt><dd class="{c}">{b}</dd></div>' for a, b, c in spec)}</dl><p class="stat-disclaimer">{e(m["variantNote"])} </p><p class="stat-disclaimer">Specs are manufacturer-published headline figures and may differ by variant or region. Confirm current details with the seller before buying.</p></div>
+      </div>
+    </section>
+    <section class="about-section" id="details"><div class="container">
+      <div class="section-header reveal"><span class="section-label">Why it stands out</span><h2>Comfort on a <em>budget</em></h2><p>What you get for around ₹1,200, and what you don’t.</p></div>
+      <div class="pc-grid reveal"><div class="panel pc pros"><h3>Why you’d pick it</h3><ul><li class="pro"><b>Comfortable shape</b><span>A sculpted right-hand shell with a thumb rest, easy to hold for hours.</span></li><li class="pro"><b>A real sensor</b><span>The PixArt 3327 tracks cleanly for everyday play and FPS.</span></li><li class="pro"><b>8 programmable buttons</b><span>Side buttons and software for binds and macros.</span></li></ul></div>
+      <div class="panel pc cons"><h3>Think twice if…</h3><ul>{CAPPED_CON}<li class="con"><b>Not light</b><span>At about 110 g it’s steadier than it is quick to flick.</span></li><li class="con"><b>Right-handed only</b><span>The ergonomic shape won’t work for left-handed players.</span></li></ul></div></div>
+    </div></section>
+    <section class="quick-links" id="verdict"><div class="container">
+      <div class="section-header reveal"><span class="section-label">ProMouser take</span><h2>Who it fits best</h2></div>
+      <div class="about-cards reveal">{fc("Pro", "Good fit if", "You want a comfortable palm-grip mouse for work, casual FPS or 1.9+ Minecraft on a small budget.")}{fc("Warn", "Consider alternatives if", "You play 1.8 PvP: it can’t double-click. The Ant Esports GM320 does for ₹498, and the Glorious Model D gives you a similar ergonomic shape that double-clicks.")}{fc("Verdict", "Verdict", "A solid, comfy budget mouse. Just don’t buy it for CPS.")}</div>
+    </div></section>
+    <section class="about-section" id="buy"><div class="container">
+      <div class="section-header reveal"><span class="section-label">Where to buy</span><h2>Trusted buying and product links</h2><p>Prices and availability can change quickly, so check the listing details and seller before placing an order.</p></div>
+      <div class="about-cards reveal"><div class="store-card"><div class="fc-icon" data-icon="Yes"></div><h4>Flipkart</h4><p class="price-line"><span class="price-label">Listed price</span> <span class="price-tag">~₹1,199</span></p><a class="btn btn-outline" href="{m["buy"]}" rel="noopener noreferrer" target="_blank">Search on Flipkart</a></div>
+      <div class="store-card"><div class="fc-icon" data-icon="Guide"></div><h4>Official page</h4><p>Specs and software from Kreo.</p><a class="btn btn-outline" href="https://kreo-tech.com/products/hawk-gaming-mouse" rel="noopener noreferrer" target="_blank">View on kreo-tech.com</a></div></div>
+    </div></section>
+    <section class="about-section"><div class="container">
+      <div class="section-header reveal"><span class="section-label">Keep looking</span><h2>More mice to <em>compare</em></h2></div>
+      <div class="related">{relh}</div>
+      <div class="hero-cta"><a href="../mice/compare.html?m=kreo-hawk,logitech-g102-lightsync" class="btn btn-primary">Compare with the G102</a><a href="../mice.html#explorer" class="btn btn-ghost">Open the stats lab</a></div>
+    </div></section>
+  </main>'''
+    open('mice/kreo-hawk.html', 'w').write(head + main + src[src.index('</main>') + len('</main>'):])
+
 # ---------------------------------------------------------------- 4. Minecraft guide: verified list + why the rest are capped
 EXPLAIN = '''<section class="about-section" id="capped"><div class="container">
 <div class="section-header reveal"><span class="section-label">Why most mice are capped</span><h2>How brands <em>limit</em> your CPS</h2>
@@ -170,16 +241,19 @@ EXPLAIN = '''<section class="about-section" id="capped"><div class="container">
 <div class="feature-card"><div class="fc-icon" data-icon="Light"></div><h4>Optical switches never bounce</h4><p>Optical and hybrid switches (most Razer mice, Logitech’s LIGHTFORCE) read the press with a beam of light, so there’s no bounce at all: one press is always exactly one click. Brilliant for FPS, but a butterfly or drag click can never sneak in an extra one.</p></div>
 <div class="feature-card"><div class="fc-icon" data-icon="Click"></div><h4>What “double-clicks” means</h4><p>A mouse that double-clicks has a short enough debounce (Glorious lets you set it near 0 ms) that one quick finger movement can register as two clicks. That is how butterfly clicking reaches 20+ CPS. Some servers limit CPS or ban double-click mice and macros, so check the rules where you play.</p></div>
 </div>
-<div class="panel reveal" style="margin-top:18px"><h3 style="margin-bottom:.4rem">Why we only list verified mice</h3><p class="panel-note" style="margin:0">Plenty of forum posts claim a mouse “can drag click”. ProMouser only marks a mouse as double-clicking once it has been checked by a person. Every other mouse is rated <b>Capped CPS</b> until it is, even if it has an adjustable debounce on paper. Right now that verified list is the {names}.</p></div>
+<div class="panel reveal" style="margin-top:18px"><h3 style="margin-bottom:.4rem">Why we only list verified mice</h3><p class="panel-note" style="margin:0">Plenty of forum posts claim a mouse “can drag click”. ProMouser only marks a mouse as double-clicking once it has been checked by a person. Every other mouse is listed as <b>can’t double-click</b> until it is, even if it has an adjustable debounce on paper. Right now that verified list is the {names}.</p></div>
 </div></section>'''
 def minecraft_page():
     p = 'mice/minecraft.html'; t = open(p).read()
     t = t.replace('<p class="cps-hint"><strong>Chasing CPS?</strong> The Glorious Model O and Bloody A70 offer the most click-speed potential. <a href="#top-cps">See them first →</a></p>',
                   f'<p class="cps-hint"><strong>Chasing CPS?</strong> Only {len(VER)} mice on ProMouser are verified to double-click. <a href="#top-cps">See them first →</a></p>')
-    start = t.index('<section class="about-section" id="more-picks">'); end = t.index('</section>', start) + len('</section>')
+    t = re.sub(r'<p class="cps-hint"><strong>Chasing CPS\?</strong> Only \d+ mice', f'<p class="cps-hint"><strong>Chasing CPS?</strong> Only {len(VER)} mice', t)
+    if 'id="verified"' in t:   # regenerate the verified list + explainer
+        start = t.index('<section class="about-section" id="verified">'); end = t.index('</section>', t.index('<section class="about-section" id="capped">')) + len('</section>')
+    else: start = t.index('<section class="about-section" id="more-picks">'); end = t.index('</section>', start) + len('</section>')
     rest = [m for m in VER if m['cps']['level'] < 5]
     more = ('<section class="about-section" id="verified"><div class="container">\n<div class="section-header reveal"><span class="section-label">Verified double-clickers</span><h2>The other mice that <em>double-click</em></h2>'
-            '<p>Together with the Model O and Bloody A70 above, these are the only mice ProMouser has verified can double-click. Everything else on the site is rated Capped CPS.</p></div>\n<div class="mouse-grid">'
+            '<p>Together with the Model O and Bloody A70 above, these are the only mice ProMouser has verified can double-click. Every other mouse can’t (the Redragon M711 Cobra drag clicks, but doesn’t butterfly well).</p></div>\n<div class="mouse-grid">'
             + ''.join(card(m, '../') for m in sorted(rest, key=lambda x: x['price'] or 0)) + '</div></div></section>\n' + EXPLAIN.format(names=e(VER_NAMES)))
     t = t[:start] + more + t[end:]
     if t.count('id="capped"') > 1: raise SystemExit('duplicate explainer')
@@ -190,15 +264,19 @@ def catalogue():
     p = 'mice.html'; t = open(p).read()
     if 'data-id="ant-esports-gm320"' not in t:
         t = t.replace('<div class="mouse-grid catalog-grid" data-catalog>', '<div class="mouse-grid catalog-grid" data-catalog>' + card(BY['ant-esports-gm320'], ''), 1)
+    if 'data-id="kreo-hawk"' not in t:   # alphabetical: before the first card whose name sorts after it
+        ids = re.findall(r'<article class="mouse-card reveal" data-id="([a-z0-9-]+)"', t[t.index('data-catalog'):])
+        nxt = next(i for i in ids if BY.get(i) and BY[i]['name'].lower() > 'kreo hawk')
+        t = t.replace(f'<article class="mouse-card reveal" data-id="{nxt}"', card(BY['kreo-hawk'], '') + f'<article class="mouse-card reveal" data-id="{nxt}"', 1)
     open(p, 'w').write(t)
 
 if __name__ == '__main__':
     gm320_page(); catalogue()
-    if 'id="capped"' not in open('mice/minecraft.html').read(): minecraft_page()
+    minecraft_page(); kreo_page()
     for f in glob.glob('*.html') + glob.glob('mice/*.html') + glob.glob('blog/*.html'):
         t = open(f).read(); n = patch_cards(t)
         if n != t: open(f, 'w').write(n)
     for m in MICE:
         f = m['page']
-        if os.path.exists(f) and m['id'] != 'ant-esports-gm320': patch_page(f, m)
+        if os.path.exists(f) and m['id'] not in ('ant-esports-gm320', 'kreo-hawk'): patch_page(f, m)
     print('verified:', VER_NAMES)

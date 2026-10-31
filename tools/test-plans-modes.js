@@ -27,18 +27,18 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   ok(/\d+\s*g/.test(await p.textContent('#asstLog')), 'assistant answered the ?q question');
   // 2b. CPS truth + GM320
   await p.goto(BASE + 'mice.html'); await p.waitForTimeout(600);
-  ok(await p.$$eval('[data-catalog] .mouse-card', a => a.length) === 39 && !!(await p.$('[data-catalog] [data-id="ant-esports-gm320"]')), 'catalogue has 39 mice including the GM320');
+  ok(await p.$$eval('[data-catalog] .mouse-card', a => a.length) === 40 && !!(await p.$('[data-catalog] [data-id="kreo-hawk"]')), 'catalogue has 40 mice including the GM320 and Kreo Hawk');
   ok(!(await p.$('[data-catalog] .cps3, [data-catalog] .mouse-card [data-cps=""]')), 'the CPS test no longer takes over a mouse card');
   const dc = await p.evaluate(() => PM.MICE.filter(m => m.cps.verified).map(m => m.id).sort().join(','));
-  ok(dc === 'ant-esports-gm320,bloody-a70,glorious-model-d,glorious-model-o,glorious-model-o-minus,hyperx-pulsefire-haste-2', 'exactly the 6 verified double-clickers: ' + dc);
+  ok(dc === 'ant-esports-gm320,attack-shark-x3,bloody-a70,glorious-model-d,glorious-model-o,glorious-model-o-minus,hyperx-pulsefire-haste-2', 'exactly the 7 verified double-clickers: ' + dc);
   const mc = await p.evaluate(() => PM.recommend({ games: ['minecraft'], mcVersion: '1.8', weight: 'any', grip: 'any', connection: 'any' }).slice(0, 6).map(r => r.m.cps.verified));
   ok(mc.every(Boolean), 'top 6 recommendations for 1.8 PvP are all double-clickers');
   await p.goto(BASE + 'mice/logitech-g102-lightsync.html'); await p.waitForTimeout(500);
-  ok(/Capped CPS/.test(await p.textContent('#cps')) && !/drag clicks well/.test(await p.content()), 'G102 page says Capped CPS');
+  ok(/Can’t double-click/.test(await p.textContent('#cps')) && !/Not verified by ProMouser/.test(await p.content()), 'G102 page says it can’t double-click');
   await p.goto(BASE + 'mice/ant-esports-gm320.html'); await p.waitForTimeout(500);
   ok(/498/.test(await p.textContent('.hero-quick')) && /amazon\.in/.test(await p.getAttribute('#buy a.btn', 'href')), 'GM320 page with ₹498 and an Amazon link');
   await p.goto(BASE + 'mice/minecraft.html'); await p.waitForTimeout(500);
-  ok(await p.$$eval('#verified .mouse-card', a => a.length) === 4 && !!(await p.$('#capped')), 'Minecraft page: verified list + capped explainer');
+  ok(await p.$$eval('#verified .mouse-card', a => a.length) === 5 && !!(await p.$('#capped')), 'Minecraft page: verified list + capped explainer');
   // 2c. ProMouser AI credits: guests 3 a day, 1 credit = 5 questions, Ultra unlimited
   await p.goto(BASE + 'mouse-ai.html'); await p.evaluate(() => { localStorage.removeItem('pm_ai_meter'); sessionStorage.clear(); }); await p.reload(); await p.waitForTimeout(800);
   for (let i = 0; i < 4; i++) { await p.fill('#asstInput', 'how heavy is the G102'); await p.press('#asstInput', 'Enter'); await p.waitForTimeout(1000); }
