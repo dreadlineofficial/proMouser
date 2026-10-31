@@ -1,5 +1,5 @@
 /* =====================================================================
-   ProMouser: Recommendation Assistant  (mouse-ai.html)
+   ProMouser AI  (mouse-ai.html)
 
    A conversational helper that runs entirely in the browser on the same
    data as the rest of the site (mice-data.js + the fit engine in stats.js).
@@ -13,6 +13,9 @@
      • lists: "lightest wireless mice under ₹5,000", "which mice can drag click"
      • concepts: DPI, polling rate, debounce, butterfly/jitter/drag, grips…
      • follow-ups: "cheaper", "lighter", "show more", "why that one?"
+     • "how / why is it better (than the G102)?", "what makes it good", "downsides?"
+     • which mice double-click, and why most mice are capped
+   Each question uses credits (1 credit covers 5 questions; Ultra is unlimited).
    It remembers the conversation for this browser tab.
    ===================================================================== */
 (() => {
@@ -85,6 +88,8 @@
   ALIASES.sort((a, b) => b[0].length - a[0].length);
   const VOCAB = [...new Set(ALIASES.flatMap(([a]) => a.split(' ')).filter(w => w.length >= 5 && /^[a-z]+$/.test(w)))];
   const BRANDS = [...new Set(MICE.map(m => m.brand))];
+  // the only mice ProMouser has verified can double-click (mice-data.js cps.verified); every other mouse is capped
+  const VERIFIED = MICE.filter(m => m.cps.verified).sort((a, b) => b.cps.level - a.cps.level || (a.price || 0) - (b.price || 0)), VERIFIED_IDS = VERIFIED.map(m => m.id);
 
   function lev(a, b) {
     if (Math.abs(a.length - b.length) > 2) return 9;
@@ -274,7 +279,7 @@
     const gp = pick[0].parts.find(x => x.key === 'game');
     if (gp && gp.value < .5 && !opts.more) P(o, `<span class="a-note">None of the mice that pass your other must-haves is really built for ${esc(LABEL.games(p.games))}${p.lefty ? ': being left-handed rules out the ergonomic, button-heavy shapes' : p.budgetMax ? ': try a higher budget' : ''}. Remove a filter under “What I know about you” to see better matches.</span>`);
     else if (pick[0].score != null && pick[0].score < 62 && !opts.more) P(o, `<span class="a-note">These are the closest fits, but none matches everything well. Try removing a filter under “What I know about you”${p.lefty ? ' (left-handed rules out most ergonomic mice)' : ''}.</span>`);
-    if ((p.games || []).includes('minecraft') && p.mcVersion !== '1.9+' && top.cps.level < 4) P(o, `<span class="a-note">Heads-up: for 1.8 PvP, the <a href="${root}mice/glorious-model-o.html">Glorious Model O</a> and <a href="${root}mice/bloody-a70.html">Bloody A70</a> have the most CPS potential, but they didn’t fit your other answers as well.</span>`);
+    if ((p.games || []).includes('minecraft') && p.mcVersion !== '1.9+' && !top.cps.verified) P(o, `<span class="a-note">Heads-up: your top pick is capped for CPS. Only ${VERIFIED.length} mice are verified to double-click (the cheapest is the <a href="${root}mice/ant-esports-gm320.html">Ant Esports GM320</a> at ₹498), but they didn’t fit your other answers as well.</span>`);
     // ask the single most useful next question
     if (!p.games) { P(o, 'What do you mostly play? That changes the picks the most.'); chips(o, ['FPS', 'I play FPS games'], ['Minecraft PvP', 'I play Minecraft 1.8 PvP'], ['MMO / MOBA', 'I play MMOs'], ['Work', 'Mostly work and browsing']); }
     else if (!p.grip) { P(o, 'How do you hold your mouse? If you’re not sure, ask me “how do I find my grip?”'); chips(o, ['Palm', 'I use palm grip'], ['Claw', 'I use claw grip'], ['Fingertip', 'I use fingertip grip'], ['Not sure', 'How do I find my grip?']); }
@@ -340,8 +345,10 @@
     o.blocks.push({ t: 'html', html: `<div class="a-hero">${imgTag(m)}<div><small>${esc(m.brand)} · ${esc(m.tags.join(' · '))}</small><h4>${esc(m.name)}</h4><p>${esc(m.bestFor)}.</p>
       <div class="a-specs">${[['Weight', m.weight + ' g'], ['Sensor', m.sensor || '—'], ['Max DPI', num(m.dpi)], ['Polling', num(m.poll) + ' Hz'], ['Connection', m.connection + (m.battery ? ` · ${m.battery} h` : '')], ['Buttons', m.buttons ?? '—'], ['Size', m.dims ? m.dims.join(' × ') + ' mm' : '—'], ['Price', m.price ? '~' + inr(m.price) : '—']].map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div></div></div>` });
     P(o, `<b>Minecraft:</b> ${esc(m.cps.label)} (${m.cps.level}/5). ${esc(m.cps.note)}`);
+    if (m.caveat) P(o, `<span class="a-note">⚠ ${esc(m.caveat)}</span>`);
+    if (m.buy) P(o, `<a href="${m.buy}" target="_blank" rel="noopener">Find it on Amazon${m.price ? ' · ' + inr(m.price) : ''} ↗</a>`);
     if (personal) P(o, `For you it’s a <b>${r.score}% fit</b>${r.pros.length ? ': ' + esc(r.pros.slice(0, 2).join('; ').toLowerCase()) : ''}.${r.cons.length ? ' Watch out: ' + esc(r.cons[0].toLowerCase()) + '.' : ''}`);
-    chips(o, ['Is it good for Minecraft?', `Is the ${m.short} good for Minecraft?`], ['Cheaper alternative', `Something cheaper than the ${m.short}`], ['Compare it', `Compare the ${m.short} with ${similar(m)[0].short}`], ['Full page', `@open:${m.page}`]);
+    chips(o, ['What makes it good?', `What makes the ${m.short} good?`], ['Downsides?', `What are the downsides of the ${m.short}?`], ['Cheaper alternative', `Something cheaper than the ${m.short}`], ['Compare it', `Compare the ${m.short} with ${similar(m)[0].short}`], ['Full page', `@open:${m.page}`]);
     return o;
   }
 
@@ -399,11 +406,19 @@
     else if (/\b(wireless|cordless)\b/.test(t)) { f = x => x.connection === 'Wireless'; what = 'like (but wireless)'; }
     else if (/\bwired\b/.test(t)) { f = x => x.connection === 'Wired'; what = 'like (but wired)'; }
     else if (/better (for )?(click|cps|butterfly|minecraft)|more cps/.test(t)) { f = x => x.cps.level > m.cps.level; what = 'that clicks better than'; }
-    const list = similar(m, f).slice(0, 3);
-    if (!list.length) { P(o, `I couldn’t find anything ${what} the ${esc(m.name)} in our list.`); return o; }
-    ctx.last = list.map(x => x.id); ctx.focus = null;
-    P(o, `Mice ${what} the <b>${esc(m.name)}</b> (${m.weight} g · ${m.price ? inr(m.price) : 'no price'}), closest in shape and use first:`);
-    o.blocks.push({ t: 'html', html: `<div class="a-cards">${list.map((x, i) => card({ m: x, pros: [x.bestFor + '.'] }, i)).join('')}</div>` });
+    // a double-clicker's alternatives should still double-click (that's usually why you picked it)
+    const keepDC = m.cps.verified && !/\b(fps|aim|valorant|cs2?|wireless)\b/.test(t);
+    let list = keepDC ? [...similar(m, x => f(x) && x.cps.verified), ...similar(m, f)].filter((x, i, a) => a.indexOf(x) === i).slice(0, 3) : similar(m, f).slice(0, 3);
+    if (!list.length) {
+      const cheapest = MICE.filter(x => x.price).sort((a, b) => a.price - b.price)[0];
+      P(o, what === 'cheaper than' && cheapest && cheapest.id === m.id ? `The <b>${esc(m.name)}</b> is already the cheapest mouse on ProMouser at ${inr(m.price)}${m.cps.verified ? ', and the cheapest one that double-clicks' : ''}. Nothing cheaper is worth recommending.` : `I couldn’t find anything ${what} the ${esc(m.name)} in our list.`);
+      return o;
+    }
+    ctx.last = list.map(x => x.id); ctx.focus = null; ctx.pair = [list[0].id, m.id];
+    P(o, `Mice ${what} the <b>${esc(m.name)}</b> (${m.weight} g · ${m.price ? inr(m.price) : 'no price'}), closest in shape and use first${keepDC && list[0].cps.verified ? ', keeping ones that also double-click' : ''}:`);
+    const note = x => [x.price && m.price && x.price < m.price ? `${inr(m.price - x.price)} cheaper.` : null, x.cps.verified && !m.cps.verified ? 'Double-clicks, unlike the ' + m.short + '.' : !x.cps.verified && m.cps.verified ? 'Capped: it won’t double-click like the ' + m.short + '.' : null, x.caveat ? '⚠ ' + x.caveat : x.bestFor + '.'].filter(Boolean);
+    o.blocks.push({ t: 'html', html: `<div class="a-cards">${list.map((x, i) => card({ m: x, pros: note(x) }, i)).join('')}</div>` });
+    chips(o, ['What would I lose?', `How is the ${m.short} better than the ${list[0].short}?`]);
     chips(o, ['Compare with the first', `Compare the ${m.short} with ${list[0].short}`]);
     return o;
   }
@@ -432,11 +447,14 @@
       return `<tr><th>${label}</th>${ms.map((m, i) => `<td class="${best != null && vs[i] === best ? 'win' : ''}">${esc(String(fmt(m, i)))}</td>`).join('')}</tr>`;
     }).join('')}</tbody></table></div>`;
     o.blocks.push({ t: 'html', html: table });
+    { const ws = personal || ms.map(merit), wi = ws.indexOf(Math.max(...ws)); if (ms.length === 2) ctx.pair = [ms[wi].id, ms[1 - wi].id]; }
+    ms.filter(m => m.caveat).forEach(m => P(o, `<span class="a-note">⚠ ${esc(m.short)}: ${esc(m.caveat)}</span>`));
     const pickIf = m => {
       const others = ms.filter(x => x !== m), out = [];
       if (others.every(x => m.weight < x.weight - 4)) out.push('you want the lightest, fastest-to-flick option');
       if (m.price && others.every(x => !x.price || m.price < x.price * .85)) out.push('price matters');
-      if (m.cps.level >= 3 && others.every(x => m.cps.level > x.cps.level)) out.push('you play 1.8 Minecraft PvP and want max CPS');
+      if (m.cps.verified && others.every(x => !x.cps.verified)) out.push('you play 1.8 Minecraft PvP: it double-clicks, the others are capped');
+      else if (m.cps.verified && others.every(x => m.cps.level > x.cps.level)) out.push('you want the most CPS potential');
       if (m.connection === 'Wireless' && others.every(x => x.connection === 'Wired')) out.push('you want to go wireless');
       if ((m.buttons || 0) >= 8 && others.every(x => (x.buttons || 0) < (m.buttons || 0) - 1)) out.push('you need lots of buttons for binds');
       if (others.every(x => m.comfort > x.comfort)) out.push('comfort for long sessions comes first');
@@ -447,6 +465,7 @@
     const lines = ms.map(m => { const w = pickIf(m); return w.length ? `<b>${esc(m.short)}</b> if ${w.slice(0, 3).join(', ')}.` : null; }).filter(Boolean);
     if (lines.length) P(o, 'Pick the ' + lines.join('<br>Pick the '));
     if (!personal) chips(o, ['For FPS?', `${ms[0].short} vs ${ms[1].short} for FPS`], ['For Minecraft?', `${ms[0].short} vs ${ms[1].short} for Minecraft PvP`]);
+    if (ms.length === 2) chips(o, ['Why is it better?', `Why is the ${byId[ctx.pair[0]].short} better than the ${byId[ctx.pair[1]].short}?`]);
     chips(o, ['Open in compare lab', `@open:mice/compare.html?m=${ms.map(m => m.id).join(',')}`]);
     return o;
   }
@@ -486,30 +505,137 @@
 
   const CONCEPTS = [
     [/double ?click(ing|s)?\b.*\b(fix|problem|issue|what (do|should|can) i do|broken|keeps|randomly|by itself|on its own)|\bmy mouse (is |keeps )?(double|clicking twice)|\bfix.*double ?click/, 'Fixing a mouse that double-clicks', 'That’s usually a worn switch “chattering”. In order: 1) Confirm it with the <a href="' + root + 'mouse-button-test.html">mouse button test</a>. 2) Raise the debounce time in your mouse software if it has one. 3) Blow compressed air into the gap under the button. 4) If it’s under warranty (Logitech and Razer give 2 years in India), claim it. 5) Handy with a soldering iron? A new Omron or Kailh switch costs under ₹100. Mice with optical switches can’t develop this fault.'],
-    [/\b(more|increase|improve|higher|boost|raise|get better) (my )?cps\b|\bcps (higher|up)\b|\bclick faster\b|\bhow to (get )?(fast|faster) click/, 'How to get more CPS', '1) Pick a technique: jitter (10–14 CPS) is easiest to learn, butterfly (15–25) needs a mouse that registers fast presses, drag (25+) needs a grippy button. 2) Use a mouse that supports it: the Glorious Model O for butterfly, the Bloody A70 for drag. 3) Practise in short bursts on the <a href="' + root + 'cps-test.html">CPS test</a>: five 5-second runs, then rest. 4) Keep your wrist relaxed: if it hurts, stop. Lite shows your double clicks and consistency so you can see what’s improving.', ['glorious-model-o', 'bloody-a70']],
-    [/how (do i|to|can i|do you|should i) butterfly/, 'How to butterfly click', 'Rest your index and middle fingers on the left button, then tap them one after the other, fast, like drumming. Each finger adds a click, so you get two clicks per “cycle”. Keep your wrist on the desk and your fingers relaxed. Start slowly for rhythm, then speed up. It needs a mouse with a crisp, low-debounce switch: the Glorious Model O is the classic choice.', ['glorious-model-o']],
+    [/\b(more|increase|improve|higher|boost|raise|get better) (my )?cps\b|\bcps (higher|up)\b|\bclick faster\b|\bhow to (get )?(fast|faster) click/, 'How to get more CPS', '1) Pick a technique: jitter (10–14 CPS) is easiest to learn, butterfly (15–25) needs a mouse that registers fast presses, drag (25+) needs a grippy button. 2) Use a mouse that can double-click: most mice are capped. ProMouser has verified only six: the Glorious Model O, Model O- and Model D, the Bloody A70, the HyperX Pulsefire Haste 2 and the ₹498 Ant Esports GM320. 3) Practise in short bursts on the <a href="' + root + 'cps-test.html">CPS test</a>: five 5-second runs, then rest. 4) Keep your wrist relaxed: if it hurts, stop. Lite shows your double clicks and consistency so you can see what’s improving.', VERIFIED_IDS.slice(0, 3)],
+    [/how (do i|to|can i|do you|should i) butterfly/, 'How to butterfly click', 'Rest your index and middle fingers on the left button, then tap them one after the other, fast, like drumming. Each finger adds a click, so you get two clicks per “cycle”. Keep your wrist on the desk and your fingers relaxed. Start slowly for rhythm, then speed up. It only adds clicks on a mouse that can double-click: the Glorious Model O is the classic choice, and the Ant Esports GM320 is the budget one.', ['glorious-model-o', 'ant-esports-gm320']],
     [/how (do i|to|can i|do you|should i) jitter/, 'How to jitter click', 'Hold your hand in a claw over the mouse, tense your forearm and let your index finger vibrate on the left button. Keep the vibration small and keep breathing. Practise in 5-second bursts and stop if your wrist hurts. Light mice with a firm click work best.'],
-    [/how (do i|to|can i|do you|should i) drag ?click/, 'How to drag click', 'Put your finger on the top of the left button and drag it down slowly with firm pressure. Friction makes the finger skip, and each skip is a click. Grip tape or a slightly sweaty finger helps. The Bloody A70 and Logitech G102 are known drag clickers.', ['bloody-a70', 'logitech-g102-lightsync']],
+    [/how (do i|to|can i|do you|should i) drag ?click/, 'How to drag click', 'Put your finger on the top of the left button and drag it down slowly with firm pressure. Friction makes the finger skip, and each skip is a click. Grip tape helps. It only works on a mouse that isn’t capped: the Bloody A70 is the classic drag clicker. Most mice, including the Logitech G102, merge those skips into single clicks.', ['bloody-a70']],
     [/\b(8 ?k|8000 ?hz|4 ?k|4000 ?hz|high polling)\b/, 'Is 4K / 8K polling worth it?', 'Only if you have a 240 Hz+ monitor and a fast PC. 8,000 Hz makes motion a touch smoother and cuts latency by under 1 ms, but it uses noticeably more CPU and drains wireless batteries faster. On a 60–144 Hz screen you won’t feel it. 1,000 Hz is still the right default for most players.', ['razer-viper-v3-pro']],
     [/(does|do|will) (the |a |my |your )?mouse (really )?(matter|make a difference|help|improve)|better mouse.*(aim|better player)|mouse.*(improve|help).*aim/, 'Does your mouse matter for aim?', 'A bit, but less than practice. A good mouse removes problems: a flawless sensor, a weight you can control and a shape that fits your grip. Going from a heavy, ill-fitting office mouse to a light gaming mouse is a big jump. Going from a ₹3,000 gaming mouse to a ₹15,000 one is a small one. Fix sensitivity and practise with the <a href="' + root + 'aim-trainer.html">aim trainer</a> first.'],
     [/\b(quiet|quietest|silent|noise|noisy|loud)\b/, 'Quiet mice', 'We don’t measure click noise yet, so I can’t rank our mice by how loud they are. If quiet matters most, look for mice sold as “silent”: they use dampened switches. They’re great for offices and late nights, but a poor match for jitter or butterfly clicking.'],
     [/\b(white|black|pink|blue|red|purple|colou?rs?|colou?rway)\b(?!.*\b(theme|site|website)\b)/, 'Colours', 'We don’t track colours yet. Plenty of the mice here come in white or other colours, including the Logitech G PRO X Superlight 2, the Glorious Model O, the Razer Viper V3 Pro and the Logitech G102. Check the seller’s listing for what’s in stock.'],
-    [/\b(pros?|professional|esports?|streamers?|youtubers?|technoblade|tenz|s1mple|dream|shroud|zywoo|players?)\b.*\b(use|using|uses|play with)\b|\bwhat (mouse|mice) (do|does) (pros|professional)/, 'What do pros use?', 'We don’t track individual players’ setups, so I won’t guess anyone’s mouse. As a general picture: in pro FPS, light wireless mice dominate, and the Logitech G PRO X Superlight 2 and Razer Viper V3 Pro are the most common. Zowie’s EC series is a long-time Counter-Strike favourite. In 1.8 Minecraft PvP, the Glorious Model O and Bloody A70 are the community’s go-to CPS mice.', ['logitech-g-pro-x-superlight-2', 'razer-viper-v3-pro', 'glorious-model-o']],
+    [/\b(pros?|professional|esports?|streamers?|youtubers?|technoblade|tenz|s1mple|dream|shroud|zywoo|players?)\b.*\b(use|using|uses|play with)\b|\bwhat (mouse|mice) (do|does) (pros|professional)/, 'What do pros use?', 'We don’t track individual players’ setups, so I won’t guess anyone’s mouse. As a general picture: in pro FPS, light wireless mice dominate, and the Logitech G PRO X Superlight 2 and Razer Viper V3 Pro are the most common. Zowie’s EC series is a long-time Counter-Strike favourite. In 1.8 Minecraft PvP, the Glorious Model O and Bloody A70 are the go-to CPS mice, because they double-click.', ['logitech-g-pro-x-superlight-2', 'razer-viper-v3-pro', 'glorious-model-o']],
     [/\b(dpi|cpi)\b/, 'DPI (or CPI)', 'How far the cursor moves per inch of mouse movement. It’s sensitivity, not accuracy. Most good players use 400–1,600 DPI and tune in-game sensitivity. A 30,000 DPI sensor isn’t “more accurate” than a 12,000 one at the settings you’ll actually use.'],
     [/\bpolling\b|\bhz\b|\breport rate\b/, 'Polling rate', 'How often the mouse reports to your PC each second. 1,000 Hz (1 ms) is the gaming standard. 4,000–8,000 Hz feels a touch smoother on high-refresh monitors but uses more CPU and battery. It won’t fix aim on its own.'],
     [/\bips\b|tracking speed/, 'IPS (tracking speed)', 'The fastest swipe the sensor can follow without losing track. Anything above ~250 IPS is plenty for almost everyone; low-sensitivity FPS players benefit from 400+.'],
-    [/\bdebounce\b/, 'Debounce', 'A short delay a mouse waits before accepting another click, to stop accidental double-clicks. Lower debounce (some mice go to 0 ms) lets fast butterfly and jitter clicks register, which is why the Glorious Model O is a Minecraft favourite.'],
-    [/\bbutterfly\b/, 'Butterfly clicking', 'Alternating two fingers on one button so you get two clicks per “cycle”. It needs a mouse that registers rapid presses (low debounce, mechanical switches). Glorious Model O and Bloody A70 are the strongest picks; Razer’s optical-switch mice (DeathAdder V3, Viper V3 Pro) are weak at it.'],
+    [/\bdebounce\b/, 'Debounce', 'A short delay a mouse waits after each click before it accepts another, so a bouncing switch doesn’t register twice. Most brands fix it at a safe, longer value, which merges fast butterfly and drag clicks into single clicks: that’s why most mice are capped. Glorious lets you lower it towards 0 ms, so one quick press can register as two clicks.', VERIFIED_IDS.slice(0, 3)],
+    [/\bbutterfly\b/, 'Butterfly clicking', 'Alternating two fingers on one button so you get two clicks per “cycle”. It only adds CPS on a mouse that can double-click. ProMouser has verified six: the Glorious Model O, O- and D, the Bloody A70, the HyperX Pulsefire Haste 2 and the Ant Esports GM320. Every other mouse is capped.', VERIFIED_IDS.slice(0, 3)],
     [/\bjitter\b/, 'Jitter clicking', 'Tensing your arm so one finger vibrates on the button. It works on most mice with a firm, crisp click; lighter mice are easier to keep steady.'],
-    [/\bdrag ?click/, 'Drag clicking', 'Dragging a finger across the button so friction makes it bounce and register many clicks. It depends on a grippy button surface and switch: the Bloody A70 is the classic drag clicker; grip tape helps on others.'],
+    [/\bdrag ?click/, 'Drag clicking', 'Dragging a finger across the button so friction makes it bounce and register many clicks. It needs a grippy button and a mouse that isn’t capped: the Bloody A70 is the classic drag clicker. On a capped mouse the skips merge into single clicks, however good your technique.', ['bloody-a70']],
     [/\bcps\b/, 'CPS (clicks per second)', 'How many clicks you register per second. In 1.8 Minecraft PvP it decides trades. Normal clicking is ~6–8 CPS, jitter ~10–14, butterfly 15–25+, drag 25+. Test yours with the <a href="' + root + 'cps-test.html">CPS test</a>.'],
     [/\b1\.8\b.*\b1\.9|\b1\.9\b.*\b1\.8|\bpvp version|combat update/, '1.8 vs 1.9+ PvP', '1.8 combat has no attack cooldown, so faster clicking means more hits: CPS is king. 1.9+ added a cooldown, so timing, aim and comfort matter more than raw CPS. Tell me which you play and I’ll weight picks accordingly.'],
     [/\b(grip|palm|claw|fingertip)\b/, 'Grip styles', '<b>Palm</b>: whole hand rests on the mouse; suits bigger, ergonomic shells. <b>Claw</b>: palm touches the back, fingers arched; suits medium, shorter mice. <b>Fingertip</b>: only fingertips touch; suits small, light mice. Quick test: rest your hand naturally on your mouse and see which parts touch.'],
     [/measure.*hand|hand.*measure|hand size|how big.*hand/, 'Measuring your hand', 'Measure from the crease of your wrist to the tip of your middle finger. Under 17 cm is small, 17–19.5 cm medium, over 19.5 cm large. Tell me the number (like “my hand is 18.5 cm”) and I’ll match it against each mouse’s real length.'],
-    [/\boptical switch|mechanical switch|switch type/, 'Optical vs mechanical switches', 'Optical switches use a light beam, so they never wear out into double-clicking and need no debounce, but some (like Razer’s) are poor for butterfly clicking. Mechanical switches have a metal contact: crisp and great for click techniques, but they can develop double-clicks over years.'],
+    [/\boptical switch|mechanical switch|switch type/, 'Optical vs mechanical switches', 'Optical switches use a light beam, so they never wear out into double-clicking and need no debounce, but because they never bounce, every press is exactly one click, so they can’t double-click for CPS. Mechanical switches have a metal contact: crisp and great for click techniques, but they can develop double-clicks over years.'],
     [/\b(wired vs wireless|wireless lag|wireless latency|is wireless good)\b/, 'Wired vs wireless', 'Modern 2.4 GHz gaming wireless (Lightspeed, HyperSpeed) is as fast as wired. Bluetooth is slower, fine for work. Wireless costs more and needs charging, but removes cable drag.'],
     [/\b(weight|heavy|light)\b.*\bmatter|\bwhy light/, 'Does weight matter?', 'Lighter mice (under ~65 g) are easier to flick and stop, which helps fast FPS aim and long sessions. Heavier mice feel steadier for slow, precise movement. It’s personal: there’s no best weight.']
   ];
+
+  /* =============================== 4b. CPS truth, strengths, "why is it better" =============================== */
+  const CAP_RE = /\b(capped|uncapped|cps (cap|limit)|cap(s|ped)? (my |the )?cps|limit(s|ed)? (my |the )?cps|double[- ]?click (protection|filter)|why (is|are) my cps|why can'?t (i|my mouse|it) (drag|butterfly|double)|brands? (cap|limit)|how do (brands|companies|they) (cap|limit))\b/;
+  const DC_LIST_RE = /\b(which|what|list|show|name|all|any)\b.*\b(double[- ]?click\w*|uncapped|not capped|can (butterfly|drag)( click)?)\b|\b(double[- ]?click(ing|s)?|uncapped) (mice|mouses?|ones)\b|\b(mice|mouses?|ones) (that|which) (can )?(double|butterfly|drag)/;
+  function capExplain(o) {
+    P(o, '<b>Why most mice are capped</b>');
+    P(o, 'Butterfly, jitter and drag clicking all hit one button many times, a few milliseconds apart. Whether those presses count is up to the mouse:');
+    P(o, '• <b>Debounce.</b> A mechanical switch’s contacts bounce for a few milliseconds when pressed, so the firmware waits a set time after each click and ignores anything inside that window. Fast butterfly and drag presses land inside it and get merged into one click. That window is the cap.<br>• <b>Why brands keep it high.</b> Worn switches start double-clicking by themselves, the number one reason mice get returned. A longer, fixed debounce hides that, so most brands don’t let you lower it.<br>• <b>Optical switches</b> (most Razer mice, Logitech’s LIGHTFORCE) read the press with light and never bounce, so one press is always exactly one click.<br>• A mouse that <b>double-clicks</b> has a short enough delay that one quick press can register twice. That’s how butterfly clicking reaches 20+ CPS.');
+    P(o, `ProMouser has verified only ${VERIFIED.length} mice that double-click; every other mouse is rated <b>Capped CPS</b> until a person has checked it. <a href="${root}mice/minecraft.html#capped">Read the full explainer →</a>`);
+    o.blocks.push({ t: 'html', html: `<div class="a-cards">${VERIFIED.slice(0, 3).map((m, i) => card({ m, pros: [m.bestFor + '.'] }, i)).join('')}</div>` });
+    ctx.last = VERIFIED.slice(0, 3).map(m => m.id);
+    chips(o, ['All 6 double-clickers', 'Which mice can double click?'], ['Cheapest double-clicker', 'Cheapest mouse that can double click'], ['Is the G102 capped?', 'Is the G102 capped?']);
+    return o;
+  }
+  function verifiedList(o, q, t) {
+    const byPrice = /\b(cheap|cheapest|budget|lowest price|affordable)\b/.test(t), qq = { ...q }; if (byPrice) { delete qq.cheap; delete qq.budgetMax; }
+    let pool = VERIFIED.filter(m => hardFilter([m], qq).length);
+    if (byPrice) pool = pool.slice().sort((a, b) => (a.price || 1e9) - (b.price || 1e9));
+    if (!pool.length) { P(o, `None of the ${VERIFIED.length} verified double-clickers matches that. Try loosening a filter.`); return o; }
+    ctx.last = pool.map(m => m.id); ctx.focus = null;
+    P(o, `<b>The ${VERIFIED.length} mice ProMouser has verified can double-click</b>${pool.length < VERIFIED.length ? ` (${pool.length} match your filters)` : ''}. Every other mouse on the site is capped.`);
+    o.blocks.push({ t: 'html', html: `<ol class="a-list">${pool.map(m => `<li><a href="${root + m.page}">${imgTag(m)}<span><b>${esc(m.name)}</b><small>${esc(m.cps.label)} · ${m.weight} g · ${m.connection.toLowerCase()} · ${m.price ? inr(m.price) : 'no price'}${m.caveat ? ' · build and skates a step below' : ''}</small></span></a></li>`).join('')}</ol>` });
+    P(o, '<span class="a-note">Why only these? Most brands use a fixed debounce or optical switches, which merge fast presses into single clicks. Ask me “why are most mice capped?”</span>');
+    chips(o, ['Why are the rest capped?', 'Why are most mice capped?'], ['Model O vs GM320', 'Model O vs GM320'], ['Cheapest one', 'Cheapest mouse that can double click']);
+    return o;
+  }
+  function capOne(o, m) {
+    ctx.focus = m.id;
+    if (m.cps.verified) P(o, `<b>No, the ${esc(m.name)} isn’t capped.</b> ProMouser has verified that it double-clicks, so butterfly and jitter clicks register extra clicks. ${esc(m.cps.note)}`);
+    else {
+      P(o, `<b>Yes, treat the ${esc(m.name)} as capped.</b> ${esc(m.cps.note)}`);
+      const alt = VERIFIED.filter(x => x.price).sort((a, b) => Math.abs(a.price - (m.price || 3000)) - Math.abs(b.price - (m.price || 3000)))[0];
+      if (alt) P(o, `Closest double-clicker on price: the <a href="${root + alt.page}">${esc(alt.name)}</a> (${inr(alt.price)}).`);
+    }
+    chips(o, ['Why are mice capped?', 'Why are most mice capped?'], ['All double-clickers', 'Which mice can double click?']);
+    return o;
+  }
+
+  // what A does better than B, in plain words (only real, meaningful differences)
+  function edges(a, b, prefs) {
+    const out = [], p = prefs && scorable(prefs) ? toEngine(prefs) : null;
+    if (a.cps.verified && !b.cps.verified) out.push(`<b>It double-clicks</b> (verified by ProMouser); the ${esc(b.short)} is capped, so butterfly and drag clicks can’t add extra CPS on it`);
+    if (b.weight - a.weight >= 5) out.push(`<b>${b.weight - a.weight} g lighter</b> (${a.weight} g vs ${b.weight} g), so it’s quicker to flick and less tiring`);
+    if (a.price && b.price && a.price <= b.price * .9) out.push(`<b>${inr(b.price - a.price)} cheaper</b> (${inr(a.price)} vs ${inr(b.price)})`);
+    if (a.poll > b.poll) out.push(`<b>${num(a.poll)} Hz polling</b> vs ${num(b.poll)} Hz, a touch smoother on high-refresh screens`);
+    if ((a.ips || 0) - (b.ips || 0) >= 150) out.push(`<b>A faster sensor</b> (${a.ips} IPS vs ${b.ips || 'unpublished'}), so big low-sensitivity swipes never spin out`);
+    if (a.connection === 'Wireless' && b.connection === 'Wired') out.push(`<b>Wireless</b>${a.battery ? ` with about ${a.battery} h of battery` : ''}, so there’s no cable drag`);
+    if (a.connection === 'Wireless' && b.connection === 'Wireless' && (a.battery || 0) - (b.battery || 0) >= 20) out.push(`<b>Longer battery</b> (${a.battery} h vs ${b.battery} h)`);
+    if ((a.buttons || 0) - (b.buttons || 0) >= 2) out.push(`<b>More buttons</b> (${a.buttons} vs ${b.buttons || '?'}) for binds and macros`);
+    if (a.comfort - b.comfort >= 1) out.push(`<b>More comfortable</b> for long sessions (we rate it ${a.comfort}/5 vs ${b.comfort}/5)`);
+    if (a.lefty && !b.lefty) out.push('<b>Works for left-handers</b>, with side buttons on both sides');
+    if (a.customLevel - b.customLevel >= 2) out.push('<b>More to tune</b> in its software');
+    if (p) { const fa = PM.fit(a, p), fb = PM.fit(b, p); fa.parts.forEach((x, i) => { const y = fb.parts[i]; if (y && x.value - y.value >= .15 && !['weight', 'budget', 'connection'].includes(x.key)) out.push(`<b>Fits your ${esc(x.label.toLowerCase())} better</b> (${Math.round(x.value * 100)}% vs ${Math.round(y.value * 100)}%)`); }); }
+    return out;
+  }
+  function better(o, a, b) {
+    const pr = ctx.prefs, sc = scorable(pr) ? [PM.fit(a, toEngine(pr)).score, PM.fit(b, toEngine(pr)).score] : null;
+    const win = edges(a, b, pr), lose = edges(b, a, pr);
+    ctx.focus = a.id; ctx.pair = [a.id, b.id];
+    if (sc && sc[1] > sc[0] + 2) P(o, `<span class="a-note">Honest answer: for what you told me, the ${esc(b.short)} actually fits you better (${sc[1]}% vs ${sc[0]}%). Here’s where each one wins.</span>`);
+    P(o, win.length ? `<b>Why the ${esc(a.name)} beats the ${esc(b.name)}${sc ? ` for you (${sc[0]}% vs ${sc[1]}%)` : ''}:</b>` : `<b>The ${esc(a.name)} doesn’t clearly beat the ${esc(b.name)}</b> on anything we measure.`);
+    if (win.length) P(o, '✓ ' + win.slice(0, 5).join('<br>✓ '));
+    if (lose.length) P(o, `<b>Where the ${esc(b.short)} wins:</b><br>` + lose.slice(0, 3).join('<br>'));
+    [a, b].filter(m => m.caveat).forEach(m => P(o, `<span class="a-note">⚠ ${esc(m.short)}: ${esc(m.caveat)}</span>`));
+    chips(o, ['Side-by-side table', `Compare the ${a.short} with ${b.short}`], ['Cheaper alternative', `Something cheaper than the ${a.short}`], ['Is it good for me?', `Is the ${a.short} good for me?`]);
+    return o;
+  }
+  // what makes one mouse good: where it ranks across all mice, in words
+  function strengths(o, m) {
+    ctx.focus = m.id;
+    const pct = (f, low) => { const v = MICE.map(f).filter(x => x != null && x > 0), me = f(m); if (me == null || !v.length) return null; return Math.round(v.filter(x => (low ? x > me : x < me)).length / v.length * 100); };
+    const s = [];
+    if (m.cps.verified) s.push(`<b>It double-clicks.</b> One of only ${VERIFIED.length} mice ProMouser has verified, so butterfly and jitter clicking add real CPS`);
+    const wl = pct(x => x.weight, true); if (wl >= 60) s.push(`<b>Light:</b> ${m.weight} g is lighter than ${wl}% of the mice we cover`);
+    const pr = pct(x => x.price, true); if (m.price && pr >= 60) s.push(`<b>Great value:</b> ${inr(m.price)} is cheaper than ${pr}% of the mice here`);
+    if (m.poll >= 4000) s.push(`<b>${num(m.poll)} Hz polling</b>, among the fastest available`);
+    if ((m.ips || 0) >= 650) s.push(`<b>A flagship sensor</b> (${esc(m.sensor || '')}, ${m.ips} IPS)`);
+    if (m.comfort >= 4) s.push(`<b>Comfortable</b> for long sessions (${m.comfort}/5)`);
+    if ((m.buttons || 0) >= 8) s.push(`<b>${m.buttons} programmable buttons</b> for binds and macros`);
+    if (m.connection === 'Wireless' && (m.battery || 0) >= 90) s.push(`<b>Wireless</b> with about ${m.battery} h of battery`);
+    if (m.lefty) s.push('<b>Left-hand friendly</b>');
+    P(o, `<b>What makes the ${esc(m.name)} good:</b> ${esc(m.bestFor.toLowerCase())}.`);
+    if (s.length) P(o, '✓ ' + s.slice(0, 5).join('<br>✓ '));
+    const w = weaknessList(m); if (w.length) P(o, '<span class="a-note">Trade-offs: ' + w.slice(0, 2).join('; ') + '.</span>');
+    chips(o, ['Downsides?', `What are the downsides of the ${m.short}?`], ['Cheaper alternative', `Something cheaper than the ${m.short}`], ['Compare it', `Compare the ${m.short} with ${similar(m)[0].short}`]);
+    return o;
+  }
+  function weaknessList(m) {
+    const w = [];
+    if (m.caveat) w.push(esc(m.caveat.replace(/\.$/, '').toLowerCase()));
+    if (!m.cps.verified) w.push('capped for 1.8 Minecraft CPS (not verified to double-click)');
+    if (m.weight >= 95) w.push(`heavy at ${m.weight} g`);
+    if (m.price && m.price >= 10000) w.push(`expensive at ${inr(m.price)}`);
+    if (m.comfort <= 2) w.push('not the most comfortable for long sessions');
+    if (m.connection === 'Wired') w.push('wired only');
+    if (m.shape === 'Ergonomic' && !m.lefty) w.push('right-handed only');
+    if (!m.sensor) w.push('the sensor model isn’t published');
+    return w;
+  }
+  function weaknesses(o, m) {
+    ctx.focus = m.id;
+    const w = weaknessList(m);
+    P(o, w.length ? `<b>Downsides of the ${esc(m.name)}:</b>` : `<b>No big downsides</b> on the ${esc(m.name)} for most players.`);
+    if (w.length) P(o, '⚠ ' + w.map(x => x.charAt(0).toUpperCase() + x.slice(1)).join('<br>⚠ '));
+    chips(o, ['What’s good about it?', `What makes the ${m.short} good?`], ['Alternatives', `Alternatives to the ${m.short}`]);
+    return o;
+  }
 
   /* =============================== 5. intent routing =============================== */
   function reply(text) {
@@ -519,15 +645,16 @@
     const mentioned = findMice(t);
     const ord = { first: 0, '1st': 0, second: 1, '2nd': 1, third: 2, '3rd': 2, last: Math.max(0, ctx.last.length - 1) };
     let refs = mentioned;
+    const fid = ctx.focus || ctx.last[0] || null;   // "it" = the mouse we're talking about, else the top pick
     if (!refs.length) {
       const pos = t.match(/\b(first|1st|second|2nd|third|3rd|last) (one|mouse|pick)\b/);
       if (/\b(first|top) (two|2)\b/.test(t) && ctx.last.length >= 2) refs = ctx.last.slice(0, 2).map(id => byId[id]);
       else if (/\b(all three|top (three|3)|these)\b/.test(t) && ctx.last.length >= 2) refs = ctx.last.slice(0, 3).map(id => byId[id]);
       else if (pos && ctx.last[ord[pos[1]]]) refs = [byId[ctx.last[ord[pos[1]]]]];
-      else if (/\b(it|this|that|this one|that one|this mouse|that mouse|the mouse)\b/.test(t) && ctx.focus && !/\b(recommend|suggest|need|want|looking for|buy|pick|choose|help me|instead|other)\b/.test(t) && t.trim().split(' ').length <= 12) refs = [byId[ctx.focus]];
+      else if (/\b(it|its|it'?s|this|that|this one|that one|this mouse|that mouse|the mouse)\b/.test(t) && fid && !/\b(recommend|suggest|need|want|looking for|buy|pick|choose|help me|instead|other)\b/.test(t) && t.trim().split(' ').length <= 12) refs = [byId[fid]];
       else if (/\bwhy\b.*\b(first|#1|number one|top)\b/.test(t) && ctx.last[0]) refs = [byId[ctx.last[0]]];
-      else if (ctx.focus && t.trim().split(' ').length <= 7 && !/\b(i have|i play|i use|my hands?|my budget|recommend|suggest|list|show me|mice)\b/.test(t)
-        && (FACT.some(([re]) => re.test(t)) || /\b(alternatives?|similar|cheaper|lighter|heavier|worth|good for|any good|upgrade)\b/.test(t))) refs = [byId[ctx.focus]];
+      else if (fid && t.trim().split(' ').length <= 8 && !/\b(what (is|are)|what'?s an?|explain|meaning|mean)\b/.test(t) && (ctx.focus || /\b(alternatives?|similar|cheaper|lighter|heavier)\b/.test(t)) && !/\b(i have|i play|i use|my hands?|my budget|recommend|suggest|list|show me|mice)\b/.test(t)
+        && (FACT.some(([re]) => re.test(t)) || /\b(alternatives?|similar|cheaper|lighter|heavier|worth|good for|any good|upgrade)\b/.test(t))) refs = [byId[fid]];
     }
     said.forEach(s => P(o, `<span class="a-note">${esc(s)}</span>`));
 
@@ -535,7 +662,27 @@
     if (/^\s*(reset|start over|clear|forget( everything)?|new chat)\s*$/.test(t.trim())) { ctx.prefs = {}; ctx.last = []; ctx.focus = null; ctx.offset = 0; ctx.seeded = true; P(o, 'Done, I’ve forgotten your preferences. What do you play?'); chips(o, ['FPS', 'I play FPS games'], ['Minecraft PvP', 'I play Minecraft 1.8 PvP']); return o; }
     if (/^\s*(hi|hey|hello|yo|sup|hii+|namaste)\b/.test(t) && t.trim().split(' ').length <= 3) { P(o, 'Hey! Tell me what you play, your grip and your budget, or ask about any of the ' + MICE.length + ' mice on ProMouser.'); chips(o, ['Pick a mouse for me', 'Help me choose a mouse'], ['Best for Minecraft', 'Best mouse for Minecraft 1.8 PvP'], ['Lightest wireless', 'Lightest wireless mice']); return o; }
     if (/^\s*(thanks|thank you|thx|ty|ok thanks|cool|nice|great)\b/.test(t) && t.trim().split(' ').length <= 4) { P(o, 'Anytime! Ask me anything else, or open a mouse’s page for the full spec sheet.'); return o; }
-    if (/\b(what can you do|help me use|how do you work|who are you|are you (an )?ai)\b/.test(t)) { P(o, `I’m ProMouser’s recommendation assistant. I run in your browser on our spec data for ${MICE.length} mice, so I don’t make things up from the internet. Ask me to pick a mouse, compare mice, check if a mouse suits you, list mice by a spec, or explain terms like DPI or debounce.`); chips(o, ['Pick for me', 'Help me choose a mouse'], ['G102 vs Model O', 'G102 vs Model O'], ['What is debounce?', 'What is debounce?']); return o; }
+    if (/\b(what can you do|help me use|how do you work|who are you|are you (an )?ai|what are you|better than (chat ?gpt|gemini|google|a normal ai|other ai)|vs chat ?gpt)\b/.test(t)) { P(o, `I’m <b>ProMouser AI</b>. Unlike a general chatbot, I don’t piece answers together from random websites and forum posts. Every answer comes from ProMouser’s own data on ${MICE.length} mice, reviewed by people: real specs, prices, fit ratings and which mice we’ve verified can double-click. If we haven’t checked something, I say so instead of guessing.`);
+      P(o, 'Ask me to pick a mouse, compare mice, explain why one is better, find a cheaper alternative, list mice by a spec, or explain terms like DPI or debounce.'); chips(o, ['Pick for me', 'Help me choose a mouse'], ['G102 vs Model O', 'G102 vs Model O'], ['What is debounce?', 'What is debounce?']); return o; }
+
+    // which mice double-click, and why most mice are capped
+    const itMouse = () => byId[fid] || null;
+    if (DC_LIST_RE.test(t) && !mentioned.length) return verifiedList(o, q, t);
+    if (CAP_RE.test(t) || /\bcapped\b/.test(t)) { if (refs.length === 1) return capOne(o, refs[0]); if (!mentioned.length) return capExplain(o); }
+    // "how / why is it better (than the G102)?"
+    if (/\bbetter\b/.test(t) && /\b(how|why|what makes|in what way|what'?s better|what is better about)\b/.test(t)) {
+      const it = itMouse();
+      if (mentioned.length >= 2) return better(o, mentioned[0], mentioned[1]);
+      if (mentioned.length === 1 && /\bthan\b/.test(t) && it && it.id !== mentioned[0].id) return better(o, it, mentioned[0]);
+      if (mentioned.length === 1) { const other = ctx.pair && ctx.pair.includes(mentioned[0].id) ? byId[ctx.pair.find(x => x !== mentioned[0].id)] : it && it.id !== mentioned[0].id ? it : null; return other ? better(o, mentioned[0], other) : strengths(o, mentioned[0]); }
+      if (ctx.pair) return better(o, byId[ctx.pair[0]], byId[ctx.pair[1]]);
+      if (ctx.last.length >= 2) return better(o, byId[ctx.last[0]], byId[ctx.last[1]]);
+      if (it) return strengths(o, it);
+    }
+    // what's good / bad about one mouse
+    const one = refs.length === 1 ? refs[0] : null;
+    if (one && /\b(what makes|what'?s (so )?(good|great|special) about|why (is|are) (it|this|that|the [a-z0-9 -]+) (so )?(good|great|popular|liked|recommended|loved)|why do (people|players|pros) (like|love|buy|pick|use)|strengths?|advantages?|pros of|best (thing|part) about|selling points?|why should i (get|buy))\b/.test(t)) return strengths(o, one);
+    if (one && /\b(cons|downsides?|weakness(es)?|drawbacks?|negatives?|what'?s (bad|wrong) (about|with)|problems? with|issues? with|bad things|disadvantages?)\b/.test(t)) return weaknesses(o, one);
 
     // concepts ("what is dpi", "explain butterfly clicking")
     const askConcept = /\b(what('?s| is| are| does)|explain|meaning|mean|how (do|does|to|can|should)|difference between|tell me about|worth it|is it worth|matter|what (do|should|can) i do|fix|tips?|do pros|pros use|(do|does) [a-z0-9]+ use|quiet\w*|silent|colou?r|white)\b/.test(t);
@@ -651,10 +798,53 @@
     prof.innerHTML = e.length ? e.map(([k, v]) => `<button type="button" class="pchip" data-rm="${k}" title="Remove">${esc(LABEL[k](v))}<span aria-hidden="true">×</span></button>`).join('') : '<p class="panel-note">Nothing yet. Tell me what you play, your grip, hands and budget.</p>';
   }
   function draw(o, animate) { return bubble('bot', o.blocks.map(b => (b.t === 'p' ? `<p>${b.html}</p>` : b.html)).join(''), animate); }
+  /* ---------- credits: 1 credit covers AI.questionsPerCredit questions; Ultra unlimited; guests get a few a day ---------- */
+  const AI = (window.PM_CONFIG && window.PM_CONFIG.ai) || { questionsPerCredit: 5, guestPerDay: 3 }, MKEY = 'pm_ai_meter';
+  const meter = {
+    all() { try { return JSON.parse(localStorage.getItem(MKEY) || '{}') || {}; } catch (e) { return {}; } },
+    put(k, v) { const a = this.all(); a[k] = v; try { localStorage.setItem(MKEY, JSON.stringify(a)); } catch (e) { /* storage off */ } },
+    user() { return B && B.getUser ? B.getUser() : null; },
+    today() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; },
+    unlimited() { return !!(this.user() && B.has && B.has('freeAI')); },
+    status() {
+      const u = this.user();
+      if (!u) { const g = this.all().guest || {}, used = g.date === this.today() ? g.used : 0; return { guest: true, left: Math.max(0, AI.guestPerDay - used) }; }
+      if (this.unlimited()) return { unlimited: true };
+      const bal = B.balance ? B.balance() : null;
+      return { left: (this.all()[u.id] || {}).left || 0, credits: bal ? bal.total : 0 };
+    },
+    async take() {
+      const u = this.user();
+      if (!u) { const s = this.status(); if (s.left <= 0) return 'guest'; this.put('guest', { date: this.today(), used: AI.guestPerDay - s.left + 1 }); return true; }
+      if (this.unlimited()) return true;
+      let left = (this.all()[u.id] || {}).left || 0;
+      if (left <= 0) {
+        try { await B.spend(1, 'assistant'); } catch (e) { return e.code === 'NO_CREDITS' ? 'credits' : 'error'; }
+        left = AI.questionsPerCredit;
+      }
+      this.put(u.id, { left: left - 1 }); return true;
+    }
+  };
+  function paintMeter() {
+    let el = $('#aiMeter', host); if (!el) { el = document.createElement('p'); el.id = 'aiMeter'; el.className = 'ai-meter'; form.after(el); }
+    const s = meter.status(), n = AI.questionsPerCredit;
+    el.innerHTML = s.unlimited ? '<span class="ultra-chip">Ultra</span> Unlimited questions'
+      : s.guest ? `${s.left} free question${s.left === 1 ? '' : 's'} left today · <button type="button" class="linkish" data-auth="signin">Sign in</button> for more`
+      : `${s.left ? `${s.left} question${s.left === 1 ? '' : 's'} left on this credit` : `Your next question uses 1 credit`} · 1 credit = ${n} questions · ${s.credits} credit${s.credits === 1 ? '' : 's'} · <a href="${root}ultra.html">Unlimited with Ultra</a>`;
+  }
   async function ask(text, opts = {}) {
     text = String(text || '').trim(); if (!text || busy) return;
     if (text.startsWith('@open:')) { reply(text); return; }
     busy = true;
+    const ok = opts.quiet ? true : await meter.take();   // replaying a saved chat after a reload is free
+    if (!opts.quiet) paintMeter();
+    if (ok !== true) {
+      bubble('user', esc(text));
+      bubble('bot', ok === 'guest' ? `<p>You’ve used today’s ${AI.guestPerDay} free questions. <b>Sign in</b> (it’s free) to keep going: every account gets daily credits, and 1 credit covers ${AI.questionsPerCredit} questions.</p><p><button class="btn btn-primary btn-sm" type="button" data-auth="signup">Create a free account</button> <button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button></p>`
+        : ok === 'credits' ? `<p>You’re out of credits. 1 credit covers ${AI.questionsPerCredit} questions, and your daily credits refill at midnight.</p><p><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a> <a class="btn btn-ghost btn-sm" href="${root}ultra.html">Unlimited with Ultra</a></p>`
+        : '<p>Something went wrong checking your credits. Please try again.</p>');
+      busy = false; return;
+    }
     bubble('user', esc(text), !opts.quiet);
     let typing;
     if (!opts.quiet) { typing = bubble('bot', '<span class="a-typing"><i></i><i></i><i></i></span>'); await new Promise(r => setTimeout(r, reduce ? 120 : 420 + Math.random() * 380)); }
@@ -671,8 +861,8 @@
   let DEFAULT_CHIPS = hubMode() ? HUB_CHIPS : REC_CHIPS;
   /* Hub mode: the same assistant, introduced as a mouse knowledge base rather than a recommender */
   const COPY = {
-    recommend: { label: 'Recommendation Assistant', h1: 'Ask me anything about <em>mice</em>', p: null, ph: 'e.g. Minecraft PvP, claw grip, under ₹3,000' },
-    hub: { label: 'Mouse Assistant', h1: 'Ask anything about <em>any mouse</em>', p: `Specs, sensors, weights, prices, click styles and head-to-head comparisons for all ${MICE.length} mice on ProMouser. Answers come straight from our spec data.`, ph: 'e.g. How heavy is the Viper V3 Pro?' }
+    recommend: { label: 'ProMouser AI', h1: 'Ask me anything about <em>mice</em>', p: null, ph: 'e.g. Minecraft PvP, claw grip, under ₹3,000' },
+    hub: { label: 'ProMouser AI', h1: 'Ask anything about <em>any mouse</em>', p: `Specs, sensors, weights, prices, click styles and head-to-head comparisons for all ${MICE.length} mice on ProMouser. Answers come straight from our spec data.`, ph: 'e.g. How heavy is the Viper V3 Pro?' }
   };
   const hero = document.querySelector('#assistant .section-header'), origP = hero && hero.querySelector('p') ? hero.querySelector('p').innerHTML : '';
   function applyMode() {
@@ -719,7 +909,7 @@
     if (sum.length) bubble('bot', `<p><span class="asst-memory">✦ Ultra memory</span></p><p>Welcome back! I remember: <b>${esc(sum.join(' · '))}</b>. Ask away, or say “start over” to reset.</p>`, false);
   }
   const head = $('.asst-profile .panel-head h3', host); if (head && hasMemory() && !$('.asst-memory', head.parentNode)) head.insertAdjacentHTML('afterend', '<span class="asst-memory" title="Saved to your account">✦ Remembered</span>');
-  renderProfile(); if (!replay.length) renderChips(DEFAULT_CHIPS);
+  renderProfile(); if (!replay.length) renderChips(DEFAULT_CHIPS); paintMeter(); if (B && B.on) B.on(paintMeter);
   const q0 = new URLSearchParams(location.search).get('q');
   if (q0) { try { history.replaceState({}, '', location.pathname); } catch (e) { /* file:// */ } ask(q0); }
   };

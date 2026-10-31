@@ -229,14 +229,15 @@ language plpgsql security definer set search_path = '' as $$
 declare uid uuid := auth.uid(); p public.profiles; b public.credit_balances; cost int; from_daily int;
 begin
   if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
-  if p_feature is distinct from 'recommendation' then raise exception 'UNKNOWN_FEATURE'; end if;
+  if p_feature is null or p_feature not in ('recommendation', 'assistant') then raise exception 'UNKNOWN_FEATURE'; end if;
   perform public.pm_refresh(uid);
   select * into p from public.profiles where id = uid;
   select * into b from public.credit_balances where user_id = uid for update;
   if exists (select 1 from public.user_passes where user_id = uid and feature = p_feature and until > now()) then
     return jsonb_build_object('charged', 0, 'pass', p_feature);
   end if;
-  cost := public.pm_cost(p.plan);
+  -- ProMouser AI: 1 credit per batch of questions (the browser asks once per batch); free on Ultra
+  cost := case when p_feature = 'assistant' then (case when p.plan = 'ultra' then 0 else 1 end) else public.pm_cost(p.plan) end;
   if cost = 0 then return jsonb_build_object('charged', 0, 'pass', null, 'plan', p.plan); end if;
   if b.daily + b.purchased < cost then raise exception 'NO_CREDITS'; end if;
   from_daily := least(b.daily, cost);

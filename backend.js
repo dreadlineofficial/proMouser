@@ -37,6 +37,8 @@
     // Same account on both sites. Buying Ultra adds a year (365 days) of Turbo.
     turbo: { onlineUrl: 'https://dreadlineofficial.github.io/ProMouser-Online/',
       product: { id: 'turbo-1m', type: 'turbo', name: 'ProMouser Turbo (1 month)', price: 199, days: 30 } },
+    // ProMouser AI: 1 credit covers this many questions (Ultra: unlimited). Signed-out visitors get a few free questions a day.
+    ai: { questionsPerCredit: 5, guestPerDay: 3 },
     // Credits work for everything. A pass covers ONE feature: right now that's recommendations.
     passes: [
       { id: 'rec-pass-1m', type: 'pass', feature: 'recommendation', name: 'Recommendation Pass (1 month)', short: 'Recommendation Pass', price: 199, days: 30,
@@ -57,7 +59,7 @@
   const FEATURES = {
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
-    freeRecs: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
+    freeRecs: 'ultra', freeAI: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
@@ -190,6 +192,7 @@
       const u = current(); if (!u) throw new Error('Please sign in first.');
       if (passActive(u, reason)) return { charged: 0, pass: reason };
       if (reason === 'recommendation' && PLAN.has(u, 'freeRecs')) return { charged: 0, plan: 'ultra' };
+      if (reason === 'assistant' && PLAN.has(u, 'freeAI')) return { charged: 0, plan: 'ultra' };
       if (u.credits.daily + u.credits.purchased < cost) { const e = new Error('Not enough credits.'); e.code = 'NO_CREDITS'; throw e; }
       let left = cost; const fromDaily = Math.min(u.credits.daily, left); u.credits.daily -= fromDaily; left -= fromDaily; u.credits.purchased -= left;
       saveUser(u); emit(); return { charged: cost, reason };

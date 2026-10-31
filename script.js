@@ -130,11 +130,11 @@
       if (save) { try { const b = B(); if (b && b.getUser && b.getUser()) b.updateProfile({ prefs: { mode: m } }).catch(() => {}); } catch (e) { /* not signed in */ } }
       if (changed && flash) {
         let f = $('.mode-flash'); if (!f) { f = document.createElement('div'); f.className = 'mode-flash'; f.setAttribute('role', 'status'); document.body.appendChild(f); }
-        f.innerHTML = m === 'hub' ? '<b>Hub mode</b><span>Mice, tests, stats and a mouse assistant</span>' : '<b>Recommend mode</b><span>Find the right mouse for you</span>';
+        f.innerHTML = m === 'hub' ? '<b>Hub mode</b><span>Mice, tests, stats and ProMouser AI</span>' : '<b>Recommend mode</b><span>Find the right mouse for you</span>';
         f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');
       }
     }
-    const html = cls => `<div class="mode-switch ${cls}" role="group" aria-label="How you use ProMouser"><button type="button" data-mode="recommend" title="Find the right mouse for you">Recommend</button><button type="button" data-mode="hub" title="Mice, tests, stats and a mouse assistant">Hub</button></div>`;
+    const html = cls => `<div class="mode-switch ${cls}" role="group" aria-label="How you use ProMouser"><button type="button" data-mode="recommend" title="Find the right mouse for you">Recommend</button><button type="button" data-mode="hub" title="Mice, tests, stats and ProMouser AI">Hub</button></div>`;
     const actions = $('.nav-actions'), links = $('#navLinks');
     // in the top bar: one compact toggle showing the current mode (the full switch lives in the mobile menu)
     if (actions) actions.insertAdjacentHTML('afterbegin', '<button type="button" class="mode-toggle"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/></svg><b></b></button>');
@@ -158,7 +158,7 @@
       c.innerHTML = `<div class="mc-card"><span class="section-label">Welcome to ProMouser</span><h2 id="mcTitle">How do you want to use <em>ProMouser</em>?</h2>
         <div class="mc-opts">
           <button type="button" class="mc-opt" data-set-mode="recommend"><span class="mc-ico" data-icon="AI"></span><b>Recommend</b><small>Help me pick a mouse</small>
-            <ul><li>Personal recommendations</li><li>The Recommendation Assistant</li><li>Plans with more matches and preferences</li></ul></button>
+            <ul><li>Personal recommendations</li><li>ProMouser AI</li><li>Plans with more matches and preferences</li></ul></button>
           <button type="button" class="mc-opt hub" data-set-mode="hub"><span class="mc-ico" data-icon="Hub"></span><b>Hub</b><small>I’m here for the mice and the tests</small>
             <ul><li>Every mouse, specs and comparisons</li><li>Mouse tests with your stats</li><li>Ask anything about any mouse</li></ul></button>
         </div><p class="mc-note">You can switch any time with the mode button in the top bar.</p>
@@ -222,7 +222,7 @@
       ['Browse mice', 'mice.html', 'Every mouse with spec sheets, filters and a spec map'],
       ['Compare mice', 'mice/compare.html', 'Up to four mice side by side'],
       ['FPS mice', 'mice/first-person-shooters.html', 'Best mice for fast aim: Valorant, CS2, Fortnite, TF2'],
-      ['Minecraft mice', 'mice/minecraft.html', 'Highest-CPS mice first: Glorious Model O and Bloody A70'],
+      ['Minecraft mice', 'mice/minecraft.html', 'The 6 verified double-clickers first, and why most mice are capped'],
       ['Extra picks', 'mice/extra.html', 'Budget and legacy mouse pages'],
       /*mice:start*/
       ["Razer DeathAdder V3", "mice/razer-deathadder-v3.html", "59 g · wired · Fast, precise FPS aim"],
@@ -232,7 +232,7 @@
       ["Bloody A70", "mice/bloody-a70.html", "150 g · wired · Drag clicking and bridging practice"],
       ["Razer Cobra", "mice/razer-cobra.html", "58 g · wired · Value-focused FPS and everyday play"],
       ["Logitech G PRO X2 SUPERSTRIKE", "mice/logitech-g-pro-x2-superstrike.html", "61 g · wireless · Players who want to tune their own click feel"],
-      ["Logitech G102 Lightsync", "mice/logitech-g102-lightsync.html", "85 g · wired · A cheap, reliable all-rounder that drag clicks well"],
+      ["Logitech G102 Lightsync", "mice/logitech-g102-lightsync.html", "85 g · wired · A cheap, reliable all-rounder"],
       ["Logitech G304 Lightspeed", "mice/logitech-g304-lightspeed.html", "99 g · wireless · Affordable wireless with a huge battery life"],
       ["Logitech G502 X", "mice/logitech-g502-x.html", "89 g · wired · Lots of buttons in a much lighter G502 body"],
       ["Logitech G502 X Plus", "mice/logitech-g502-x-plus.html", "106 g · wireless · The flagship wireless G502, with RGB"],
@@ -248,23 +248,24 @@
       ["Razer Naga V2 HyperSpeed", "mice/razer-naga-v2-hyperspeed.html", "95 g · wireless · A 12-button thumb grid for MMOs and macros"],
       ["Glorious Model O-", "mice/glorious-model-o-minus.html", "58 g · wired · The Model O’s clicking in a smaller shell"],
       ["Glorious Model D", "mice/glorious-model-d.html", "68 g · wired · An ergonomic honeycomb shape that still clicks fast"],
-      ["Glorious Model O Wireless", "mice/glorious-model-o-wireless.html", "69 g · wireless · A wireless Model O for clicking without a cable"],
+      ["Glorious Model O Wireless", "mice/glorious-model-o-wireless.html", "69 g · wireless · The Model O shape without a cable"],
       ["Glorious Model I", "mice/glorious-model-i.html", "69 g · wired · Swappable side buttons for MMO and work binds"],
-      ["Bloody A90", "mice/bloody-a90.html", "106 g · wired · Drag clicking on a budget"],
+      ["Bloody A90", "mice/bloody-a90.html", "106 g · wired · A budget Bloody for everyday play and 1.9+"],
       ["Bloody W70 Max", "mice/bloody-w70-max.html", "108 g · wired · Bloody’s 10K-CPI RGB model"],
       ["SteelSeries Rival 3", "mice/steelseries-rival-3.html", "77 g · wired · A budget all-rounder with solid clicks"],
       ["SteelSeries Aerox 3", "mice/steelseries-aerox-3.html", "57 g · wired · A water-resistant honeycomb ultralight"],
-      ["HyperX Pulsefire Haste", "mice/hyperx-pulsefire-haste.html", "59 g · wired · A light honeycomb shell that butterfly clicks well"],
+      ["HyperX Pulsefire Haste", "mice/hyperx-pulsefire-haste.html", "59 g · wired · A light honeycomb shell for FPS and 1.9+ PvP"],
       ["HyperX Pulsefire Haste 2", "mice/hyperx-pulsefire-haste-2.html", "53 g · wired · A solid-shell ultralight with 8K polling"],
       ["Zowie EC2-C", "mice/zowie-ec2-c.html", "73 g · wired · No-software esports ergonomics"],
-      ["Cooler Master MM710", "mice/cooler-master-mm710.html", "53 g · wired · A 53 g honeycomb clicker on a budget"],
-      ["Endgame Gear XM1r", "mice/endgame-gear-xm1r.html", "63 g · wired · Crisp, low-latency clicks for jitter and butterfly"],
+      ["Cooler Master MM710", "mice/cooler-master-mm710.html", "53 g · wired · A 53 g honeycomb mouse on a budget"],
+      ["Endgame Gear XM1r", "mice/endgame-gear-xm1r.html", "63 g · wired · Crisp, low-latency clicks for FPS and jitter clicking"],
       ["Corsair Harpoon RGB Pro", "mice/corsair-harpoon-rgb-pro.html", "85 g · wired · A small, grippy budget mouse"],
       ["Corsair M65 RGB Ultra", "mice/corsair-m65-rgb-ultra.html", "97 g · wired · Tunable weight and a sniper button"],
       ["Redragon M711 Cobra", "mice/redragon-m711-cobra.html", "100 g · wired · The classic cheap RGB gaming mouse"],
       ["Attack Shark X3", "mice/attack-shark-x3.html", "49 g · wireless · A flagship sensor at 49 g for very little money"],
+      ["Ant Esports GM320", "mice/ant-esports-gm320.html", "120 g · wired · Double-clicking on a tight budget"],
       /*mice:end*/
-      ['Recommendation Assistant', 'mouse-ai.html', 'Ask questions and compare mice, grounded in ProMouser pages'],
+      ['ProMouser AI', 'mouse-ai.html', 'Ask questions and compare mice, grounded in ProMouser pages'],
       ['Hand grip guide', 'hand-grip.html', 'Palm, claw and fingertip grips explained'],
       ['Mouse tips', 'mouse-tips.html', 'DPI, polling rate, surface and lift-off settings'],
       ['Minecraft tips', 'minecraft-tips.html', 'Setups for builders and PvP players'],

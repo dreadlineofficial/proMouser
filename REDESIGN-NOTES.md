@@ -1,14 +1,38 @@
-# ProMouser redesign — notes (v8)
+# ProMouser redesign — notes (v9)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v8
+## What's new in v9
+
+- **Only verified mice double-click.** ProMouser has verified six: Glorious Model O, Model O-,
+  Model D, Bloody A70, HyperX Pulsefire Haste 2 and Ant Esports GM320 (`cps.verified` in
+  `mice-data.js`). Every other mouse is now **Capped CPS** (level 1, butterfly and drag "not good"),
+  in the data, the recommendation engine, every mouse card and every review page.
+  `tools/cps_truth.py` re-applies the list to the static pages if it changes.
+- **Why most mice are capped:** a new explainer on the Minecraft page (`#capped`): debounce,
+  why brands keep it high, optical switches, what "double-clicks" means. The CPS test page and
+  every capped review page link to it.
+- **Ant Esports GM320** added (₹498 on Amazon.in, verified double-clicker; build quality and skates
+  a step below the others). The Amazon button is a search link for now — swap in the exact product
+  link in `mice-data.js` (`buy`) and `mice/ant-esports-gm320.html`. Its weight (~120 g) is an
+  estimate; Ant Esports doesn't publish it.
+- **ProMouser AI** (renamed from the Recommendation Assistant everywhere):
+  - Uses credits: **1 credit covers 5 questions**, **unlimited on Ultra**, 3 free questions a day
+    when signed out. `PM_CONFIG.ai` in `backend.js`; `spend_credits('assistant')` in `schema.sql`.
+  - New answers: "how/why is it better (than X)?", "what makes it good?", "downsides?",
+    "which mice can double-click?", "why is my CPS capped?", "is the G102 capped?", cheaper
+    alternatives that keep double-clicking, and an honest note when the other mouse fits you better.
+  - "Why it beats a normal AI" (human-reviewed data, not random sources) on the AI page, the home
+    page and the recommendations page.
+- **Supabase:** re-run `schema.sql` (spend_credits accepts `'assistant'`).
+
+## v8
 
 - **Two ways to use ProMouser.** A **Recommend / Hub** toggle sits in the top bar (and the
   mobile menu). First-time visitors to the home page are asked which they want.
-  - **Recommend** is the site as before: recommendations, the Recommendation Assistant, plans.
+  - **Recommend** is the site as before: recommendations, ProMouser AI, plans.
   - **Hub** is for people who are here for the mice: the home page becomes a mouse hub
     (search with filters like “wireless under 60 g”, mouse of the day, your test bests,
     spec record holders), the nav gains **Ask** and **My stats**, and the assistant
@@ -86,7 +110,7 @@ http://localhost:8000. Everything works from either.
 
   The hub shows your personal bests. The nav "Tests" menu, footer, search and sitemap include the new pages.
 - **New prices** (placeholders): Lite **₹349/month**, Ultra **₹799/month**, Recommendation Pass **₹199**, credits 10 = ₹39 · 30 = ₹99 · 100 = ₹249 · 300 = ₹649. They're in `backend.js` and `supabase/schema.sql`. **If you already ran `schema.sql` on Supabase, run it again**: it updates the prices in place and keeps your users and data.
-- **Recommendation Assistant, round 3.** I tested it with 50 real-style questions (slang, typos, Hinglish, follow-ups) and fixed what it got wrong:
+- **ProMouser AI, round 3.** I tested it with 50 real-style questions (slang, typos, Hinglish, follow-ups) and fixed what it got wrong:
   - **Mouse names:** bare names like "deathadder", "viper" and "superlight" now resolve. "g pro x superlight 2" no longer gets mistaken for the original Superlight.
   - **Vague questions:** "best mouse", "which mouse should I buy" and "top 5 mice" get real picks straight away (best for FPS / 1.8 PvP / under ₹3,000) instead of only a question back.
   - **New answer types:**
@@ -111,7 +135,7 @@ http://localhost:8000. Everything works from either.
   - **Price watchlist.** "Watch price" stars on every mouse page and shortlist card. The Elite Dashboard shows each watched mouse's price change since you saved it.
   - **Sensitivity converter** (`sens.html`, under Tests). It converts between CS2/CS:GO, Valorant, Apex, Overwatch 2 and TF2, with eDPI, cm/360, a "same feel in every game" table and a DPI-change helper.
   - **Shortlist export.** Print or save as PDF (with a print-only stylesheet), or copy a readable list.
-  - **Assistant memory.** The Recommendation Assistant saves what it learns to your account and greets you with it next time, on any device.
+  - **Assistant memory.** ProMouser AI saves what it learns to your account and greets you with it next time, on any device.
   - Free and Lite users see friendly Ultra previews or upsells instead of these features. Leaving Ultra keeps your saved data, but it's locked until you return.
   - The shop has three cards (Lite, Ultra, Recommendation Pass). The dev panel switches **Normal / Lite / Ultra** and previews all three themes.
   - Supabase: plans are now `free | lite | ultra`, and profiles have an `extras` column (watchlist, profiles, memory) that only Ultra accounts can change, enforced by a database trigger. Re-running `schema.sql` upgrades an older install.
@@ -131,7 +155,7 @@ http://localhost:8000. Everything works from either.
   - FPS scores are finer-grained so 38 mice don't tie at 100%.
   - Minecraft weighs CPS more, so the Model O and A70 still lead for 1.8.
   - Lite results fold after 6 with a "Show all" button.
-- **Recommendation Assistant rewritten** (`assistant.js`). It runs in the browser on the same data and engine. It understands:
+- **ProMouser AI rewritten** (`assistant.js`). It runs in the browser on the same data and engine. It understands:
   - games, grip, hand size in S/M/L, cm or inches, budgets in ₹ or $, weight, wireless, left-handed, buttons and click style
   - questions about one mouse, comparisons of 2–4 mice, cheaper/lighter/wireless alternatives, lists ("lightest wireless under ₹5,000")
   - concept explanations, and follow-ups ("cheaper", "show more", "compare the first two", "why the first one?")

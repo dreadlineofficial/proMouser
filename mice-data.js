@@ -12,7 +12,8 @@
  *
  * series = default chart colour (--s1…--s7); dims = [length, width, height] mm;
  * img 'art/…' = illustrated render (no product photo yet); art = how the render is drawn;
- * lefty = usable by left-handed players (side buttons on both sides); cps.level 1-5 is how much click-speed
+ * lefty = usable by left-handed players (side buttons on both sides); cps.verified = ProMouser has checked that it
+ * double-clicks (only these can reach high CPS; every other mouse is rated "Capped CPS"); cps.level 1-5 is how much click-speed
  * (CPS) potential it has for Minecraft; handSize / comfort / custom are editorial estimates.
  *
  * Any field set to null is "not published" and is shown as "—".
@@ -80,8 +81,9 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Not a CPS mouse",
-      "note": "It can’t double-click, so butterfly and jitter clicking won’t reach the click speeds a Glorious Model O or Bloody A70 will. A great FPS mouse, but a weak pick for 1.8-style PvP."
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "dims": [
       128,
@@ -126,9 +128,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 7995,
     "priceNote": "Amazon.in",
@@ -155,9 +157,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Built to support butterfly, jitter and drag clicking without feeling heavy or sluggish."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "dims": [
       125,
@@ -233,7 +236,8 @@ window.PM_MICE = [
     "cps": {
       "level": 5,
       "label": "Top CPS",
-      "note": "Debounce can be lowered to 0 ms, so one finger movement can register as two clicks. That is what makes butterfly and jitter clicking so fast. Not the best for drag clicking."
+      "note": "Debounce can be lowered to 0 ms, so one finger movement can register as two clicks. That is what makes butterfly and jitter clicking so fast. Not the best for drag clicking.",
+      "verified": true
     },
     "dims": [
       128,
@@ -280,8 +284,8 @@ window.PM_MICE = [
     ],
     "clicking": {
       "butterfly": "poor",
-      "jitter": "great",
-      "drag": null
+      "jitter": "good",
+      "drag": "poor"
     },
     "price": 3190,
     "priceNote": "Modxcomputers.in (lowest trusted seller)",
@@ -311,9 +315,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 3,
-      "label": "Jitter clicking",
-      "note": "Good for jitter clicking, not butterfly: the buttons are smaller and the default weight is heavy for fast clicking."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "dims": [
       132,
@@ -356,8 +361,8 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": null,
-      "jitter": null,
+      "butterfly": "great",
+      "jitter": "great",
       "drag": "great"
     },
     "price": 8929,
@@ -385,7 +390,8 @@ window.PM_MICE = [
     "cps": {
       "level": 5,
       "label": "Top CPS",
-      "note": "Light Strike switches and a grippy button surface support extremely high drag-click scores, which makes it a favourite for bridging."
+      "note": "Light Strike switches and a grippy button surface support extremely high drag-click scores, which makes it a favourite for bridging.",
+      "verified": true
     },
     "dims": null,
     "lefty": false,
@@ -426,9 +432,9 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": null,
+      "butterfly": "poor",
       "jitter": null,
-      "drag": null
+      "drag": "poor"
     },
     "price": 2695,
     "priceNote": "From (see Minecraft picks)",
@@ -453,9 +459,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "No click-specific features. A solid, dependable mouse for casual Minecraft rather than max-CPS play."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "dims": [
       119.6,
@@ -529,8 +536,9 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Not a CPS mouse",
-      "note": "It can’t double-click, so it won’t reach the click speeds the Model O and Bloody A70 can. Its adjustable click actuation is about how clicks feel, not raw CPS."
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "dims": [
       125,
@@ -581,9 +589,9 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "great"
+      "drag": "poor"
     },
     "price": 1395,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -592,7 +600,7 @@ window.PM_MICE = [
       "Budget",
       "Minecraft"
     ],
-    "bestFor": "A cheap, reliable all-rounder that drag clicks well",
+    "bestFor": "A cheap, reliable all-rounder",
     "comfort": 3,
     "handSize": [
       "small",
@@ -605,9 +613,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "A Minecraft favourite on a budget. The shell and switches hold up well to drag clicking and it can butterfly click, though Logitech’s fixed debounce keeps it a step below the Model O and A70."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -658,9 +667,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 2495,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -681,9 +690,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "The G102’s shape made wireless. The AA battery adds weight, so it’s fine for casual PvP but a wired clicker will score higher."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -756,9 +766,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Its hybrid optical switches are built for speed and durability, not double-click tricks. Good for jitter clicking, weak for butterfly."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -831,9 +842,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Same switches as the G502 X, and heavier. Great for binds and comfort, not for chasing CPS."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -885,9 +897,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 13995,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -906,9 +918,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Very light and quick, but the hybrid switches aren’t tuned for butterfly double-clicks. Comfortable for jitter clicking and 1.9+ combat."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -960,9 +973,9 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 8995,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -983,9 +996,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Mechanical switches and a balanced weight: decent for jitter and butterfly, but built for FPS first."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": true,
     "art": {
@@ -1035,7 +1049,7 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -1058,9 +1072,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Comfortable and dependable. Mechanical switches handle jitter well, and the weight keeps it from being a top PvP pick."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1132,8 +1147,9 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Not a CPS mouse",
-      "note": "Razer’s optical switches don’t butterfly click well, the same issue as the DeathAdder V3. Brilliant for FPS, the wrong tool for 1.8 PvP."
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1205,9 +1221,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Light and easy to flick, but optical switches limit butterfly clicking. Fine for jitter and casual play."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1257,7 +1274,7 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -1279,9 +1296,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Unlike the DeathAdder V3 it uses mechanical switches, so it can butterfly click. The heavier body slows it down a little."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1353,8 +1371,9 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 1,
-      "label": "Not a CPS mouse",
-      "note": "Same optical switches as the DeathAdder V3, so it can’t double-click. A comfort-first FPS mouse, not a PvP clicker."
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1428,8 +1447,9 @@ window.PM_MICE = [
     "customLevel": 3,
     "cps": {
       "level": 1,
-      "label": "Not a CPS mouse",
-      "note": "Heavy, with optical switches that don’t double-click. Fantastic for work and MMOs; skip it for PvP."
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1479,7 +1499,7 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -1500,9 +1520,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Mechanical switches can butterfly click, but it’s very small, so it suits fingertip players with smaller hands."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1552,7 +1573,7 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -1574,9 +1595,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Mechanical switches, but the weight and 12-button side panel make it awkward for fast PvP clicking."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1649,8 +1671,9 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 4,
-      "label": "Strong CPS",
-      "note": "The same switches and adjustable debounce as the Model O in a smaller, lighter shell, so it butterfly and jitter clicks very well. The full-size Model O stays our top pick."
+      "label": "Double clicks",
+      "note": "The same switches and adjustable debounce as the Model O in a smaller, lighter shell, so it butterfly and jitter clicks very well. The full-size Model O stays our top pick.",
+      "verified": true
     },
     "lefty": false,
     "art": {
@@ -1725,8 +1748,9 @@ window.PM_MICE = [
     "customLevel": 2,
     "cps": {
       "level": 4,
-      "label": "Strong CPS",
-      "note": "Glorious’ adjustable debounce in an ergonomic body: strong for jitter and butterfly if you prefer a palm-friendly shape."
+      "label": "Double clicks",
+      "note": "Glorious’ adjustable debounce in an ergonomic body: strong for jitter and butterfly if you prefer a palm-friendly shape.",
+      "verified": true
     },
     "lefty": false,
     "art": {
@@ -1775,8 +1799,8 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
-      "jitter": "great",
+      "butterfly": "poor",
+      "jitter": "good",
       "drag": "poor"
     },
     "price": 7999,
@@ -1786,7 +1810,7 @@ window.PM_MICE = [
       "Wireless",
       "Minecraft"
     ],
-    "bestFor": "A wireless Model O for clicking without a cable",
+    "bestFor": "The Model O shape without a cable",
     "comfort": 3,
     "handSize": [
       "medium",
@@ -1799,9 +1823,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "Wireless Model O with adjustable debounce. It’s a touch heavier, so the wired Model O keeps the CPS crown."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1851,7 +1876,7 @@ window.PM_MICE = [
       "fps"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -1876,9 +1901,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Light for a 9-button mouse and the debounce is adjustable, but extra side buttons get in the way of fast PvP."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -1927,18 +1953,18 @@ window.PM_MICE = [
       "fps"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "great"
+      "drag": "poor"
     },
     "price": 2999,
     "priceNote": "Approx. India street price, Oct 2026",
     "rating": null,
     "tags": [
       "Minecraft",
-      "Drag clicking"
+      "Budget"
     ],
-    "bestFor": "Drag clicking on a budget",
+    "bestFor": "A budget Bloody for everyday play and 1.9+",
     "comfort": 3,
     "handSize": [
       "medium",
@@ -1950,9 +1976,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "Buyers report 20+ CPS butterfly clicking and very high drag-click scores, though many add grip tape for drag clicking. The A70 is still the stronger drag clicker."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Its optical switches don’t bounce, so every press is exactly one click and butterfly or drag clicking can’t add extra ones.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2004,9 +2031,9 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": null,
+      "butterfly": "poor",
       "jitter": null,
-      "drag": null
+      "drag": "poor"
     },
     "price": 3499,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2027,9 +2054,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Unconfirmed",
-      "note": "We haven’t confirmed how well it butterfly or drag clicks yet. The A70 and A90 are the proven Bloody clickers."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2083,9 +2111,9 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 2299,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2106,9 +2134,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Crisp mechanical switches and a light body make it a decent budget PvP mouse, though it won’t match a Model O."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2157,7 +2186,7 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -2179,9 +2208,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Very light with snappy switches, good for jitter. The holes in the shell make drag clicking harder."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2231,9 +2261,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "great",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 3299,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2242,7 +2272,7 @@ window.PM_MICE = [
       "Minecraft",
       "Ultralight"
     ],
-    "bestFor": "A light honeycomb shell that butterfly clicks well",
+    "bestFor": "A light honeycomb shell for FPS and 1.9+ PvP",
     "comfort": 4,
     "handSize": [
       "medium"
@@ -2253,9 +2283,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "Popular with PvP players: light, with crisp TTC switches that handle butterfly clicking well."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2305,8 +2336,8 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
-      "jitter": "good",
+      "butterfly": "great",
+      "jitter": "great",
       "drag": "good"
     },
     "price": 4499,
@@ -2327,9 +2358,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Light and quick with good clicks. A safe pick for 1.9+ and casual 1.8 PvP."
+      "level": 4,
+      "label": "Double clicks",
+      "note": "Verified by ProMouser to double-click: light, quick and crisp, so butterfly and jitter clicks register extra clicks. A great all-rounder for both 1.8 and 1.9+ PvP.",
+      "verified": true
     },
     "lefty": false,
     "art": {
@@ -2397,9 +2429,10 @@ window.PM_MICE = [
     "custom": [],
     "customLevel": 0,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Zowie’s switches are firm, with fixed debounce: excellent for deliberate FPS clicks, slow for butterfly."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2449,9 +2482,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "great",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 2999,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2460,7 +2493,7 @@ window.PM_MICE = [
       "Ultralight",
       "Minecraft"
     ],
-    "bestFor": "A 53 g honeycomb clicker on a budget",
+    "bestFor": "A 53 g honeycomb mouse on a budget",
     "comfort": 3,
     "handSize": [
       "small",
@@ -2471,9 +2504,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "Omron switches in a 53 g honeycomb shell. It’s light and clicky, a good budget butterfly-clicking pick."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2522,9 +2556,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "great",
-      "jitter": "great",
-      "drag": "good"
+      "butterfly": "poor",
+      "jitter": "good",
+      "drag": "poor"
     },
     "price": 5999,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2533,7 +2567,7 @@ window.PM_MICE = [
       "Minecraft",
       "Clicking"
     ],
-    "bestFor": "Crisp, low-latency clicks for jitter and butterfly",
+    "bestFor": "Crisp, low-latency clicks for FPS and jitter clicking",
     "comfort": 3,
     "handSize": [
       "medium"
@@ -2544,9 +2578,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 4,
-      "label": "Strong CPS",
-      "note": "Endgame Gear’s analog switch tech with adjustable debounce makes the XM1r one of the best clickers outside Glorious and Bloody."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. It has an adjustable debounce setting, but ProMouser hasn’t verified that it actually double-clicks, so we rate it as capped until we have.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2597,9 +2632,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 1999,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2620,9 +2655,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Short and grippy with decent switches, so it can butterfly click. It’s best for smaller hands."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2671,7 +2707,7 @@ window.PM_MICE = [
       "work"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
       "drag": "poor"
     },
@@ -2696,9 +2732,10 @@ window.PM_MICE = [
     ],
     "customLevel": 3,
     "cps": {
-      "level": 2,
-      "label": "Everyday clicking",
-      "note": "Built for FPS: the heavy aluminium frame and sniper button are great for aim, not for fast clicking."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2749,9 +2786,9 @@ window.PM_MICE = [
       "fps"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 1299,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2773,9 +2810,10 @@ window.PM_MICE = [
     ],
     "customLevel": 2,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Crisp enough for jitter and butterfly clicking at this price, but it’s heavier than a dedicated PvP mouse."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2826,9 +2864,9 @@ window.PM_MICE = [
       "minecraft"
     ],
     "clicking": {
-      "butterfly": "good",
+      "butterfly": "poor",
       "jitter": "good",
-      "drag": "good"
+      "drag": "poor"
     },
     "price": 2799,
     "priceNote": "Approx. India street price, Oct 2026",
@@ -2849,9 +2887,10 @@ window.PM_MICE = [
     ],
     "customLevel": 1,
     "cps": {
-      "level": 3,
-      "label": "Moderate CPS",
-      "note": "Light with crisp Kailh switches. It can butterfly click, but build quality varies more than with the big brands."
+      "level": 1,
+      "label": "Capped CPS",
+      "note": "Not verified by ProMouser to double-click, so treat its CPS as capped. Like most mice, its firmware ignores a second press that comes too soon after the first (debounce), so butterfly and drag clicks get merged into single clicks.",
+      "verified": false
     },
     "lefty": false,
     "art": {
@@ -2868,6 +2907,84 @@ window.PM_MICE = [
       "weight is ±3 g by colour"
     ],
     "series": 3
+  },
+  {
+    "id": "ant-esports-gm320",
+    "name": "Ant Esports GM320",
+    "short": "GM320",
+    "brand": "Ant Esports",
+    "page": "mice/ant-esports-gm320.html",
+    "img": "ant-esports-gm320",
+    "weight": 120,
+    "dpi": 12800,
+    "ips": null,
+    "accel": null,
+    "poll": 1000,
+    "connection": "Wired",
+    "battery": null,
+    "buttons": 8,
+    "sensor": null,
+    "switches": null,
+    "shape": "Ergonomic",
+    "hand": "Right-handed",
+    "grips": [
+      "palm",
+      "claw"
+    ],
+    "games": [
+      "minecraft",
+      "fps",
+      "mmo"
+    ],
+    "clicking": {
+      "butterfly": "great",
+      "jitter": "great",
+      "drag": "good"
+    },
+    "price": 498,
+    "priceNote": "Amazon.in",
+    "buy": "https://www.amazon.in/s?k=Ant+Esports+GM320+RGB+Gaming+Mouse",
+    "rating": null,
+    "tags": [
+      "Budget",
+      "Minecraft"
+    ],
+    "bestFor": "Double-clicking on a tight budget",
+    "variantNote": "Ant Esports doesn’t publish the weight; 120 g is our estimate (retail listings say 185 g, which includes the box). Listings quote 7,200 to 12,800 DPI depending on the batch.",
+    "caveat": "Build quality and the stock skates are a step below the other double-clicking mice: it glides less smoothly and feels less solid.",
+    "verify": [
+      "weight (estimate; not published by Ant Esports)",
+      "dpi (listings say 7,200 or 12,800)",
+      "sensor and switch models not published",
+      "CPS: verified by ProMouser to double-click"
+    ],
+    "series": 3,
+    "comfort": 3,
+    "handSize": [
+      "medium",
+      "large"
+    ],
+    "custom": [
+      "software",
+      "macros",
+      "rgb"
+    ],
+    "customLevel": 2,
+    "cps": {
+      "level": 4,
+      "label": "Double clicks",
+      "note": "Verified by ProMouser to double-click, so butterfly and jitter clicking register extra clicks, at under ₹500. Its build quality and skates are a step below the Model O, A70 and Haste 2, which is why it isn’t a 5.",
+      "verified": true
+    },
+    "dims": null,
+    "lefty": false,
+    "art": {
+      "shape": "ergo",
+      "body": "black",
+      "glow": "#ff2bd6",
+      "holes": false,
+      "sides": "left"
+    }
   }
 ];
 

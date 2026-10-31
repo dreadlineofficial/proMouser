@@ -32,7 +32,7 @@
       const q = input.value.trim(); if (!q) { out.hidden = true; return; }
       const r = find(q);
       out.innerHTML = r.length ? r.slice(0, 6).map(m => `<a href="${root}${m.page}"><img src="${PM.IMG(m, 480)}" alt="" width="46" height="46" loading="lazy"><span><b>${esc(m.name)}</b><small>${esc(specs(m).join(' · '))}</small></span></a>`).join('') + (r.length > 6 ? `<a class="more" href="${root}mice.html#catalog">${r.length - 6} more in the catalogue →</a>` : '')
-        : `<p>No mice match “${esc(q)}”. <a href="${root}mouse-ai.html?q=${encodeURIComponent(q)}">Ask the assistant instead →</a></p>`;
+        : `<p>No mice match “${esc(q)}”. <a href="${root}mouse-ai.html?q=${encodeURIComponent(q)}">Ask ProMouser AI instead →</a></p>`;
       out.hidden = false;
     };
     input.addEventListener('input', show);
