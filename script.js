@@ -118,7 +118,10 @@
     const KEY = 'pm_mode', B = () => window.PMBackend;
     const cur = () => (doc.dataset.mode === 'hub' ? 'hub' : 'recommend');
     const stored = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
-    const paint = () => $$('.mode-switch button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === cur())));
+    const paint = () => {
+      $$('.mode-switch button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === cur())));
+      $$('.mode-toggle').forEach(t => { const hub = cur() === 'hub'; t.querySelector('b').textContent = hub ? 'Hub' : 'Recommend'; t.title = `You’re in ${hub ? 'Hub' : 'Recommend'} mode. Switch to ${hub ? 'Recommend' : 'Hub'}`; t.setAttribute('aria-label', t.title); });
+    };
     function set(m, { save = true, flash = true } = {}) {
       m = m === 'hub' ? 'hub' : 'recommend';
       const changed = m !== cur(); doc.dataset.mode = m;
@@ -133,9 +136,13 @@
     }
     const html = cls => `<div class="mode-switch ${cls}" role="group" aria-label="How you use ProMouser"><button type="button" data-mode="recommend" title="Find the right mouse for you">Recommend</button><button type="button" data-mode="hub" title="Mice, tests, stats and a mouse assistant">Hub</button></div>`;
     const actions = $('.nav-actions'), links = $('#navLinks');
-    if (actions) actions.insertAdjacentHTML('afterbegin', html('in-bar'));
+    // in the top bar: one compact toggle showing the current mode (the full switch lives in the mobile menu)
+    if (actions) actions.insertAdjacentHTML('afterbegin', '<button type="button" class="mode-toggle"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/></svg><b></b></button>');
     if (links) { const li = document.createElement('li'); li.className = 'mode-li'; li.innerHTML = html('in-menu'); links.prepend(li); }
-    document.addEventListener('click', e => { const b = e.target.closest('.mode-switch button, [data-set-mode]'); if (!b) return; e.preventDefault(); set(b.dataset.mode || b.dataset.setMode); closeChooser(); });
+    document.addEventListener('click', e => {
+      if (e.target.closest('.mode-toggle')) { e.preventDefault(); set(cur() === 'hub' ? 'recommend' : 'hub'); return; }
+      const b = e.target.closest('.mode-switch button, [data-set-mode]'); if (!b) return; e.preventDefault(); set(b.dataset.mode || b.dataset.setMode); closeChooser();
+    });
     paint();
 
     // a signed-in account remembers the mode across devices (only when this browser hasn't chosen yet)
@@ -154,7 +161,7 @@
             <ul><li>Personal recommendations</li><li>The Recommendation Assistant</li><li>Plans with more matches and preferences</li></ul></button>
           <button type="button" class="mc-opt hub" data-set-mode="hub"><span class="mc-ico" data-icon="Hub"></span><b>Hub</b><small>I’m here for the mice and the tests</small>
             <ul><li>Every mouse, specs and comparisons</li><li>Mouse tests with your stats</li><li>Ask anything about any mouse</li></ul></button>
-        </div><p class="mc-note">You can switch any time with the <b>Recommend / Hub</b> toggle in the top bar.</p>
+        </div><p class="mc-note">You can switch any time with the mode button in the top bar.</p>
         <button type="button" class="mc-skip" data-set-mode="recommend">Skip for now</button></div>`;
       document.body.appendChild(c); if (window.PMIcons) window.PMIcons(c);
       requestAnimationFrame(() => c.classList.add('open')); document.body.style.overflow = 'hidden';

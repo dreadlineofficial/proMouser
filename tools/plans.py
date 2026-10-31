@@ -21,7 +21,7 @@ ROWS = [  # feature, free, basic, lite, ultra
   ('Shortlist export (PDF / copy)', '—', '—', '—', '✓'),
   ('Assistant memory', '—', '—', '—', '✓'),
   ('ProMouser Turbo on ProMouser Online', '—', '—', '—', '1 year included (₹2,388 value)'),
-  ('Theme', 'Red &amp; black', 'Red &amp; black + Basic badge', 'Blue &amp; black', 'Purple &amp; black'),
+  ('Theme', 'Red &amp; black', 'Dark blue &amp; black', 'Blue &amp; black', 'Purple &amp; black'),
 ]
 def table(hl):
     cls = {'basic': 'basic-col', 'lite': 'lite-col', 'ultra': 'ultra-col'}
@@ -34,13 +34,13 @@ def ucard(icon, h, p): return f'<div class="u-feat reveal"><div class="fc-icon" 
 FINE = '<p class="fine" style="text-align:center;margin-top:1rem">Demo checkout: nothing is charged. Prices are placeholders until real payments are connected. Plans are one-time payments: buying a higher plan upgrades you for life, and a lower one never downgrades you.</p>'
 
 BASIC = f'''
-    <section class="basic-wrap">
+    <section class="theme-basic basic-wrap">
     <section class="about-section page-hero" id="hero">
       <div class="container about-grid">
         <div class="about-text reveal">
           <span class="section-label">ProMouser Basic</span>
           <h1>A little more, <em>for less</em></h1>
-          <p>Two extra credits every day, your top 5 matches instead of 3, a breakdown of why each mouse was picked, and a way to check any mouse against your answers.</p>
+          <p>Two extra credits every day, your top 5 matches instead of 3, a breakdown of why each mouse was picked, a way to check any mouse against your answers, and a deep navy look.</p>
           <p class="shop-price"><b>₹599</b> once <small>· yours for life</small></p>
           <div class="hero-cta"><button class="btn btn-primary" data-buy="basic-lifetime" type="button">Get Basic</button><a class="btn btn-ghost" href="#compare">Compare plans</a></div>
         </div>
@@ -62,7 +62,7 @@ BASIC = f'''
         {card('Stats', 'Match breakdown', 'Every pick shows how it scored on weight, shape, grip, sensor, connection and more, so you know why it’s there.')}
         {card('Versus', 'Check any mouse', 'Already eyeing a mouse? Pick it from the full list and see its score, where it would rank and what holds it back.')}
         {card('Note', 'Longer history', 'Your last 30 recommendation runs, instead of 12, on your Elite Dashboard.')}
-        {card('Elite', 'Basic badge', 'A Basic badge on your account. The site keeps the classic red-and-black look.')}
+        {card('Style', 'Dark blue &amp; black theme', 'The whole site switches to a deep navy-and-black look, a shade darker than Lite’s blue.')}
       </div></div></section>
     <section class="about-section" id="compare"><div class="container">
       <div class="section-header reveal"><span class="section-label">Compare plans</span><h2>Free vs <em>Basic</em> vs Lite vs Ultra</h2></div>

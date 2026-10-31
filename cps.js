@@ -15,7 +15,7 @@
    ===================================================================== */
 (() => {
   'use strict';
-  const host = document.querySelector('[data-cps]');
+  const host = document.querySelector('[data-cps=""]');   // the empty mount point, not mouse cards' data-cps ratings
   if (!host) return;
   const B = window.PMBackend;
   const root = document.documentElement.dataset.root || '';

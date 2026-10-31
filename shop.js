@@ -79,7 +79,7 @@
     body.innerHTML = `<div class="pay-result"><div class="done-badge" aria-hidden="true">✓</div><h2>Payment <em>successful</em></h2><p class="demo-note" style="margin-top:0">Demo order — no money was taken.</p>
       <div class="receipt"><div><span>Order</span><b>${order.id}</b></div><div><span>Date</span><b>${fmtDate(order.createdAt)}</b></div><div><span>Total</span><b>${inr(order.total)}</b></div></div>
       <ul class="order-lines compact">${order.items.map(i => `<li><div><b>${esc(i.name)}</b><small>${i.type === 'credits' ? `+${i.credits} credits added` : i.type === 'pass' ? `Free recommendations until ${fmtDate(bal.recPassUntil)}` : i.type === 'turbo' ? `Turbo active on ProMouser Online until ${fmtDate(B.turbo().until)}` : `${PL[i.type]} unlocked for life${i.type === 'ultra' ? ` · plus Turbo until ${fmtDate(B.turbo().until)}` : ''}`}</small></div><span>${inr(i.price)}</span></li>`).join('')}</ul>
-      ${gotLite ? `<p class="lite-welcome${plan === 'ultra' ? ' ultra' : ''}">Welcome to <strong>ProMouser ${PL[plan]}</strong>. ${plan === 'basic' ? 'Your extra credits and recommendation features are ready.' : `We’re switching you to the ${plan === 'ultra' ? 'purple' : 'blue'} theme now.`}</p>` : ''}
+      ${gotLite ? `<p class="lite-welcome${plan === 'ultra' ? ' ultra' : ''}">Welcome to <strong>ProMouser ${PL[plan]}</strong>. We’re switching you to the ${({ basic: 'dark blue', lite: 'blue', ultra: 'purple' })[plan]} theme now.</p>` : ''}
       <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations.html" id="coGo">Get recommendations</a><button class="btn btn-ghost" type="button" id="coDone">Done</button></div></div>`;
     const done = () => { A.closeModal(true); if (gotLite) location.reload(); };
     $('#coDone', body).addEventListener('click', done);
@@ -103,11 +103,11 @@
       const perCredit = p => (p.price / p.credits).toFixed(2);
       host.innerHTML = `
         <div class="shop-heroes">
-          <article class="shop-hero shop-basic reveal visible" id="basic">
+          <article class="shop-hero shop-basic theme-basic reveal visible" id="basic">
             <span class="plan-tag basic">One-time · yours forever</span>
             <h3>ProMouser <em>Basic</em></h3>
             <p class="shop-price"><b>${inr(CFG.basic.product.price)}</b> once</p>
-            <ul class="tick-list"><li><strong>${CFG.basic.dailyCredits} credits a day</strong> instead of ${CFG.free.dailyCredits}</li><li>Your top ${CFG.basic.resultsLimit} matches instead of ${CFG.free.resultsLimit}</li><li>A match breakdown on every pick</li><li>Check any mouse against your answers</li><li>History of your last ${CFG.basic.historyLimit} runs</li></ul>
+            <ul class="tick-list"><li><strong>${CFG.basic.dailyCredits} credits a day</strong> instead of ${CFG.free.dailyCredits}</li><li>Your top ${CFG.basic.resultsLimit} matches instead of ${CFG.free.resultsLimit}</li><li>A match breakdown on every pick</li><li>Check any mouse against your answers</li><li>History of your last ${CFG.basic.historyLimit} runs</li><li>Dark blue &amp; black theme</li></ul>
             ${R[t] >= 1 ? `<p class="panel-note">${t === 'basic' ? 'You own Basic for life. ✓' : 'Your plan already includes everything in Basic.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.basic.product.id}" type="button">Get Basic</button><a class="btn btn-ghost" href="${root}basic.html">What’s included</a></div>`}
           </article>
           <article class="shop-hero theme-lite reveal visible" id="lite">

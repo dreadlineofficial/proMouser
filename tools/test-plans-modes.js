@@ -18,7 +18,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   ok(res.length > 0, 'hub search finds light wireless mice: ' + res.slice(0, 2).join(' | '));
   await p.reload(); await p.waitForTimeout(1200);
   ok(!(await p.$('.mode-chooser')) && await p.evaluate(() => document.documentElement.dataset.mode) === 'hub', 'mode persists, no chooser after');
-  await p.click('.mode-switch.in-bar button[data-mode="recommend"]'); await p.waitForTimeout(300);
+  await p.click('.mode-toggle'); await p.waitForTimeout(300);
   ok(await p.isVisible('#hero') && !(await p.isVisible('#hub')), 'switch back to Recommend from the top bar');
   // 2. hub assistant copy + ?q
   await p.evaluate(() => localStorage.setItem('pm_mode', 'hub'));
@@ -31,7 +31,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.evaluate(() => PMBackend.updateProfile({ onboarded: true }));
   await p.evaluate(() => PMBackend.applyOrder({ id: 'T1', createdAt: Date.now(), total: 599, items: [{ ...PM_CONFIG.basic.product }] }));
   const s1 = await p.evaluate(() => ({ t: PMBackend.tier(), d: PMBackend.balance().daily, lim: PMBackend.resultsLimit(), bd: PMBackend.has('breakdown'), adv: PMBackend.has('advanced'), theme: document.documentElement.dataset.plan || '' }));
-  ok(s1.t === 'basic' && s1.d === 7 && s1.lim === 5 && s1.bd && !s1.adv && !s1.theme, 'Basic: 7 credits, top 5, breakdown, no advanced, no theme ' + JSON.stringify(s1));
+  ok(s1.t === 'basic' && s1.d === 7 && s1.lim === 5 && s1.bd && !s1.adv && s1.theme === 'basic', 'Basic: 7 credits, top 5, breakdown, no advanced, navy theme ' + JSON.stringify(s1));
   await p.goto(BASE + 'recommendations.html'); await p.waitForTimeout(1000);
   await p.evaluate(() => { const c = document.querySelector('#recsForm input[name="games"][value="fps"]'); if (c && !c.checked) c.click(); });
   await p.click('#genBtn'); await p.waitForSelector('.result-card', { timeout: 15000 }); await p.waitForTimeout(800);

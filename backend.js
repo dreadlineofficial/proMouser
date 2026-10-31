@@ -67,7 +67,7 @@
     label: t => ({ free: 'Free', basic: 'ProMouser Basic', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra' })[t] || 'Free',
     short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
     paid: t => t === 'basic' || t === 'lite' || t === 'ultra',
-    themed: t => t === 'lite' || t === 'ultra',   // Basic keeps the default red theme
+    themed: t => t === 'basic' || t === 'lite' || t === 'ultra',   // Basic navy, Lite blue, Ultra purple
     applyTheme(t) { if (PLAN.themed(t)) document.documentElement.dataset.plan = t; else delete document.documentElement.dataset.plan; }
   };
   const trimLog = log => Object.fromEntries(Object.entries(log || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), (Array.isArray(v) ? v : []).slice(0, 60).map(s => ({ at: +s.at || 0, v: +s.v || 0, ...(s.k ? { k: String(s.k).slice(0, 24) } : {}) }))]));

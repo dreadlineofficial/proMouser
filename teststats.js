@@ -120,7 +120,7 @@
 
   /* add a panel under each test that doesn't have one yet */
   function mount() {
-    const spots = [['[data-cps]', 'cps'], ['[data-test="reaction"]', 'reaction'], ['[data-test="aim"]', 'aim'], ['[data-test="polling"]', 'polling'], ['[data-test="scroll"]', 'scroll'], ['[data-test="buttons"]', 'buttons'], ['.double-click-test-layout', 'doubleclick']];
+    const spots = [['[data-cps=""]', 'cps'], ['[data-test="reaction"]', 'reaction'], ['[data-test="aim"]', 'aim'], ['[data-test="polling"]', 'polling'], ['[data-test="scroll"]', 'scroll'], ['[data-test="buttons"]', 'buttons'], ['.double-click-test-layout', 'doubleclick']];
     spots.forEach(([sel, test]) => { const host = document.querySelector(sel); if (host && !document.querySelector(`[data-tstats="${test}"]`)) { const el = document.createElement('section'); el.dataset.tstats = test; host.after(el); } });
     document.querySelectorAll('[data-tstats]').forEach(render);
   }

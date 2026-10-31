@@ -200,7 +200,7 @@
   function viewTab(el) {
     const html = document.documentElement, on = c => html.classList.contains(c);
     el.innerHTML = `
-      <h4>Theme preview</h4><div class="row"><div class="seg">${[['red', 'Red / black', ''], ['lite', 'Lite blue', 'lite'], ['ultra', 'Ultra purple', 'ultra']].map(([k, l, v]) => `<button type="button" data-th="${k}" class="${v} ${(html.dataset.plan || '') === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <h4>Theme preview</h4><div class="row"><div class="seg">${[['red', 'Red / black', ''], ['basic', 'Basic navy', 'basic'], ['lite', 'Lite blue', 'lite'], ['ultra', 'Ultra purple', 'ultra']].map(([k, l, v]) => `<button type="button" data-th="${k}" class="${v} ${(html.dataset.plan || '') === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <p class="msg">Preview only. Use the Account tab to really switch plans.</p>
       <h4>Layout</h4><div class="row"><button class="b ${grid ? 'on' : ''}" id="pvGrid" type="button">12-column grid</button><button class="b ${size ? 'on' : ''}" id="pvSize" type="button">Viewport size</button><button class="b ${on('pmdev-outline') ? 'on' : ''}" id="pvOut" type="button">Outline elements</button></div>
       <h4>Motion</h4><div class="row"><button class="b ${on('pmdev-noanim') ? 'on' : ''}" id="pvAnim" type="button">Turn off animations</button><button class="b" id="pvReveal" type="button">Reveal everything</button></div>

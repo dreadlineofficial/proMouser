@@ -22,7 +22,7 @@ http://localhost:8000. Everything works from either.
   | Daily credits | 7 | 20 | 30 |
   | Credits per recommendation | 1 | 2 | 0 (unlimited) |
   | Results | Top 5 | Every match | Every match |
-  | Extras | Match breakdown, check any mouse, 30-run history | + advanced preferences, advanced CPS stats, bests on every test, blue theme | + statistics for every test, **1 year of Turbo**, profiles (10), watchlist (50), sensitivity converter, export, assistant memory, purple theme |
+  | Extras | Match breakdown, check any mouse, 30-run history, deep navy theme (darker than Lite’s blue) | + advanced preferences, advanced CPS stats, bests on every test, blue theme | + statistics for every test, **1 year of Turbo**, profiles (10), watchlist (50), sensitivity converter, export, assistant memory, purple theme |
 
   New page `basic.html`; `lite.html`, `ultra.html` and the shop were rewritten around one
   comparison table (`tools/plans.py` regenerates the plan pages; `tools/test-plans-modes.js` is a Playwright check of plans, stats and modes).
