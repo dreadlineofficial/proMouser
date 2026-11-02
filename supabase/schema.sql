@@ -33,6 +33,11 @@ language sql immutable set search_path = '' as $$ select case when p_plan = 'ult
 create table if not exists public.profiles (
   id             uuid primary key references auth.users(id) on delete cascade,
   name           text not null check (char_length(name) between 1 and 60),
+  username       text not null check (username ~ '^[A-Za-z0-9_]{3,20}$'),
+  bio            text not null default '' check (char_length(bio) <= 240),
+  location       text not null default '' check (char_length(location) <= 80),
+  website        text not null default '' check (website = '' or website ~* '^https?://[^[:space:]]+$'),
+  avatar_url     text check (avatar_url is null or (avatar_url ~ '^https?://' and char_length(avatar_url) <= 1000)),
   prefs          jsonb not null default '{"games":[],"weight":"any","grip":"any","connection":"any"}'
                  check (jsonb_typeof(prefs) = 'object' and pg_column_size(prefs) < 8000),
   onboarded      boolean not null default false,
@@ -42,6 +47,29 @@ create table if not exists public.profiles (
   plan_cancelled boolean not null default false,
   created_at     timestamptz not null default now()
 );
+
+-- Public-facing profile fields. Backfill existing accounts before requiring handles.
+alter table public.profiles add column if not exists username text;
+alter table public.profiles add column if not exists bio text not null default '';
+alter table public.profiles add column if not exists location text not null default '';
+alter table public.profiles add column if not exists website text not null default '';
+alter table public.profiles add column if not exists avatar_url text;
+update public.profiles
+  set username = left(coalesce(nullif(regexp_replace(lower(name), '[^a-z0-9_]', '', 'g'), ''), 'player'), 7)
+    || substr(replace(id::text, '-', ''), 1, 12)
+  where username is null or username !~ '^[A-Za-z0-9_]{3,20}$';
+alter table public.profiles alter column username set not null;
+alter table public.profiles drop constraint if exists profiles_username_check;
+alter table public.profiles add constraint profiles_username_check check (username ~ '^[A-Za-z0-9_]{3,20}$');
+alter table public.profiles drop constraint if exists profiles_bio_check;
+alter table public.profiles add constraint profiles_bio_check check (char_length(bio) <= 240);
+alter table public.profiles drop constraint if exists profiles_location_check;
+alter table public.profiles add constraint profiles_location_check check (char_length(location) <= 80);
+alter table public.profiles drop constraint if exists profiles_website_check;
+alter table public.profiles add constraint profiles_website_check check (website = '' or website ~* '^https?://[^[:space:]]+$');
+alter table public.profiles drop constraint if exists profiles_avatar_url_check;
+alter table public.profiles add constraint profiles_avatar_url_check check (avatar_url is null or (avatar_url ~ '^https?://' and char_length(avatar_url) <= 1000));
+create unique index if not exists profiles_username_lower_idx on public.profiles (lower(username));
 
 create table if not exists public.credit_balances (
   user_id    uuid primary key references auth.users(id) on delete cascade,
@@ -157,7 +185,7 @@ create policy "own runs insert"    on public.recommendation_runs for insert to a
 revoke insert, update, delete on public.profiles, public.credit_balances, public.user_passes, public.products, public.orders from anon, authenticated;
 revoke insert, update, delete on public.recommendation_runs from anon;
 revoke update, delete on public.recommendation_runs from authenticated;
-grant update (name, prefs, onboarded, plan_cancelled, extras) on public.profiles to authenticated;
+grant update (name, username, bio, location, website, avatar_url, prefs, onboarded, plan_cancelled, extras) on public.profiles to authenticated;
 
 -- only Ultra accounts may change their extras (the browser can't flip this: plan isn't writable)
 create or replace function public.pm_guard_extras() returns trigger
@@ -174,9 +202,13 @@ create trigger pm_guard_extras before update on public.profiles for each row exe
 -- ---------------------------------------------------------------- new user bootstrap
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
+declare profile_name text;
 begin
-  insert into public.profiles (id, name)
-    values (new.id, left(coalesce(nullif(trim(new.raw_user_meta_data->>'name'), ''), split_part(new.email, '@', 1), 'Player'), 60));
+  profile_name := left(coalesce(nullif(trim(new.raw_user_meta_data->>'name'), ''), split_part(new.email, '@', 1), 'Player'), 60);
+  insert into public.profiles (id, name, username)
+    values (new.id, profile_name,
+      left(coalesce(nullif(regexp_replace(lower(profile_name), '[^a-z0-9_]', '', 'g'), ''), 'player'), 7)
+        || substr(replace(new.id::text, '-', ''), 1, 12));
   insert into public.credit_balances (user_id) values (new.id);
   return new;
 end $$;
@@ -209,7 +241,9 @@ begin
   if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
   perform public.pm_refresh(uid);
   select jsonb_build_object(
-      'id', p.id, 'email', u.email, 'name', p.name, 'prefs', p.prefs, 'onboarded', p.onboarded,
+      'id', p.id, 'email', u.email, 'name', p.name, 'username', p.username, 'bio', p.bio,
+      'location', p.location, 'website', p.website, 'avatar_url', p.avatar_url,
+      'prefs', p.prefs, 'onboarded', p.onboarded,
       'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at,
       'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best,
       'passes', coalesce((select jsonb_object_agg(x.feature, x.until) from public.user_passes x where x.user_id = p.id and x.until > now()), '{}'::jsonb),
@@ -327,3 +361,18 @@ begin
 end $$;
 revoke all on function public.grant_order(uuid, text, text[], text, text) from public, anon, authenticated;
 grant execute on function public.grant_order(uuid, text, text[], text, text) to service_role;
+
+-- Profile photos are public; signed-in users can only replace or remove their own image.
+do $$ begin
+  if exists (select 1 from pg_namespace where nspname = 'storage') then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+      values ('avatars', 'avatars', true, 1048576, array['image/jpeg'])
+      on conflict (id) do update set public = true, file_size_limit = 1048576, allowed_mime_types = array['image/jpeg'];
+    execute 'drop policy if exists "avatar upload" on storage.objects';
+    execute 'drop policy if exists "avatar update" on storage.objects';
+    execute 'drop policy if exists "avatar delete" on storage.objects';
+    execute $p$create policy "avatar upload" on storage.objects for insert to authenticated with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+    execute $p$create policy "avatar update" on storage.objects for update to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+    execute $p$create policy "avatar delete" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+  end if;
+end $$;

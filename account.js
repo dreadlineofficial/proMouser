@@ -87,6 +87,7 @@
           <p class="auth-error" role="alert" hidden></p>
           <button class="btn btn-primary btn-block" type="submit"><span>${up ? 'Create account' : 'Sign in'}</span></button>
         </form>
+        ${B.mode === 'supabase' ? `<div class="auth-provider-options"><span>Or continue with</span><button class="btn btn-ghost btn-block auth-provider-btn" type="button" data-auth-provider="google"><span class="provider-mark google" aria-hidden="true">G</span>Google</button><button class="btn btn-ghost btn-block auth-provider-btn" type="button" data-auth-provider="discord"><span class="provider-mark discord" aria-hidden="true">D</span>Discord</button></div>` : ''}
         ${B.mode === 'supabase' ? '' : '<p class="demo-note"><strong>Demo mode:</strong> accounts are stored only in this browser until the real sign-in service is connected. Don’t reuse an important password.</p>'}`;
       $$('.auth-tabs button', body).forEach(b => b.addEventListener('click', () => render(b.dataset.m)));
       const form = $('form', body), err = $('.auth-error', body), btn = $('button[type=submit]', body);
@@ -99,6 +100,11 @@
           if (!u.onboarded) startOnboarding(u, opts.after); else { toast(`Welcome back, ${u.name.split(' ')[0]}!`); opts.after && opts.after(u); }
         } catch (ex) { err.textContent = ex.message; err.hidden = false; err.classList.toggle('is-info', ex.code === 'CONFIRM_EMAIL'); btn.disabled = false; btn.classList.remove('loading'); form.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 260 }); }
       });
+      $$('[data-auth-provider]', body).forEach(providerButton => providerButton.addEventListener('click', async () => {
+        providerButton.disabled = true;
+        try { await B.signInWithProvider(providerButton.dataset.authProvider); }
+        catch (error) { err.textContent = error.message; err.hidden = false; providerButton.disabled = false; }
+      }));
       $('input', form).focus();
     };
     render(mode);
@@ -146,10 +152,11 @@
     const u = B.getUser();
     if (!u) { slot.innerHTML = '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'; return; }
     const bal = B.balance(), t = B.tier(), init = esc(u.name.trim().charAt(0).toUpperCase() || '?');
+    const avatar = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : init;
     slot.innerHTML = `
       <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop.html" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
       <div class="user-menu">
-        <button class="avatar ${t}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${init}</button>
+        <button class="avatar ${t}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${avatar}</button>
         <div class="user-dd" role="menu">
           <div class="user-dd-head"><b>${esc(u.name)}</b><small>${esc(u.email)}</small><span class="plan-tag ${t}">${t === 'free' ? 'Free plan' : PLAN.label(t)}</span></div>
           <a role="menuitem" href="${root}elite.html">Elite Dashboard</a>
@@ -204,6 +211,41 @@
   };
 
   /* ---------- account page ---------- */
+  function compressAvatar(file) {
+    if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return Promise.reject(new Error('Choose a JPG, PNG, or WebP image.'));
+    if (file.size > 8 * 1024 * 1024) return Promise.reject(new Error('Profile photos must be 8 MB or smaller.'));
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), image = new Image();
+      image.onload = async () => {
+        try {
+          if (image.naturalWidth * image.naturalHeight > 20000000) throw new Error('This image is too large to process. Please choose a smaller photo.');
+          const toJpeg = (width, height, quality) => new Promise((res, rej) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const context = canvas.getContext('2d');
+            if (!context) { rej(new Error('Could not process this image.')); return; }
+            context.drawImage(image, 0, 0, width, height);
+            canvas.toBlob(blob => blob ? res(blob) : rej(new Error('Could not process this image.')), 'image/jpeg', quality);
+          });
+          const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+          let width = Math.round(image.naturalWidth * scale), height = Math.round(image.naturalHeight * scale);
+          let blob = await toJpeg(width, height, .82);
+          if (blob.size > 500 * 1024) {
+            const fallbackScale = Math.min(1, 384 / Math.max(image.naturalWidth, image.naturalHeight));
+            width = Math.max(1, Math.round(image.naturalWidth * fallbackScale));
+            height = Math.max(1, Math.round(image.naturalHeight * fallbackScale));
+            blob = await toJpeg(width, height, .68);
+          }
+          if (blob.size > 500 * 1024) throw new Error('This image is too detailed to optimize. Please choose another photo.');
+          resolve(blob);
+        } catch (error) { reject(error); }
+        finally { URL.revokeObjectURL(url); }
+      };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read this image.')); };
+      image.src = url;
+    });
+  }
+
   function renderAccountPage(host) {
     const u = B.getUser();
     if (!u) {
@@ -214,9 +256,53 @@
     const hrs = Math.max(0, Math.round((bal.resetsAt - Date.now()) / 3600000));
     const tb = B.turbo ? B.turbo() : { active: false };
     const planLine = (paid ? (u.plan.renewsAt ? `${name} until ${fmtDate(u.plan.renewsAt)}` : `${name} · yours for life`) : (u.plan.lapsedAt ? 'Your paid plan has ended' : 'Free plan')) + (tb.active ? ` · <span class="turbo-text">Turbo</span> until ${fmtDate(tb.until)}` : '');
+    const avatarMarkup = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : esc(u.name.trim().charAt(0).toUpperCase() || '?');
+    const identities = u.identities || [];
+    const providers = [
+      { id: 'google', name: 'Google', mark: 'G' },
+      { id: 'discord', name: 'Discord', mark: 'D' }
+    ];
+    const providerCards = providers.map(provider => {
+      const identity = identities.find(i => i.provider === provider.id);
+      return `<div class="connected-account">
+        <span class="provider-mark ${provider.id}" aria-hidden="true">${provider.mark}</span>
+        <div class="connected-account-info"><strong>${provider.name}</strong><small>${identity ? esc(identity.label || 'Connected') : 'Not connected'}</small></div>
+        ${identity
+          ? `<button class="btn btn-outline btn-sm" type="button" data-disconnect="${provider.id}" aria-label="Disconnect ${provider.name}">Disconnect</button>`
+          : `<button class="btn btn-ghost btn-sm" type="button" data-connect="${provider.id}" aria-label="Connect ${provider.name}" ${B.mode !== 'supabase' ? 'disabled' : ''}>Connect</button>`}
+      </div>`;
+    }).join('');
     host.innerHTML = `
-      <div class="acct-head"><div class="avatar big ${t}">${esc(u.name.charAt(0).toUpperCase())}</div><div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p>${esc(u.email)} · member since ${fmtDate(u.createdAt)}</p></div></div>
+      <article class="panel acct-profile">
+        <div class="acct-profile-heading">
+          <div class="avatar big acct-avatar ${t}">${avatarMarkup}</div>
+          <div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p class="acct-handle">@${esc(u.username || 'player')} · member since ${fmtDate(u.createdAt)}</p><p>${esc(u.email)}</p></div>
+        </div>
+        <div class="acct-profile-editor">
+          <div class="avatar-controls">
+            <label class="btn btn-ghost btn-sm avatar-upload" for="profileAvatar">Change photo<input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp"></label>
+            ${u.avatarUrl ? '<button class="btn btn-outline btn-sm" type="button" id="removeAvatar">Remove photo</button>' : ''}
+            <small>JPG, PNG, or WebP · up to 8 MB</small>
+            <small>Photos are publicly viewable when Supabase is enabled.</small>
+          </div>
+          <form id="profileForm" class="profile-form">
+            <label>Display name<input name="name" autocomplete="name" maxlength="60" required value="${esc(u.name)}"></label>
+            <label>Username<input name="username" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" required value="${esc(u.username || '')}" aria-describedby="usernameHint"><small id="usernameHint">3–20 letters, numbers, or underscores</small></label>
+            <label class="profile-bio">About you<textarea name="bio" maxlength="240" rows="3" placeholder="Tell people a little about yourself">${esc(u.bio || '')}</textarea><small>Up to 240 characters</small></label>
+            <label>Location<input name="location" autocomplete="address-level2" maxlength="80" value="${esc(u.location || '')}" placeholder="City, country"></label>
+            <label>Website<input name="website" type="url" autocomplete="url" maxlength="300" value="${esc(u.website || '')}" placeholder="https://example.com"></label>
+            <button class="btn btn-primary btn-sm" type="submit">Save profile</button>
+          </form>
+        </div>
+      </article>
       <div class="acct-grid">
+        <article class="panel connected-panel"><h3>Connected accounts</h3><p class="panel-note">Link a provider to sign in with it. Your ProMouser profile stays the same.</p>
+          <div class="connected-list">
+            <div class="connected-account"><span class="provider-mark email" aria-hidden="true">@</span><div class="connected-account-info"><strong>Email &amp; password</strong><small>${esc(u.email)} · primary sign-in</small></div><span class="connected-status">Active</span></div>
+            ${providerCards}
+          </div>
+          <p class="panel-note">${B.mode === 'supabase' ? 'Google and Discord must be enabled in the site’s Supabase Authentication settings.' : 'Social sign-in connections are unavailable in demo mode. Profile changes are saved in this browser.'}</p>
+        </article>
         <article class="panel"><div class="panel-head"><h3>Plan &amp; credits</h3><span class="plan-tag ${t}">${t === 'free' ? 'Free' : PLAN.label(t)}</span></div>
           <p class="panel-note">${planLine}</p>
           <div class="credit-stats">
@@ -239,12 +325,68 @@
         <article class="panel"><h3>Orders</h3>${u.orders.length ? `<ul class="hist">${u.orders.slice(0, 8).map(o => `<li><b>${esc(o.items.map(i => i.name).join(', '))}</b><small>${o.id} · ${fmtDate(o.createdAt)} · ${inr(o.total)} · demo payment</small></li>`).join('')}</ul>` : '<p class="panel-note">No orders yet.</p>'}</article>
       </div>
       <div class="acct-foot"><button class="btn btn-ghost btn-sm" type="button" data-auth="signout">Sign out</button><button class="btn btn-outline btn-sm danger" type="button" id="delAcct">Delete account</button></div>`;
+    $('#profileForm', host).addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.currentTarget, data = new FormData(form), button = $('button[type=submit]', form);
+      button.disabled = true;
+      try {
+        await B.updateProfile({
+          name: data.get('name'), username: data.get('username'), bio: data.get('bio'),
+          location: data.get('location'), website: data.get('website')
+        });
+        toast('Profile saved.');
+      } catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    });
+    $('#profileAvatar', host).addEventListener('change', async e => {
+      const input = e.currentTarget, file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const blob = await compressAvatar(file);
+        if (B.mode === 'supabase') await B.uploadAvatar(blob);
+        else {
+          const avatarUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Could not read this image.'));
+            reader.readAsDataURL(blob);
+          });
+          await B.updateProfile({ avatarUrl });
+        }
+        toast('Profile photo updated.');
+      } catch (error) { toast(error.message, 'err'); }
+      finally { input.value = ''; }
+    });
+    const removeAvatar = $('#removeAvatar', host);
+    if (removeAvatar) removeAvatar.addEventListener('click', async () => {
+      removeAvatar.disabled = true;
+      try {
+        if (B.mode === 'supabase') await B.removeAvatar();
+        else await B.updateProfile({ avatarUrl: null });
+        toast('Profile photo removed.');
+      } catch (error) { toast(error.message, 'err'); removeAvatar.disabled = false; }
+    });
+    $$('[data-connect]', host).forEach(button => button.addEventListener('click', async () => {
+      button.disabled = true;
+      try { await B.linkIdentity(button.dataset.connect); }
+      catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    }));
+    $$('[data-disconnect]', host).forEach(button => button.addEventListener('click', async () => {
+      const provider = button.dataset.disconnect;
+      if (!confirm(`Disconnect your ${provider === 'google' ? 'Google' : 'Discord'} account?`)) return;
+      button.disabled = true;
+      try { await B.unlinkIdentity(provider); toast('Account disconnected.'); }
+      catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    }));
     $('#prefsForm', host).addEventListener('submit', async e => {
       e.preventDefault(); const f = new FormData(e.target);
       await B.updateProfile({ prefs: { games: f.getAll('games'), weight: f.get('weight') || 'any', grip: f.get('grip') || 'any', connection: f.get('connection') || 'any' } });
       toast('Preferences saved.');
     });
-    $('#delAcct', host).addEventListener('click', async () => { if (confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); } });
+    $('#delAcct', host).addEventListener('click', async () => {
+      if (!confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) return;
+      try { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); }
+      catch (error) { toast(error.message, 'err'); }
+    });
   }
 
   /* ---------- boot ---------- */

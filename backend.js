@@ -96,6 +96,11 @@
   }
 
   const allUsers = () => read(KEY_USERS, {});
+  const makeUsername = (name, id) => {
+    const base = String(name || 'player').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 7) || 'player';
+    const suffix = String(id || '').replace(/[^a-z0-9]/gi, '').slice(-12).toLowerCase();
+    return (base + suffix).slice(0, 20);
+  };
   const saveUser = u => { const all = allUsers(); all[u.id] = u; write(KEY_USERS, all); try { localStorage.setItem(KEY_PLAN, u.plan.tier); } catch (e) { /* storage unavailable */ } applyTheme(u.plan.tier); };
   const applyTheme = PLAN.applyTheme;
   const allowance = u => PLAN.cfg(u).dailyCredits;
@@ -105,6 +110,12 @@
     let changed = false; const now = Date.now();
     if (PLAN.paid(u.plan.tier) && u.plan.renewsAt && now > u.plan.renewsAt) { u.plan = { tier: 'free', lapsedAt: now }; changed = true; }
     if (!u.extras) { u.extras = { watchlist: [], profiles: [], memory: null }; changed = true; }
+    if (!u.username) { u.username = makeUsername(u.name, u.id); changed = true; }
+    if (u.bio == null) { u.bio = ''; changed = true; }
+    if (u.location == null) { u.location = ''; changed = true; }
+    if (u.website == null) { u.website = ''; changed = true; }
+    if (!Object.prototype.hasOwnProperty.call(u, 'avatarUrl')) { u.avatarUrl = null; changed = true; }
+    if (!u.identities) { u.identities = [{ provider: 'email' }]; changed = true; }
     if (u.pass !== undefined) { u.passes = u.passes || {}; if (u.pass && u.pass.until) u.passes.recommendation = u.pass.until; delete u.pass; changed = true; }   // older demo accounts had one "Credit Pass"
     if (!u.passes) { u.passes = {}; changed = true; }
     Object.keys(u.passes).forEach(f => { if (now > u.passes[f]) { delete u.passes[f]; changed = true; } });
@@ -134,9 +145,11 @@
       if (Object.values(all).some(u => u.email === email)) throw new Error('An account with that email already exists. Try signing in.');
       const salt = uid('s');
       const u = { id: uid('u'), name, email, salt, pwHash: await hash(password, salt), createdAt: Date.now(), onboarded: false,
+        username: '', bio: '', location: '', website: '', avatarUrl: null, identities: [{ provider: 'email' }],
         prefs: { games: [], weight: 'any', grip: 'any', connection: 'any' },
         plan: { tier: 'free' }, credits: { date: today(), daily: CONFIG.free.dailyCredits, purchased: 0 }, passes: {}, orders: [], history: [],
         extras: { watchlist: [], profiles: [], memory: null } };
+      u.username = makeUsername(name, u.id);
       saveUser(u); write(KEY_SESSION, u.id); emit();
       return clean(u);
     },
@@ -169,11 +182,48 @@
     },
     async updateProfile(patch) {
       const u = current(); if (!u) throw new Error('Not signed in.');
-      if (patch.name != null) u.name = String(patch.name).trim() || u.name;
+      if (patch.name != null) {
+        const name = String(patch.name).trim();
+        if (!name || name.length > 60) throw new Error('Your name must be between 1 and 60 characters.');
+        u.name = name;
+      }
+      if (patch.username != null) {
+        const username = String(patch.username).trim().replace(/^@/, '').toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(username)) throw new Error('Your username must be 3–20 letters, numbers, or underscores.');
+        if (Object.values(allUsers()).some(other => other.id !== u.id && String(other.username || '').toLowerCase() === username)) throw new Error('That username is already taken.');
+        u.username = username;
+      }
+      if (patch.bio != null) {
+        const bio = String(patch.bio).trim();
+        if (bio.length > 240) throw new Error('Your bio must be 240 characters or fewer.');
+        u.bio = bio;
+      }
+      if (patch.location != null) {
+        const location = String(patch.location).trim();
+        if (location.length > 80) throw new Error('Your location must be 80 characters or fewer.');
+        u.location = location;
+      }
+      if (patch.website != null) {
+        const website = String(patch.website).trim();
+        if (website) {
+          try { if (!['http:', 'https:'].includes(new URL(website).protocol)) throw new Error(); }
+          catch (e) { throw new Error('Enter a valid website URL beginning with http:// or https://.'); }
+        }
+        if (website.length > 300) throw new Error('Your website URL is too long.');
+        u.website = website;
+      }
+      if (patch.avatarUrl !== undefined) {
+        const avatarUrl = patch.avatarUrl == null ? null : String(patch.avatarUrl);
+        if (avatarUrl && (!avatarUrl.startsWith('data:image/jpeg;base64,') || avatarUrl.length > 750000)) throw new Error('Choose a smaller JPEG profile photo.');
+        u.avatarUrl = avatarUrl;
+      }
       if (patch.prefs) u.prefs = { ...u.prefs, ...patch.prefs };
       if (patch.onboarded != null) u.onboarded = !!patch.onboarded;
       saveUser(u); emit(); return clean(u);
     },
+    async signInWithProvider() { throw new Error('Social sign-in is available when Supabase authentication is configured.'); },
+    async linkIdentity() { throw new Error('Connected sign-in accounts are available when Supabase authentication is configured.'); },
+    async unlinkIdentity() { throw new Error('Connected sign-in accounts are available when Supabase authentication is configured.'); },
 
     /* credits ---------------------------------------------------------- */
     costPerRecommendation() { return PLAN.cfg(current()).costPerRecommendation; },
