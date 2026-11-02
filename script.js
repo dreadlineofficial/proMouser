@@ -2,18 +2,81 @@
    ProMouser — site script
    Navigation, search, icons, scroll + pointer effects, page transitions.
    Stats / charts live in stats.js; tool logic lives inline on its page.
-   Browser storage used (see privacy): sessionStorage "pm_banner_closed".
+   Browser storage used (see privacy): localStorage "pm_accessibility";
+   sessionStorage "pm_banner_closed".
    ===================================================================== */
 'use strict';
 
 (function () {
   const doc = document.documentElement;
   const root = doc.dataset.root || '';
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ACCESSIBILITY_KEY = 'pm_accessibility';
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const readAccessibility = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ACCESSIBILITY_KEY) || '{}');
+      return {
+        performance: saved.performance === true,
+        motion: ['system', 'reduce', 'full'].includes(saved.motion) ? saved.motion : 'system'
+      };
+    } catch (e) { return { performance: false, motion: 'system' }; }
+  };
+  let accessibility = readAccessibility();
+  let performanceMode = accessibility.performance;
+  let reduce = false;
+  const applyAccessibility = () => {
+    performanceMode = accessibility.performance;
+    reduce = performanceMode || accessibility.motion === 'reduce' || (accessibility.motion === 'system' && motionQuery.matches);
+    doc.dataset.performance = performanceMode ? 'on' : 'off';
+    doc.dataset.motion = reduce ? 'reduce' : 'full';
+  };
+  applyAccessibility();
+  const saveAccessibility = next => {
+    accessibility = {
+      performance: next.performance === true,
+      motion: ['system', 'reduce', 'full'].includes(next.motion) ? next.motion : 'system'
+    };
+    applyAccessibility();
+    try { localStorage.setItem(ACCESSIBILITY_KEY, JSON.stringify(accessibility)); return true; }
+    catch (e) { return false; }
+  };
   const finePointer = window.matchMedia('(pointer: fine)').matches;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   doc.classList.remove('no-js');
+  if (motionQuery.addEventListener) motionQuery.addEventListener('change', () => {
+    if (accessibility.motion === 'system' && !performanceMode) applyAccessibility();
+  });
+
+  /* Accessibility and performance preferences apply site-wide and stay on this device. */
+  (function () {
+    const performanceToggle = $('#performanceMode');
+    const motionSelect = $('#motionPreference');
+    const status = $('#accessibilityStatus');
+    const sync = () => {
+      if (performanceToggle) performanceToggle.checked = accessibility.performance;
+      if (motionSelect) motionSelect.value = accessibility.motion;
+    };
+    const save = () => {
+      const persisted = saveAccessibility({
+        performance: performanceToggle ? performanceToggle.checked : accessibility.performance,
+        motion: motionSelect ? motionSelect.value : accessibility.motion
+      });
+      if (status) status.textContent = persisted
+        ? 'Your accessibility settings are saved on this device.'
+        : 'Settings are active for this visit, but could not be saved in this browser.';
+    };
+    performanceToggle && performanceToggle.addEventListener('change', save);
+    motionSelect && motionSelect.addEventListener('change', save);
+    sync();
+    const moreMenu = $('#nav-menu-4');
+    if (moreMenu && !$('#accessibilityNavLink', moreMenu)) {
+      const item = document.createElement('li');
+      item.innerHTML = `<a id="accessibilityNavLink" href="${root}account#accessibility"><span class="dd-ico" data-icon="Fix"></span><span class="dd-txt"><b>Accessibility settings</b><small>Motion and performance options</small></span></a>`;
+      moreMenu.appendChild(item);
+      window.PMIcons && window.PMIcons(item);
+    }
+  })();
 
   /* ── ICONS (data-icon="Name" → inline SVG) ── */
   const P = {
@@ -152,7 +215,7 @@
     // first visit to the home page: ask which ProMouser they want
     function closeChooser() { const c = $('.mode-chooser'); if (c) { c.classList.remove('open'); setTimeout(() => c.remove(), 300); document.body.style.overflow = ''; } }
     const home = !root && /(^|\/)(index\.html)?$/.test(location.pathname);
-    if (home && !stored() && !/[?&]nochooser/.test(location.search)) setTimeout(() => {
+    if (home && !performanceMode && !stored() && !/[?&]nochooser/.test(location.search)) setTimeout(() => {
       if (stored()) return;
       const c = document.createElement('div'); c.className = 'mode-chooser'; c.setAttribute('role', 'dialog'); c.setAttribute('aria-modal', 'true'); c.setAttribute('aria-labelledby', 'mcTitle');
       c.innerHTML = `<div class="mc-card"><span class="section-label">Welcome to ProMouser</span><h2 id="mcTitle">How do you want to use <em>ProMouser</em>?</h2>
@@ -228,6 +291,7 @@
       ['ProMouser Ultra', 'ultra', 'Purple theme, unlimited recommendations, watchlist, profiles, sensitivity converter'],
       ['Sensitivity converter', 'sens', 'Convert sensitivity between CS2, Valorant, Apex, Overwatch 2 and TF2 (Ultra)'],
       ['My account', 'account', 'Preferences, credits, plan and orders'],
+      ['Accessibility settings', 'account#accessibility', 'Performance mode and reduced motion preferences'],
       ['Browse mice', 'mice', 'Every mouse with spec sheets, filters and a spec map'],
       ['Compare mice', 'mice/compare', 'Up to four mice side by side'],
       ['FPS mice', 'mice/first-person-shooters', 'Best mice for fast aim: Valorant, CS2, Fortnite, TF2'],
@@ -376,9 +440,10 @@
   })();
 
   /* ── POINTER EFFECTS: card spotlight, ambient glow, hero parallax, magnetic buttons ── */
-  if (finePointer && !reduce) {
+  if (finePointer) {
     let raf = 0, px = 0, py = 0, target = null;
     document.addEventListener('pointermove', e => {
+      if (performanceMode || reduce) return;
       px = e.clientX; py = e.clientY; target = e.target;
       if (raf) return;
       raf = requestAnimationFrame(() => {
@@ -401,7 +466,10 @@
     }, { passive: true });
     document.addEventListener('pointerleave', () => { const p = $('.hero-product, .review-stage picture'); p && (p.style.transform = ''); }, true);
     $$('.btn-primary, .btn-ghost').forEach(b => {
-      b.addEventListener('pointermove', e => { const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .16}px, ${(e.clientY - r.top - r.height / 2) * .22 - 2}px)`; });
+      b.addEventListener('pointermove', e => {
+        if (performanceMode || reduce) return;
+        const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .16}px, ${(e.clientY - r.top - r.height / 2) * .22 - 2}px)`;
+      });
       b.addEventListener('pointerleave', () => { b.style.transform = ''; });
     });
   }
@@ -419,7 +487,7 @@
     };
     document.addEventListener('click', e => {
       const a = e.target.closest('a');
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !internal(a) || reduce) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !internal(a) || reduce || performanceMode) return;
       e.preventDefault();
       document.body.classList.add('page-transitioning');
       setTimeout(() => { location.href = a.href; }, 240);
@@ -427,6 +495,7 @@
     addEventListener('pageshow', () => document.body.classList.remove('page-transitioning'));
     const done = new Set();
     document.addEventListener('pointerover', e => {
+      if (performanceMode) return;
       const a = e.target.closest && e.target.closest('a');
       if (!internal(a) || done.has(a.href)) return;
       done.add(a.href);

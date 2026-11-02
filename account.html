@@ -93,6 +93,43 @@
 
     <section class="about-section page-hero" id="hero"><div class="container"><div data-account-page></div>
       <noscript><p class="panel-note">Your account needs JavaScript.</p></noscript></div></section>
+
+    <section class="about-section accessibility-section" id="accessibility" aria-labelledby="accessibilityTitle">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Settings</span>
+          <h2 id="accessibilityTitle">Accessibility &amp; <em>performance</em></h2>
+          <p>Choose how ProMouser moves and renders. These preferences are saved in this browser and do not require an account.</p>
+        </div>
+        <div class="panel accessibility-panel">
+          <div class="accessibility-setting">
+            <div>
+              <h3>Performance mode</h3>
+              <p id="performanceDescription">Turns off animations, transitions, ambient backgrounds, blur, pointer effects, page prefetching and the welcome splash. Images and site features remain available.</p>
+            </div>
+            <label class="accessibility-check" for="performanceMode">
+              <input id="performanceMode" type="checkbox" aria-describedby="performanceDescription">
+              <span>Enable performance mode</span>
+            </label>
+          </div>
+          <div class="accessibility-setting">
+            <div>
+              <h3>Motion preference</h3>
+              <p id="motionDescription">Reduce motion independently of performance mode, or follow your device’s accessibility setting.</p>
+            </div>
+            <label class="accessibility-motion" for="motionPreference">
+              <span class="sr-only">Motion preference</span>
+              <select id="motionPreference" aria-describedby="motionDescription">
+                <option value="system">Follow device setting</option>
+                <option value="reduce">Always reduce motion</option>
+                <option value="full">Allow motion</option>
+              </select>
+            </label>
+          </div>
+          <p class="accessibility-status" id="accessibilityStatus" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
