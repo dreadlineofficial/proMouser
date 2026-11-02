@@ -34,8 +34,8 @@ a generated username. Running the schema again is safe.
    - Turning it OFF makes testing quicker, because sign-up logs you straight in.
 2. **Authentication → URL Configuration**
    - **Site URL:** `https://promouser.website`
-   - **Redirect URLs:** add `https://promouser.website/account.html`.
-     For local testing, also add `http://localhost:8000/account.html`.
+   - **Redirect URLs:** add `https://promouser.website/account`.
+     For local testing, also add `http://localhost:8000/account`.
 3. To enable connected sign-in accounts, open **Authentication → Sign In / Providers** and
    configure Google and/or Discord with credentials from those providers. Add the account
    page URLs above to the allowed redirect URLs. Users can sign in with those providers,

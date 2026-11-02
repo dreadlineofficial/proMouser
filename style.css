@@ -139,23 +139,54 @@ html[data-theme="classic"] {
   --glass: rgba(10, 6, 8, .74);
   --s1: #ff2a47; --s2: #f4f4f6; --s3: #ff8a96; --s4: #9d979a;
   --s5: #d4142a; --s6: #ffc2c8; --s7: #cfcfd4;
+  --accent-dim: rgba(var(--accent-rgb), .13);
+  --accent-glow: rgba(var(--accent-rgb), .42);
+  --shadow-accent: 0 24px 70px -24px rgba(var(--accent-rgb), .5);
 }
 html[data-theme="emerald"] {
+  --bg: #030806;
+  --bg-2: #06110d;
+  --bg-3: #0a1b15;
+  --surface: #0d211a;
+  --surface-2: #123027;
+  --bg-rgb: 3, 8, 6;
+  --bg2-rgb: 6, 17, 13;
+  --bg3-rgb: 10, 27, 21;
   --accent: #34d399;
   --accent-2: #059669;
   --accent-deep: #064e3b;
   --accent-rgb: 52, 211, 153;
   --accent2-rgb: 5, 150, 105;
+  --accent-dim: rgba(var(--accent-rgb), .13);
+  --accent-glow: rgba(var(--accent-rgb), .42);
+  --shadow-accent: 0 24px 70px -24px rgba(var(--accent-rgb), .5);
   --grad: linear-gradient(120deg, #6ee7b7 0%, #059669 100%);
+  --text-2: #a2b8ad;
+  --text-3: #6d887a;
+  --glass: rgba(3, 10, 7, .78);
   --s1: #34d399; --s3: #a7f3d0; --s5: #059669; --s6: #d1fae5;
 }
 html[data-theme="sunset"] {
+  --bg: #090604;
+  --bg-2: #140b06;
+  --bg-3: #211107;
+  --surface: #29150a;
+  --surface-2: #381d0d;
+  --bg-rgb: 9, 6, 4;
+  --bg2-rgb: 20, 11, 6;
+  --bg3-rgb: 33, 17, 7;
   --accent: #fb923c;
   --accent-2: #ea580c;
   --accent-deep: #7c2d12;
   --accent-rgb: 251, 146, 60;
   --accent2-rgb: 234, 88, 12;
+  --accent-dim: rgba(var(--accent-rgb), .13);
+  --accent-glow: rgba(var(--accent-rgb), .42);
+  --shadow-accent: 0 24px 70px -24px rgba(var(--accent-rgb), .5);
   --grad: linear-gradient(120deg, #fdba74 0%, #ea580c 100%);
+  --text-2: #c3a995;
+  --text-3: #90745e;
+  --glass: rgba(12, 7, 3, .78);
   --s1: #fb923c; --s3: #fed7aa; --s5: #ea580c; --s6: #ffedd5;
 }
 
@@ -985,7 +1016,7 @@ fieldset { border: 0; min-width: 0; } .recs-form fieldset { margin-top: 1.3rem; 
 .acct-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } .acct-foot { display: flex; gap: 10px; margin-top: 22px; }
 .credit-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 1rem 0; } .credit-stats > div { padding: .8rem; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--border); } .credit-stats span { font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); } .credit-stats b { display: block; font-family: var(--font-display); font-size: 2.1rem; font-weight: 400; line-height: 1.1; } .credit-stats small { font-family: var(--font-body); font-size: .8rem; color: var(--text-3); } .credit-stats em { font-style: normal; background: none; -webkit-text-fill-color: var(--text-3); color: var(--text-3); font-size: .74rem; }
 .pref-form { display: grid; gap: 1.1rem; } .pref-form .btn { justify-self: start; }
-.avatar img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; border-radius: 50%; object-fit: cover; object-position: center; }
+.avatar img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; border-radius: 50%; object-fit: cover; object-position: var(--avatar-x, 50%) var(--avatar-y, 50%); transform: scale(var(--avatar-zoom, 1)); }
 .acct-profile { margin-bottom: 20px; padding: clamp(22px, 4vw, 42px); }
 .acct-profile-heading { display: flex; align-items: center; gap: clamp(20px, 4vw, 42px); }
 .acct-profile-heading h1 { font-size: clamp(2.6rem, 7vw, 6rem); line-height: .95; overflow-wrap: anywhere; }
@@ -999,6 +1030,10 @@ fieldset { border: 0; min-width: 0; } .recs-form fieldset { margin-top: 1.3rem; 
 .avatar-upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .avatar-upload:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
 .avatar-controls .btn:disabled, .connected-account .btn:disabled { opacity: .55; cursor: wait; }
+.avatar-crop-controls { display: grid; width: min(280px, 100%); gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.025); }
+.avatar-crop-controls label { display: grid; gap: 4px; color: var(--text-2); font-size: .75rem; }
+.avatar-crop-controls input { width: 100%; accent-color: var(--accent); }
+.avatar-crop-controls > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .profile-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; }
 .profile-form label { display: grid; gap: 6px; color: var(--text-2); font-size: .8rem; font-weight: 700; letter-spacing: .06em; }
 .profile-form input, .profile-form textarea { width: 100%; min-width: 0; border: 1px solid var(--border-2); border-radius: 12px; background: rgba(0, 0, 0, .22); padding: .75rem .85rem; color: var(--text); font-size: .95rem; font-weight: 400; letter-spacing: 0; }
@@ -1326,8 +1361,8 @@ picture.is-art img { filter: drop-shadow(0 18px 28px rgba(0,0,0,.45)); }
 /* ===================== v5: ProMouser Ultra ===================== */
 .plan-tag.ultra, .ultra-chip { background: rgba(168,85,247,.16); color: #c99bff; border: 1px solid rgba(168,85,247,.45); }
 .ultra-chip { display: inline-flex; padding: .22rem .7rem; border-radius: 999px; font-size: .74rem; font-weight: 700; }
-.avatar.ultra { background: linear-gradient(135deg, #c084fc, #7c3aed); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #a855f7, 0 0 24px rgba(168,85,247,.7); animation: ultraPulse 3.2s ease-in-out infinite; }
-@keyframes ultraPulse { 50% { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #c084fc, 0 0 34px rgba(192,132,252,.85); } }
+.avatar.ultra { background: var(--grad); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent), 0 0 24px var(--accent-glow); animation: ultraPulse 3.2s ease-in-out infinite; }
+@keyframes ultraPulse { 50% { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-2), 0 0 34px var(--accent-glow); } }
 .shop-hero.theme-ultra { background: linear-gradient(160deg, rgba(168,85,247,.24), rgba(14,6,24,.85)); border-color: rgba(168,85,247,.55); position: relative; isolation: isolate; }
 .shop-hero.theme-ultra::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
   background: conic-gradient(from var(--spin), transparent 0 55%, #a855f7 70%, #fff 76%, #7c3aed 82%, transparent 100%);

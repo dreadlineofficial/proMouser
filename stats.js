@@ -6,7 +6,7 @@
 
      [data-mouse-profile="id"]  review-page spec scales + "who it fits"
      [data-explorer]            filter-first table + spec map
-     [data-catalog]             mice.html card catalogue (search, chips, sort)
+     [data-catalog]             mice card catalogue (search, chips, sort)
      [data-compare-lab]         pick up to 4 mice and compare them
      [data-hero-rotator]        rotating hero product with live stat chips
      #generatorRunBtn           "pro generator" on the mice page
@@ -199,7 +199,7 @@
   }
   const recommend = p => MICE.map(m => fit(m, p)).sort((a, b) => b.score - a.score || a.m.weight - b.m.weight);
 
-  /* ---------- 3. explorer (mice.html): filter-first, no ranking ---------- */
+  /* ---------- 3. explorer (mice): filter-first, no ranking ---------- */
   function buildExplorer(host) {
     const vals = k => MICE.map(BANDS[k].get).filter(v => v != null);
     const mn = k => Math.min(...vals(k)), mx = k => Math.max(...vals(k));
@@ -288,7 +288,7 @@
     const pts = {};
     MICE.forEach(m => {
       const g = document.createElementNS(NS, 'g');
-      g.setAttribute('class', 'pt'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'link'); g.setAttribute('aria-label', m.name); g.style.setProperty('--c', m.cv);
+      g.setAttribute('class', 'pt'); g.setAttribute('tab./', '0'); g.setAttribute('role', 'link'); g.setAttribute('aria-label', m.name); g.style.setProperty('--c', m.cv);
       g.innerHTML = `<circle class="halo" r="14"/><circle class="core" r="6.5"/><text x="12" y="4">${esc(m.short)}</text>`;
       g.style.transform = `translate(${W / 2}px,${H / 2}px)`;
       const go = () => { location.href = root + m.page; };
@@ -414,7 +414,7 @@
     render();
   }
 
-  /* ---------- 6. catalog (mice.html): search, chips, brand, sort ---------- */
+  /* ---------- 6. catalog (mice): search, chips, brand, sort ---------- */
   function initCatalog(grid) {
     const cards = $$('.mouse-card', grid), q = $('#catQ'), brand = $('#catBrand'), sort = $('#catSort'), count = $('#catCount'), empty = $('#catEmpty');
     let chip = 'all';

@@ -11,7 +11,7 @@
    replaces window.PMBackend with a Supabase version (same methods, enforced
    on the server). See SUPABASE-SETUP.md.
 
-   Storage keys (listed in privacy.html):
+   Storage keys (listed in privacy):
      pm_users    demo accounts      pm_session  signed-in user id
      pm_plan     'free' | 'basic' | 'lite' | 'ultra' (so the plan's theme can apply before the page paints)
    ===================================================================== */

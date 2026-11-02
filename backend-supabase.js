@@ -131,7 +131,7 @@
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw fail('Please enter a valid email address.');
       if (String(password || '').length < 8) throw fail('Use a password with at least 8 characters.');
       const c = await ready;
-      const redirect = new URL((document.documentElement.dataset.root || '') + 'account.html', location.href).href;
+      const redirect = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
       const { data, error } = await c.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirect } });
       if (error) throw fail(friendly(error));
       // email confirmation is on: no session until they click the link
@@ -147,7 +147,7 @@
     async signInWithProvider(provider) {
       if (!OAUTH_PROVIDERS.includes(provider)) throw fail('That sign-in provider is not supported.');
       const c = await ready;
-      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account.html', location.href).href;
+      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
       const { error } = await c.auth.signInWithOAuth({ provider, options: { redirectTo } });
       if (error) throw fail(friendly(error));
     },
@@ -255,7 +255,7 @@
       need();
       if (!OAUTH_PROVIDERS.includes(provider)) throw fail('That sign-in provider is not supported.');
       const c = await ready;
-      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account.html', location.href).href;
+      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
       const { error } = await c.auth.linkIdentity({ provider, options: { redirectTo } });
       if (error) throw fail(friendly(error));
     },

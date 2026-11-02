@@ -13,6 +13,15 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const avatarCrop = u => {
+    const crop = u && u.prefs && u.prefs.avatarCrop || {};
+    const bounded = (value, fallback, min, max) => Math.min(max, Math.max(min, Number.isFinite(+value) ? +value : fallback));
+    return { x: bounded(crop.x, 50, 0, 100), y: bounded(crop.y, 50, 0, 100), zoom: bounded(crop.zoom, 100, 100, 200) / 100 };
+  };
+  const avatarStyle = u => {
+    const crop = avatarCrop(u);
+    return `--avatar-x:${crop.x}%;--avatar-y:${crop.y}%;--avatar-zoom:${crop.zoom}`;
+  };
   const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
   const fmtDate = t => new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -137,7 +146,7 @@
         });
       } else {
         body.innerHTML = `${dots()}<div class="auth-head center"><div class="done-badge" aria-hidden="true">✓</div><h2>You’re <em>all set</em></h2><p>Your preferences are saved. You get <strong>${CFG.free.dailyCredits} free credits every day</strong>, and each recommendation uses ${CFG.free.costPerRecommendation} credit.</p></div>
-          <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations.html" id="onbGo">Get my recommendations</a><button class="btn btn-ghost" type="button" id="onbClose">Explore the site</button></div>`;
+          <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations" id="onbGo">Get my recommendations</a><button class="btn btn-ghost" type="button" id="onbClose">Explore the site</button></div>`;
         $('#onbClose', body).addEventListener('click', () => { closeModal(true); after && after(B.getUser()); });
         $('#onbGo', body).addEventListener('click', () => closeModal(true));
       }
@@ -154,16 +163,16 @@
     const bal = B.balance(), t = B.tier(), init = esc(u.name.trim().charAt(0).toUpperCase() || '?');
     const avatar = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : init;
     slot.innerHTML = `
-      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop.html" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
+      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
       <div class="user-menu">
-        <button class="avatar ${t}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${avatar}</button>
+        <button class="avatar ${t}" style="${avatarStyle(u)}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${avatar}</button>
         <div class="user-dd" role="menu">
           <div class="user-dd-head"><b>${esc(u.name)}</b><small>${esc(u.email)}</small><span class="plan-tag ${t}">${t === 'free' ? 'Free plan' : PLAN.label(t)}</span></div>
-          <a role="menuitem" href="${root}elite.html">Elite Dashboard</a>
-          <a role="menuitem" href="${root}account.html">My account</a>
-          <a role="menuitem" href="${root}recommendations.html">Recommendations</a>
-          <a role="menuitem" href="${root}shop.html">Shop &amp; credits</a>
-          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens.html">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra.html" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite.html" class="upsell">Upgrade to Lite</a>` : ''}
+          <a role="menuitem" href="${root}elite">Elite Dashboard</a>
+          <a role="menuitem" href="${root}account">My account</a>
+          <a role="menuitem" href="${root}recommendations">Recommendations</a>
+          <a role="menuitem" href="${root}shop">Shop &amp; credits</a>
+          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite" class="upsell">Upgrade to Lite</a>` : ''}
           <button role="menuitem" type="button" data-auth="signout">Sign out</button>
         </div>
       </div>`;
@@ -183,7 +192,7 @@
   function ultraGate(what) {
     openModal(`<div class="auth-head"><span class="ultra-badge">Ultra</span><h2>${esc(what)} is part of <em>ProMouser Ultra</em></h2></div>
       <p class="panel-note">Ultra adds unlimited recommendations, statistics for every test, a year of ProMouser Turbo, saved profiles, a price watchlist, the sensitivity converter, shortlist export and an assistant that remembers you — plus everything in Lite and Basic.</p>
-      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra.html">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
+      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
     const c = $('#pmOverlay [data-close]'); c && c.addEventListener('click', () => closeModal());
   }
 
@@ -272,6 +281,7 @@
     const tb = B.turbo ? B.turbo() : { active: false };
     const planLine = (paid ? (u.plan.renewsAt ? `${name} until ${fmtDate(u.plan.renewsAt)}` : `${name} · yours for life`) : (u.plan.lapsedAt ? 'Your paid plan has ended' : 'Free plan')) + (tb.active ? ` · <span class="turbo-text">Turbo</span> until ${fmtDate(tb.until)}` : '');
     const avatarMarkup = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : esc(u.name.trim().charAt(0).toUpperCase() || '?');
+    const crop = avatarCrop(u);
     const identities = u.identities || [];
     const providers = [
       { id: 'google', name: 'Google', mark: 'G' },
@@ -290,7 +300,7 @@
     host.innerHTML = `
       <article class="panel acct-profile">
         <div class="acct-profile-heading">
-          <div class="avatar big acct-avatar ${t}">${avatarMarkup}</div>
+          <div class="avatar big acct-avatar ${t}" style="${avatarStyle(u)}">${avatarMarkup}</div>
           <div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p class="acct-handle">@${esc(u.username || 'player')} · member since ${fmtDate(u.createdAt)}</p><p>${esc(u.email)}</p></div>
         </div>
         <div class="acct-profile-editor">
@@ -298,6 +308,12 @@
             <label class="btn btn-ghost btn-sm avatar-upload" for="profileAvatar">Change photo<input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
             ${u.avatarUrl ? '<button class="btn btn-outline btn-sm" type="button" id="removeAvatar">Remove photo</button>' : ''}
             <small>JPG, PNG, or WebP · up to 8 MB. Animated GIFs are Ultra-only · up to 1 MB.</small>
+            ${u.avatarUrl ? `<div class="avatar-crop-controls" id="avatarCropControls">
+              <label>Horizontal framing<input type="range" name="x" min="0" max="100" value="${crop.x}"></label>
+              <label>Vertical framing<input type="range" name="y" min="0" max="100" value="${crop.y}"></label>
+              <label>Zoom<input type="range" name="zoom" min="100" max="200" value="${Math.round(crop.zoom * 100)}"></label>
+              <div><button class="btn btn-ghost btn-sm" type="button" id="resetAvatarCrop">Center crop</button><button class="btn btn-outline btn-sm" type="button" id="saveAvatarCrop">Save framing</button></div>
+            </div>` : ''}
             <small>Photos are publicly viewable when Supabase is enabled.</small>
           </div>
           <form id="profileForm" class="profile-form">
@@ -326,7 +342,7 @@
             <div><span>Recommendation Pass</span><b>${bal.recPass ? 'Active' : '—'}</b><em>${bal.recPass ? 'free recommendations until ' + fmtDate(bal.recPassUntil) : 'unlimited recommendations for 1 month'}</em></div>
           </div>
           <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
-          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic.html">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
+          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra">See Ultra</a>` : ''}</div>
         </article>
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
           <form id="prefsForm" class="pref-form">
@@ -336,7 +352,7 @@
             <fieldset><legend>Connection</legend><div class="chip-set">${CONNS.map(g => `<label class="pick"><input type="radio" name="connection" value="${g.id}" ${(p.connection || 'any') === g.id ? 'checked' : ''}><span>${g.label}</span></label>`).join('')}</div></fieldset>
             <button class="btn btn-primary btn-sm" type="submit">Save preferences</button>
           </form></article>
-        <article class="panel"><h3>Recent recommendations</h3>${u.history.length ? `<ul class="hist">${u.history.slice(0, 6).map(h => `<li><b>${esc(h.top || '—')}</b><small>${fmtDate(h.at)} · ${esc(h.summary || '')}</small></li>`).join('')}</ul>` : '<p class="panel-note">Nothing yet. <a href="' + root + 'recommendations.html" style="color:var(--accent)">Generate your first shortlist</a>.</p>'}</article>
+        <article class="panel"><h3>Recent recommendations</h3>${u.history.length ? `<ul class="hist">${u.history.slice(0, 6).map(h => `<li><b>${esc(h.top || '—')}</b><small>${fmtDate(h.at)} · ${esc(h.summary || '')}</small></li>`).join('')}</ul>` : '<p class="panel-note">Nothing yet. <a href="' + root + 'recommendations" style="color:var(--accent)">Generate your first shortlist</a>.</p>'}</article>
         <article class="panel"><h3>Orders</h3>${u.orders.length ? `<ul class="hist">${u.orders.slice(0, 8).map(o => `<li><b>${esc(o.items.map(i => i.name).join(', '))}</b><small>${o.id} · ${fmtDate(o.createdAt)} · ${inr(o.total)} · demo payment</small></li>`).join('')}</ul>` : '<p class="panel-note">No orders yet.</p>'}</article>
       </div>
       <div class="acct-foot"><button class="btn btn-ghost btn-sm" type="button" data-auth="signout">Sign out</button><button class="btn btn-outline btn-sm danger" type="button" id="delAcct">Delete account</button></div>`;
@@ -371,6 +387,40 @@
       } catch (error) { toast(error.message, 'err'); }
       finally { input.value = ''; }
     });
+    const cropControls = $('#avatarCropControls', host);
+    if (cropControls) {
+      const currentCrop = () => ({
+        x: +$('input[name=x]', cropControls).value,
+        y: +$('input[name=y]', cropControls).value,
+        zoom: +$('input[name=zoom]', cropControls).value
+      });
+      const applyCrop = () => {
+        const crop = currentCrop();
+        $$('.avatar', document).forEach(avatar => {
+          avatar.style.setProperty('--avatar-x', crop.x + '%');
+          avatar.style.setProperty('--avatar-y', crop.y + '%');
+          avatar.style.setProperty('--avatar-zoom', crop.zoom / 100);
+        });
+      };
+      cropControls.addEventListener('input', applyCrop);
+      $('#resetAvatarCrop', cropControls).addEventListener('click', () => {
+        $('input[name=x]', cropControls).value = '50';
+        $('input[name=y]', cropControls).value = '50';
+        $('input[name=zoom]', cropControls).value = '100';
+        applyCrop();
+      });
+      $('#saveAvatarCrop', cropControls).addEventListener('click', async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+          await B.updateProfile({ prefs: { avatarCrop: currentCrop() } });
+          toast('Profile photo framing saved.');
+        } catch (error) {
+          toast(error.message, 'err');
+          button.disabled = false;
+        }
+      });
+    }
     const removeAvatar = $('#removeAvatar', host);
     if (removeAvatar) removeAvatar.addEventListener('click', async () => {
       removeAvatar.disabled = true;

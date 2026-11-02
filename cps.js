@@ -244,7 +244,7 @@
     $('#cBestL').textContent = `Best (${store.opts.dur}s)`;
     $('#cBest').textContent = b ? fmt(b.cps, 2) : '—';
     const box = $('#cLiveAdv');
-    if (!adv()) { box.innerHTML = `<p class="cps3-tease"><span class="plan-tag lite">Lite</span> Counts double clicks and stray right clicks while you play. <a href="${root}lite.html">See Lite</a></p>`; return; }
+    if (!adv()) { box.innerHTML = `<p class="cps3-tease"><span class="plan-tag lite">Lite</span> Counts double clicks and stray right clicks while you play. <a href="${root}lite">See Lite</a></p>`; return; }
     const running = S.phase === 'running' || S.phase === 'cooldown';
     const clicks = running ? S.clicks : [], d = clicks.filter((t, i) => i > 0 && t - clicks[i - 1] < DOUBLE_MS).length;
     box.innerHTML = `<div><span>Double clicks</span><b>${running ? d : '—'}</b></div><div><span>Stray ${store.opts.btn ? 'left' : 'right'} clicks</span><b class="${running && S.wrong.length ? 'warn' : ''}">${running ? S.wrong.length : '—'}</b></div>${store.opts.moving ? `<div><span>Misses</span><b>${running ? S.misses : '—'}</b></div>` : ''}`;
@@ -285,7 +285,7 @@
       </div>
       <div class="panel cps3-graph"><div class="panel-head"><h3>Your run, second by second</h3><span class="plan-tag ${ultra() ? 'ultra' : 'lite'}">${ultra() ? 'Ultra' : 'Lite'}</span></div>${chart(r, run.d * 1000)}
         <p class="panel-note">${r.doubles ? `A double click is two clicks registered less than ${DOUBLE_MS} ms apart. That’s faster than one finger can click, so it’s either butterfly fingers landing together or your mouse switch registering one press twice.` : 'No double clicks this run.'}</p></div>
-      ${ultra() ? ultraBlock(run) : `<p class="cps3-tease">Ultra adds a progress chart across your runs and CSV export. <a href="${root}ultra.html">See Ultra</a></p>`}
+      ${ultra() ? ultraBlock(run) : `<p class="cps3-tease">Ultra adds a progress chart across your runs and CSV export. <a href="${root}ultra">See Ultra</a></p>`}
     </div>`;
   }
 
@@ -311,7 +311,7 @@
       <div class="cps3-tiles" aria-hidden="true">${tile('Peak CPS', '12.4')}${tile('Double clicks', '7')}${tile('Stray right clicks', '2')}${tile('Click style', 'Jitter')}${tile('Consistency', '81%')}${tile('Average gap', '84 ms')}</div>
       <div class="cps3-lock"><span class="plan-tag lite">Lite</span><h4>See what really happened in that run</h4>
         <p>Lite counts your double clicks, catches stray right clicks mid-run, and shows peak CPS, consistency, click style and a second-by-second graph.</p>
-        <div class="hero-cta" style="justify-content:center">${signedIn ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}lite.html">Get Lite${price ? ' · ₹' + price + ' once' : ''}</a></div></div>
+        <div class="hero-cta" style="justify-content:center">${signedIn ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}lite">Get Lite${price ? ' · ₹' + price + ' once' : ''}</a></div></div>
     </div>`;
   }
 
@@ -323,7 +323,7 @@
       <div class="panel cps3-summary">
         <div class="cps3-score"><small>${run.d} s · ${btnName(run.btn)} click${run.moving ? ' · moving' : ''}</small><b>${fmt(r.cps, 2)}</b><span>CPS</span></div>
         <div class="cps3-verdict"><h3>${rank[1]} ${run.pb ? '<span class="chip">New personal best</span>' : ''}</h3><p>${rank[2]} ${r.n} clicks in ${run.d} s.</p>
-          <div class="hero-cta"><button class="btn btn-primary btn-sm" type="button" data-cps-again>Go again</button><a class="btn btn-ghost btn-sm" href="${root}tests.html">More tests</a></div></div>
+          <div class="hero-cta"><button class="btn btn-primary btn-sm" type="button" data-cps-again>Go again</button><a class="btn btn-ghost btn-sm" href="${root}tests">More tests</a></div></div>
       </div>
       ${adv() ? advanced(r, run) : locked()}`;
   }

@@ -45,7 +45,7 @@
         <div class="sens-out" id="sensOut" aria-live="polite"></div>
       </div>
       ${locked ? `<div class="ultra-lock"><span class="ultra-badge">Ultra</span><h4>Keep your aim when you switch games</h4><p>The sensitivity converter is part of ProMouser Ultra, with unlimited recommendations, a price watchlist and more.</p>
-        <div class="hero-cta" style="justify-content:center">${B && B.getUser && B.getUser() ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}ultra.html">See Ultra</a></div></div>` : ''}
+        <div class="hero-cta" style="justify-content:center">${B && B.getUser && B.getUser() ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'}<a class="btn btn-primary btn-sm" href="${root}ultra">See Ultra</a></div></div>` : ''}
     </div>`;
   }
 

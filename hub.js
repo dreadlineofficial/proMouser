@@ -1,5 +1,5 @@
 /* =====================================================================
-   ProMouser Hub (index.html in Hub mode): mouse search, mouse of the day,
+   ProMouser Hub (./ in Hub mode): mouse search, mouse of the day,
    your test bests and the spec record holders. Runs on mice-data.js +
    stats.js (window.PM). Reads test results stored by tests.js, cps.js and
    teststats.js in this browser.
@@ -31,8 +31,8 @@
     const show = () => {
       const q = input.value.trim(); if (!q) { out.hidden = true; return; }
       const r = find(q);
-      out.innerHTML = r.length ? r.slice(0, 6).map(m => `<a href="${root}${m.page}"><img src="${PM.IMG(m, 480)}" alt="" width="46" height="46" loading="lazy"><span><b>${esc(m.name)}</b><small>${esc(specs(m).join(' · '))}</small></span></a>`).join('') + (r.length > 6 ? `<a class="more" href="${root}mice.html#catalog">${r.length - 6} more in the catalogue →</a>` : '')
-        : `<p>No mice match “${esc(q)}”. <a href="${root}mouse-ai.html?q=${encodeURIComponent(q)}">Ask ProMouser AI instead →</a></p>`;
+      out.innerHTML = r.length ? r.slice(0, 6).map(m => `<a href="${root}${m.page}"><img src="${PM.IMG(m, 480)}" alt="" width="46" height="46" loading="lazy"><span><b>${esc(m.name)}</b><small>${esc(specs(m).join(' · '))}</small></span></a>`).join('') + (r.length > 6 ? `<a class="more" href="${root}mice#catalog">${r.length - 6} more in the catalogue →</a>` : '')
+        : `<p>No mice match “${esc(q)}”. <a href="${root}mouse-ai?q=${encodeURIComponent(q)}">Ask ProMouser AI instead →</a></p>`;
       out.hidden = false;
     };
     input.addEventListener('input', show);
@@ -50,7 +50,7 @@
       <a class="motd-img" href="${root}${m.page}"><img src="${PM.IMG(m, 720)}" alt="${esc(m.name)}" loading="lazy"></a>
       <span class="mc-brand">${esc(m.brand)}</span><h3>${esc(m.name)}</h3>
       <div class="motd-specs">${[['Weight', m.weight != null ? m.weight + ' g' : '—'], ['Sensor', m.dpi ? num(m.dpi) + ' DPI' : '—'], ['Polling', m.poll ? num(m.poll) + ' Hz' : '—'], ['Price', m.price ? inr(m.price) : '—']].map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>
-      <div class="hero-cta"><a class="btn btn-primary btn-sm" href="${root}${m.page}">Full specs</a><a class="btn btn-ghost btn-sm" href="${root}mice/compare.html?m=${m.id},${other.id}">Compare</a><a class="btn btn-ghost btn-sm" href="${root}mouse-ai.html?q=${encodeURIComponent('Tell me about the ' + (m.short || m.name))}">Ask about it</a></div>`;
+      <div class="hero-cta"><a class="btn btn-primary btn-sm" href="${root}${m.page}">Full specs</a><a class="btn btn-ghost btn-sm" href="${root}mice/compare?m=${m.id},${other.id}">Compare</a><a class="btn btn-ghost btn-sm" href="${root}mouse-ai?q=${encodeURIComponent('Tell me about the ' + (m.short || m.name))}">Ask about it</a></div>`;
   }
 
   /* ---------- your test bests ---------- */
@@ -61,16 +61,16 @@
     const aim = Object.entries(t.aim || {}).sort((a, b) => a[1] - b[1])[0];
     const low = k => (log[k] || []).reduce((a, s) => Math.min(a, s.v), Infinity), n = k => (log[k] || []).length;
     const T = [
-      ['cps-test.html', 'Click', 'CPS test', 'How many clicks a second?', bestCps && `${bestCps[1].cps.toFixed(2)} CPS`],
-      ['reaction-test.html', 'Speed', 'Reaction time', 'Click the moment it turns green', t.reaction && `${t.reaction.best} ms`],
-      ['aim-trainer.html', 'Aim', 'Aim trainer', 'Speed and accuracy on targets', aim && `${(aim[1] / 1000).toFixed(2)} s`],
-      ['double-click-test.html', 'Click', 'Double click', 'Is your switch double clicking?', n('doubleclick') && `${n('doubleclick')} checks`],
-      ['polling-rate-test.html', 'Poll', 'Polling rate', 'How many Hz your mouse reports', t.polling && `${num(t.polling.hz)} Hz`],
-      ['scroll-test.html', 'Scroll', 'Scroll wheel', 'Catch reverse jumps', n('scroll') && `${low('scroll').toFixed(1)} jumps / 100`],
-      ['mouse-button-test.html', 'Test', 'Mouse buttons', 'Every button, chatter check', n('buttons') && `${n('buttons')} sessions`]
+      ['cps-test', 'Click', 'CPS test', 'How many clicks a second?', bestCps && `${bestCps[1].cps.toFixed(2)} CPS`],
+      ['reaction-test', 'Speed', 'Reaction time', 'Click the moment it turns green', t.reaction && `${t.reaction.best} ms`],
+      ['aim-trainer', 'Aim', 'Aim trainer', 'Speed and accuracy on targets', aim && `${(aim[1] / 1000).toFixed(2)} s`],
+      ['double-click-test', 'Click', 'Double click', 'Is your switch double clicking?', n('doubleclick') && `${n('doubleclick')} checks`],
+      ['polling-rate-test', 'Poll', 'Polling rate', 'How many Hz your mouse reports', t.polling && `${num(t.polling.hz)} Hz`],
+      ['scroll-test', 'Scroll', 'Scroll wheel', 'Catch reverse jumps', n('scroll') && `${low('scroll').toFixed(1)} jumps / 100`],
+      ['mouse-button-test', 'Test', 'Mouse buttons', 'Every button, chatter check', n('buttons') && `${n('buttons')} sessions`]
     ];
     tests.innerHTML = T.map(([href, ic, name, sub, best]) => `<a class="hub-test reveal visible" href="${root}${href}"><span class="ht-ico" data-icon="${ic}"></span><b>${name}</b><small>${sub}</small><em class="${best ? '' : 'none'}">${best ? 'Best: ' + esc(best) : 'Not taken yet'}</em></a>`).join('')
-      + `<a class="hub-test stats reveal visible" href="${root}my-stats.html"><span class="ht-ico" data-icon="Stats"></span><b>My stats</b><small>All your results in one place</small><em>Open →</em></a>`;
+      + `<a class="hub-test stats reveal visible" href="${root}my-stats"><span class="ht-ico" data-icon="Stats"></span><b>My stats</b><small>All your results in one place</small><em>Open →</em></a>`;
     window.PMIcons && window.PMIcons(tests);
   }
 
