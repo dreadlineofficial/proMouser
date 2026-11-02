@@ -206,7 +206,12 @@
           catch (e) { throw fail('Enter a valid website URL beginning with http:// or https://.'); }
         }
       }
-      if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl || null;
+      if (patch.avatarUrl !== undefined) {
+        const avatarUrl = patch.avatarUrl || null;
+        const isGif = typeof avatarUrl === 'string' && (/^data:image\/gif;base64,/i.test(avatarUrl) || /\/profile\.gif(?:[?#]|$)/i.test(avatarUrl));
+        if (isGif && !PLAN.has(u, 'animatedAvatar')) throw fail('Animated profile GIFs are available with ProMouser Ultra.', 'NEEDS_ULTRA');
+        row.avatar_url = avatarUrl;
+      }
       if (patch.prefs) {
         if (patch.prefs.theme != null) {
           if (!PLAN.has(u, 'advanced')) throw fail('Custom themes are available with ProMouser Lite and Ultra.', 'NEEDS_LITE');
@@ -222,20 +227,27 @@
     },
     async uploadAvatar(file) {
       const u = need();
+      const isGif = file && file.type === 'image/gif';
+      if (!isGif && (!file || file.type !== 'image/jpeg')) throw fail('Choose a JPEG or GIF profile photo.');
+      if (isGif && !PLAN.has(u, 'animatedAvatar')) throw fail('Animated profile GIFs are available with ProMouser Ultra.', 'NEEDS_ULTRA');
+      if (file.size > (isGif ? 1024 * 1024 : 500 * 1024)) throw fail(isGif ? 'Animated profile GIFs must be 1 MB or smaller.' : 'Choose a smaller JPEG profile photo.');
       const c = await ready;
-      const path = `${u.id}/profile.jpg`;
+      const path = `${u.id}/profile.${isGif ? 'gif' : 'jpg'}`;
       const { error } = await c.storage.from('avatars').upload(path, file, {
-        upsert: true, contentType: 'image/jpeg', cacheControl: '3600'
+        upsert: true, contentType: isGif ? 'image/gif' : 'image/jpeg', cacheControl: '3600'
       });
       if (error) throw fail(friendly(error));
       const { data } = c.storage.from('avatars').getPublicUrl(path);
-      return PMBackend.updateProfile({ avatarUrl: `${data.publicUrl}?v=${Date.now()}` });
+      const result = await PMBackend.updateProfile({ avatarUrl: `${data.publicUrl}?v=${Date.now()}` });
+      const { error: cleanupError } = await c.storage.from('avatars').remove([`${u.id}/profile.${isGif ? 'jpg' : 'gif'}`]);
+      if (cleanupError) throw fail(`Profile photo updated, but the previous photo could not be removed: ${friendly(cleanupError)}`);
+      return result;
     },
     async removeAvatar() {
       const u = need();
       const c = await ready;
       await PMBackend.updateProfile({ avatarUrl: null });
-      const { error } = await c.storage.from('avatars').remove([`${u.id}/profile.jpg`]);
+      const { error } = await c.storage.from('avatars').remove([`${u.id}/profile.jpg`, `${u.id}/profile.gif`]);
       if (error) throw fail(friendly(error));
       return clone(user);
     },

@@ -366,13 +366,24 @@ grant execute on function public.grant_order(uuid, text, text[], text, text) to 
 do $$ begin
   if exists (select 1 from pg_namespace where nspname = 'storage') then
     insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-      values ('avatars', 'avatars', true, 1048576, array['image/jpeg'])
-      on conflict (id) do update set public = true, file_size_limit = 1048576, allowed_mime_types = array['image/jpeg'];
+      values ('avatars', 'avatars', true, 1048576, array['image/jpeg', 'image/gif'])
+      on conflict (id) do update set public = true, file_size_limit = 1048576, allowed_mime_types = array['image/jpeg', 'image/gif'];
     execute 'drop policy if exists "avatar upload" on storage.objects';
     execute 'drop policy if exists "avatar update" on storage.objects';
     execute 'drop policy if exists "avatar delete" on storage.objects';
-    execute $p$create policy "avatar upload" on storage.objects for insert to authenticated with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
-    execute $p$create policy "avatar update" on storage.objects for update to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+    execute $p$create policy "avatar upload" on storage.objects for insert to authenticated with check (
+      bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and (
+        (name like '%/profile.jpg' and metadata ->> 'mimetype' = 'image/jpeg') or
+        (name like '%/profile.gif' and metadata ->> 'mimetype' = 'image/gif' and
+          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan = 'ultra'))
+      ))$p$;
+    execute $p$create policy "avatar update" on storage.objects for update to authenticated
+      using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+      with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and (
+        (name like '%/profile.jpg' and metadata ->> 'mimetype' = 'image/jpeg') or
+        (name like '%/profile.gif' and metadata ->> 'mimetype' = 'image/gif' and
+          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan = 'ultra'))
+      ))$p$;
     execute $p$create policy "avatar delete" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
   end if;
 end $$;

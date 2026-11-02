@@ -59,7 +59,7 @@
   const FEATURES = {
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
-    freeRecs: 'ultra', freeAI: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
+    freeRecs: 'ultra', freeAI: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra', animatedAvatar: 'ultra'   // Ultra only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
@@ -228,7 +228,9 @@
       }
       if (patch.avatarUrl !== undefined) {
         const avatarUrl = patch.avatarUrl == null ? null : String(patch.avatarUrl);
-        if (avatarUrl && (!avatarUrl.startsWith('data:image/jpeg;base64,') || avatarUrl.length > 750000)) throw new Error('Choose a smaller JPEG profile photo.');
+        const isGif = avatarUrl && avatarUrl.startsWith('data:image/gif;base64,');
+        if (isGif && !PLAN.has(u, 'animatedAvatar')) { const e = new Error('Animated profile GIFs are available with ProMouser Ultra.'); e.code = 'NEEDS_ULTRA'; throw e; }
+        if (avatarUrl && (isGif ? avatarUrl.length > 1400000 : (!avatarUrl.startsWith('data:image/jpeg;base64,') || avatarUrl.length > 750000))) throw new Error(isGif ? 'Choose a GIF profile photo smaller than 1 MB.' : 'Choose a smaller JPEG profile photo.');
         u.avatarUrl = avatarUrl;
       }
       if (patch.prefs) {

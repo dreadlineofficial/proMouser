@@ -65,8 +65,10 @@ Test locally with `python3 -m http.server 8000` in this folder, then open
 2. In Supabase, **Table Editor → profiles** should show your row, with your games and weight
    saved in `prefs`.
 3. Edit your profile and upload a photo. The schema creates a public `avatars` storage
-   bucket (JPEG only, 1 MB maximum); users can write only to their own folder. Profile
-   photos are publicly readable, so only upload an image you are comfortable sharing.
+   bucket (JPEG or GIF, 1 MB maximum); users can write only to their own folder, and GIF
+   uploads are restricted to Ultra accounts. Profile photos are publicly readable, so only
+   upload an image you are comfortable sharing. Rerun the updated `supabase/schema.sql` to
+   enable GIF uploads on an existing project.
 4. Link a configured Google or Discord identity from **My account**.
 5. Run a recommendation. In `credit_balances`, `daily` drops from 5 to 4.
 6. Buy something in the shop (test payment). It shows up in `orders`.

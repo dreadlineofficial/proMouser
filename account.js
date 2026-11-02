@@ -212,7 +212,22 @@
 
   /* ---------- account page ---------- */
   function compressAvatar(file) {
-    if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return Promise.reject(new Error('Choose a JPG, PNG, or WebP image.'));
+    if (!file) return Promise.reject(new Error('Choose a profile photo.'));
+    if (file.type === 'image/gif') {
+      if (!B.has('animatedAvatar')) return Promise.reject(new Error('Animated profile GIFs are available with ProMouser Ultra.'));
+      if (file.size > 1024 * 1024) return Promise.reject(new Error('Animated profile GIFs must be 1 MB or smaller.'));
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file), image = new Image();
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          if (image.naturalWidth * image.naturalHeight > 20000000) reject(new Error('This image is too large to process. Please choose a smaller GIF.'));
+          else resolve(file);
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read this image.')); };
+        image.src = url;
+      });
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return Promise.reject(new Error('Choose a JPG, PNG, WebP, or GIF image.'));
     if (file.size > 8 * 1024 * 1024) return Promise.reject(new Error('Profile photos must be 8 MB or smaller.'));
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file), image = new Image();
@@ -280,9 +295,9 @@
         </div>
         <div class="acct-profile-editor">
           <div class="avatar-controls">
-            <label class="btn btn-ghost btn-sm avatar-upload" for="profileAvatar">Change photo<input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp"></label>
+            <label class="btn btn-ghost btn-sm avatar-upload" for="profileAvatar">Change photo<input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
             ${u.avatarUrl ? '<button class="btn btn-outline btn-sm" type="button" id="removeAvatar">Remove photo</button>' : ''}
-            <small>JPG, PNG, or WebP · up to 8 MB</small>
+            <small>JPG, PNG, or WebP · up to 8 MB. Animated GIFs are Ultra-only · up to 1 MB.</small>
             <small>Photos are publicly viewable when Supabase is enabled.</small>
           </div>
           <form id="profileForm" class="profile-form">
