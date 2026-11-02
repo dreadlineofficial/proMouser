@@ -25,6 +25,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <div class="page-loading" id="pageLoadingScreen" role="status" aria-live="polite">
+    <div class="page-loading__content">
+      <img src="../assets/icons/favicon.png" alt="" width="56" height="56" fetchpriority="high">
+      <p id="pageLoadingLabel">ProMouser loading</p>
+      <span class="page-loading__spinner" aria-hidden="true"></span>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const plan = document.documentElement.dataset.plan;
+      const brand = { basic: 'ProMouser Basic', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra' }[plan] || 'ProMouser';
+      document.getElementById('pageLoadingLabel').textContent = `${brand} loading`;
+      const finishLoading = () => document.documentElement.classList.add('page-loaded');
+      if (document.readyState === 'complete') finishLoading();
+      else window.addEventListener('load', finishLoading, { once: true });
+    })();
+  </script>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="ambient" aria-hidden="true"><div class="spot"></div><div class="grain"></div></div>
 
