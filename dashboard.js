@@ -32,6 +32,7 @@
     if (intro) intro.hidden = true;
     const bal = B.balance(), t = B.tier(), lite = B.has('advanced'), ultra = t === 'ultra', now = Date.now(), hist = u.history || [];
     const PLANS = window.PM_PLAN;
+    const activeTheme = PLANS.themes.some(theme => theme.id === (u.prefs && u.prefs.theme)) ? u.prefs.theme : 'plan';
     const week = hist.filter(h => now - h.at < 7 * DAY).length;
     const used = Math.max(0, bal.dailyAllowance - bal.daily);
     const planLine = t !== 'free' ? `${PLANS.short(t)} · ${u.plan.renewsAt ? Math.max(1, Math.ceil((u.plan.renewsAt - now) / DAY)) + ' days left' : 'lifetime'}` : 'Free plan';
@@ -70,6 +71,22 @@
         <div><span class="section-label">Elite Dashboard</span><h1>Welcome back, <em>${first}</em></h1><p>${date} · <span class="plan-tag ${t}">${t === 'free' ? 'Free plan' : PLANS.label(t)}</span>${passLine ? ` <span class="plan-tag">${passLine}</span>` : ''}</p></div>
         <div class="hero-cta"><a class="btn btn-primary" href="${root}recommendations.html">New recommendation</a><a class="btn btn-ghost" href="${root}shop.html">Get credits</a><a class="btn btn-ghost" href="${root}mice/compare.html">Compare mice</a></div>
       </div>
+
+      ${lite ? `<article class="panel dash-theme-settings">
+        <div class="panel-head"><div><span class="section-label">Make it yours</span><h3>Site theme</h3></div><span class="plan-tag ${t}">${PLANS.short(t)}</span></div>
+        <p class="panel-note">Choose the colors you want across ProMouser. This preference follows your account.</p>
+        <form id="dashboardThemeForm">
+          <fieldset class="theme-options">
+            <legend class="sr-only">Choose a site theme</legend>
+            ${PLANS.themes.map(theme => `<label class="theme-option">
+              <input type="radio" name="theme" value="${theme.id}" ${activeTheme === theme.id ? 'checked' : ''}>
+              <span class="theme-option-preview ${theme.id} ${theme.id === 'plan' ? t : ''}" aria-hidden="true"></span>
+              <span class="theme-option-copy"><b>${theme.label}</b><small>${theme.description}</small></span>
+            </label>`).join('')}
+          </fieldset>
+          <button class="btn btn-primary btn-sm" type="submit">Save theme</button>
+        </form>
+      </article>` : ''}
 
       <div class="dash-kpis">
         <div class="dk"><span class="dk-ico">${icon('Value')}</span><small>Credits available</small><b data-to="${bal.total}">0</b><em>${bal.daily} daily + ${bal.purchased} bought${bal.recPass ? ' · pass active' : ''}</em></div>
@@ -122,6 +139,20 @@
           ${u.orders.length ? `<ul class="mini-list">${u.orders.slice(0, 3).map(o => `<li><span>${esc(o.items.map(i => i.name).join(', '))}<small>${A.fmtDate(o.createdAt)}</small></span><b>${inr(o.total)}</b></li>`).join('')}</ul>` : '<p class="panel-note">No orders yet.</p>'}
         </article>
       </div>`;
+    const themeForm = $('#dashboardThemeForm');
+    if (themeForm) themeForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = $('button[type="submit"]', themeForm);
+      button.disabled = true;
+      try {
+        const selected = new FormData(themeForm).get('theme');
+        await B.updateProfile({ prefs: { theme: selected } });
+        A.toast('Theme saved. Your choice will be used across the site.');
+      } catch (error) {
+        A.toast(error.message, 'err');
+        button.disabled = false;
+      }
+    });
     animate(bal, used);
   }
 

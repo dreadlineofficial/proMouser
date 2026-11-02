@@ -63,6 +63,12 @@
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
+    themes: [
+      { id: 'plan', label: 'Plan colors', description: 'Keep your Lite blue or Ultra purple theme.' },
+      { id: 'classic', label: 'Classic red', description: 'Bring back the original ProMouser look.' },
+      { id: 'emerald', label: 'Emerald', description: 'A fresh green accent.' },
+      { id: 'sunset', label: 'Sunset', description: 'A warm orange accent.' }
+    ],
     tierOf: u => (u && u.plan && RANK[u.plan.tier] != null ? u.plan.tier : 'free'),
     has: (u, f) => RANK[PLAN.tierOf(u)] >= RANK[FEATURES[f] || 'free'],
     cfg: u => CONFIG[PLAN.tierOf(u)] || CONFIG.free,
@@ -70,11 +76,19 @@
     short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
     paid: t => t === 'basic' || t === 'lite' || t === 'ultra',
     themed: t => t === 'basic' || t === 'lite' || t === 'ultra',   // Basic navy, Lite blue, Ultra purple
-    applyTheme(t) { if (PLAN.themed(t)) document.documentElement.dataset.plan = t; else delete document.documentElement.dataset.plan; }
+    applyTheme(t, preference = 'plan') {
+      if (PLAN.themed(t)) document.documentElement.dataset.plan = t;
+      else delete document.documentElement.dataset.plan;
+      if ((t === 'lite' || t === 'ultra') && PLAN.themes.some(theme => theme.id === preference) && preference !== 'plan') {
+        document.documentElement.dataset.theme = preference;
+      } else {
+        delete document.documentElement.dataset.theme;
+      }
+    }
   };
   const trimLog = log => Object.fromEntries(Object.entries(log || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), (Array.isArray(v) ? v : []).slice(0, 60).map(s => ({ at: +s.at || 0, v: +s.v || 0, ...(s.k ? { k: String(s.k).slice(0, 24) } : {}) }))]));
   const passFor = feature => CONFIG.passes.find(p => p.feature === feature);
-  const KEY_USERS = 'pm_users', KEY_SESSION = 'pm_session', KEY_PLAN = 'pm_plan';
+  const KEY_USERS = 'pm_users', KEY_SESSION = 'pm_session', KEY_PLAN = 'pm_plan', KEY_THEME = 'pm_theme';
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -101,7 +115,7 @@
     const suffix = String(id || '').replace(/[^a-z0-9]/gi, '').slice(-12).toLowerCase();
     return (base + suffix).slice(0, 20);
   };
-  const saveUser = u => { const all = allUsers(); all[u.id] = u; write(KEY_USERS, all); try { localStorage.setItem(KEY_PLAN, u.plan.tier); } catch (e) { /* storage unavailable */ } applyTheme(u.plan.tier); };
+  const saveUser = u => { const all = allUsers(); all[u.id] = u; write(KEY_USERS, all); try { localStorage.setItem(KEY_PLAN, u.plan.tier); localStorage.setItem(KEY_THEME, u.prefs.theme || 'plan'); } catch (e) { /* storage unavailable */ } applyTheme(u.plan.tier, u.prefs.theme); };
   const applyTheme = PLAN.applyTheme;
   const allowance = u => PLAN.cfg(u).dailyCredits;
 
@@ -161,7 +175,7 @@
       write(KEY_SESSION, u.id); normalize(u); saveUser(u); emit();
       return clean(u);
     },
-    async signOut() { try { localStorage.removeItem(KEY_SESSION); localStorage.removeItem(KEY_PLAN); } catch (e) { /* noop */ } applyTheme('free'); emit(); },
+    async signOut() { try { localStorage.removeItem(KEY_SESSION); localStorage.removeItem(KEY_PLAN); localStorage.removeItem(KEY_THEME); } catch (e) { /* noop */ } applyTheme('free'); emit(); },
     async deleteAccount() { const u = current(); if (!u) return; const all = allUsers(); delete all[u.id]; write(KEY_USERS, all); await PMBackend.signOut(); },
 
     getUser() { return clean(current()); },
@@ -217,7 +231,13 @@
         if (avatarUrl && (!avatarUrl.startsWith('data:image/jpeg;base64,') || avatarUrl.length > 750000)) throw new Error('Choose a smaller JPEG profile photo.');
         u.avatarUrl = avatarUrl;
       }
-      if (patch.prefs) u.prefs = { ...u.prefs, ...patch.prefs };
+      if (patch.prefs) {
+        if (patch.prefs.theme != null) {
+          if (!PLAN.has(u, 'advanced')) { const e = new Error('Custom themes are available with ProMouser Lite and Ultra.'); e.code = 'NEEDS_LITE'; throw e; }
+          if (!PLAN.themes.some(theme => theme.id === patch.prefs.theme)) throw new Error('Choose a supported theme.');
+        }
+        u.prefs = { ...u.prefs, ...patch.prefs };
+      }
       if (patch.onboarded != null) u.onboarded = !!patch.onboarded;
       saveUser(u); emit(); return clean(u);
     },
@@ -305,6 +325,6 @@
   };
 
   // apply stored theme right away (the inline <head> script already did the first paint)
-  const u0 = current(); applyTheme(u0 ? u0.plan.tier : 'free');
-  addEventListener('storage', e => { if ([KEY_USERS, KEY_SESSION, KEY_PLAN].includes(e.key)) { const u = current(); applyTheme(u ? u.plan.tier : 'free'); emit(); } });
+  const u0 = current(); applyTheme(u0 ? u0.plan.tier : 'free', u0 && u0.prefs.theme);
+  addEventListener('storage', e => { if ([KEY_USERS, KEY_SESSION, KEY_PLAN, KEY_THEME].includes(e.key)) { const u = current(); applyTheme(u ? u.plan.tier : 'free', u && u.prefs.theme); emit(); } });
 })();

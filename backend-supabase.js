@@ -21,7 +21,7 @@
 
   const demo = window.PMBackend, CONFIG = demo.CONFIG;
   const LIB = 'vendor/supabase-2.117.3.js';
-  const KEY_CACHE = 'pm_sb_user', KEY_PLAN = 'pm_plan';
+  const KEY_CACHE = 'pm_sb_user', KEY_PLAN = 'pm_plan', KEY_THEME = 'pm_theme';
   const IST = 330 * 60000;   // daily credits reset at midnight India time (matches pm_today() in schema.sql)
 
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -40,10 +40,12 @@
   function setUser(u) {
     const before = JSON.stringify(user);
     user = u;
-    write(KEY_CACHE, u); write(KEY_PLAN, u ? u.plan.tier : null); applyTheme(u ? u.plan.tier : 'free');
+    write(KEY_CACHE, u); write(KEY_PLAN, u ? u.plan.tier : null);
+    write(KEY_THEME, u && u.prefs && u.prefs.theme || 'plan');
+    applyTheme(u ? u.plan.tier : 'free', u && u.prefs && u.prefs.theme);
     if (JSON.stringify(u) !== before) emit();
   }
-  applyTheme(user ? user.plan.tier : 'free');
+  applyTheme(user ? user.plan.tier : 'free', user && user.prefs && user.prefs.theme);
 
   /* ---------- load the library and create the client ---------- */
   const ready = new Promise((resolve, reject) => {
@@ -205,7 +207,13 @@
         }
       }
       if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl || null;
-      if (patch.prefs) row.prefs = Object.assign({}, u.prefs, patch.prefs);
+      if (patch.prefs) {
+        if (patch.prefs.theme != null) {
+          if (!PLAN.has(u, 'advanced')) throw fail('Custom themes are available with ProMouser Lite and Ultra.', 'NEEDS_LITE');
+          if (!PLAN.themes.some(theme => theme.id === patch.prefs.theme)) throw fail('Choose a supported theme.');
+        }
+        row.prefs = Object.assign({}, u.prefs, patch.prefs);
+      }
       if (patch.onboarded != null) row.onboarded = !!patch.onboarded;
       setUser(Object.assign(clone(u), row));   // show the change straight away
       const { error } = await (await ready).from('profiles').update(row).eq('id', u.id);
@@ -340,5 +348,5 @@
   }
 
   // other tabs: follow sign-in / sign-out and plan changes
-  addEventListener('storage', e => { if (e.key === KEY_CACHE) { user = read(KEY_CACHE, null); applyTheme(user ? user.plan.tier : 'free'); emit(); } });
+  addEventListener('storage', e => { if ([KEY_CACHE, KEY_THEME].includes(e.key)) { user = read(KEY_CACHE, null); applyTheme(user ? user.plan.tier : 'free', user && user.prefs && user.prefs.theme); emit(); } });
 })();
