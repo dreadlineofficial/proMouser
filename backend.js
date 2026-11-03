@@ -192,7 +192,7 @@
       if (patch.profiles) u.extras.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) u.extras.memory = patch.memory;
       if (patch.testLog) u.extras.testLog = trimLog(patch.testLog);
-      if (patch.ui) u.extras.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k]) => ['accent', 'bg', 'glow', 'density'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
+      if (patch.ui) u.extras.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k, v]) => v != null && ['accent', 'bg', 'glow', 'density', 'custom'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
       saveUser(u); emit(); return clean(u);
     },
     /* ProMouser Core progress (XP, streaks, achievements, plans): any signed-in account */

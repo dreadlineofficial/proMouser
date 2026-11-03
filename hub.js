@@ -67,10 +67,16 @@
       ['double-click-test', 'Click', 'Double click', 'Is your switch double clicking?', n('doubleclick') && `${n('doubleclick')} checks`],
       ['polling-rate-test', 'Poll', 'Polling rate', 'How many Hz your mouse reports', t.polling && `${num(t.polling.hz)} Hz`],
       ['scroll-test', 'Scroll', 'Scroll wheel', 'Catch reverse jumps', n('scroll') && `${low('scroll').toFixed(1)} jumps / 100`],
-      ['mouse-button-test', 'Test', 'Mouse buttons', 'Every button, chatter check', n('buttons') && `${n('buttons')} sessions`]
+      ['mouse-button-test', 'Test', 'Mouse buttons', 'Every button, chatter check', n('buttons') && `${n('buttons')} sessions`],
+      ['tracking-test', 'Track', 'Tracking', 'Stay on a moving target', n('tracking') && `${(log.tracking || []).reduce((a, s) => Math.max(a, s.v), 0).toFixed(1)}%`],
+      ['flick-test', 'Aim', 'Flick test', 'Fast, clean flicks', n('flick') && `${Math.round(low('flick'))} ms`],
+      ['target-rush', 'Speed', 'Target rush', 'Shrinking targets, 3 lives', n('rush') && `${(log.rush || []).reduce((a, s) => Math.max(a, s.v), 0)} targets`],
+      ['rhythm-test', 'Time', 'Rhythm', 'Click on the beat', n('rhythm') && `${Math.round(low('rhythm'))} ms off`],
+      ['circle-test', 'Rate', 'Circle test', 'Draw a perfect circle', n('circle') && `${(log.circle || []).reduce((a, s) => Math.max(a, s.v), 0).toFixed(1)}%`],
+      ['dpi-analyzer', 'Stats', 'DPI analyzer', 'Your mouse’s real DPI', n('dpi') && `${num(Math.round(log.dpi[0].v))} DPI`]
     ];
     tests.innerHTML = T.map(([href, ic, name, sub, best]) => `<a class="hub-test reveal visible" href="${root}${href}"><span class="ht-ico" data-icon="${ic}"></span><b>${name}</b><small>${sub}</small><em class="${best ? '' : 'none'}">${best ? 'Best: ' + esc(best) : 'Not taken yet'}</em></a>`).join('')
-      + `<a class="hub-test stats reveal visible" href="${root}my-stats"><span class="ht-ico" data-icon="Stats"></span><b>My stats</b><small>All your results in one place</small><em>Open →</em></a>`;
+      + `<a class="hub-test stats reveal visible" href="${root}my-stats"><span class="ht-ico" data-icon="Stats"></span><b>My stats</b><small>Skill profile, coach and records</small><em>Open →</em></a>`;
     window.PMIcons && window.PMIcons(tests);
   }
 

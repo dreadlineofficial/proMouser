@@ -22,7 +22,13 @@
     polling: { name: 'Polling rate', unit: 'Hz', dp: 0, higher: true },
     scroll: { name: 'Scroll wheel', unit: 'reverse jumps / 100 notches', dp: 1, higher: false },
     buttons: { name: 'Mouse buttons', unit: 'chatter presses', dp: 0, higher: false },
-    doubleclick: { name: 'Double click', unit: 'ms between clicks', dp: 0, higher: false }
+    doubleclick: { name: 'Double click', unit: 'ms between clicks', dp: 0, higher: false },
+    tracking: { name: 'Tracking test', unit: '% on target', dp: 1, higher: true, ref: [55, 15] },
+    flick: { name: 'Flick test', unit: 'ms / flick', dp: 0, higher: false, ref: [560, 140] },
+    rush: { name: 'Target rush', unit: 'targets', dp: 0, higher: true, ref: [30, 12] },
+    rhythm: { name: 'Rhythm test', unit: 'ms off the beat', dp: 0, higher: false, ref: [45, 18] },
+    circle: { name: 'Circle test', unit: '% round', dp: 1, higher: true, ref: [82, 8] },
+    dpi: { name: 'DPI analyzer', unit: 'DPI', dp: 0, higher: true }
   };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const fmt = (v, d) => (Number.isFinite(v) ? v.toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
@@ -121,7 +127,7 @@
 
   /* add a panel under each test that doesn't have one yet */
   function mount() {
-    const spots = [['[data-cps=""]', 'cps'], ['[data-test="reaction"]', 'reaction'], ['[data-test="aim"]', 'aim'], ['[data-test="polling"]', 'polling'], ['[data-test="scroll"]', 'scroll'], ['[data-test="buttons"]', 'buttons'], ['.double-click-test-layout', 'doubleclick']];
+    const spots = [['[data-cps=""]', 'cps'], ['[data-test="reaction"]', 'reaction'], ['[data-test="aim"]', 'aim'], ['[data-test="polling"]', 'polling'], ['[data-test="scroll"]', 'scroll'], ['[data-test="buttons"]', 'buttons'], ['.double-click-test-layout', 'doubleclick'], ...['tracking', 'flick', 'rush', 'rhythm', 'circle', 'dpi'].map(t => [`[data-test="${t}"]`, t])];
     spots.forEach(([sel, test]) => { const host = document.querySelector(sel); if (host && !document.querySelector(`[data-tstats="${test}"]`)) { const el = document.createElement('section'); el.dataset.tstats = test; host.after(el); } });
     document.querySelectorAll('[data-tstats]').forEach(render);
   }

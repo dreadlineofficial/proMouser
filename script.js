@@ -244,29 +244,74 @@
     paint(); window.PMPct = { paint, on };
   })();
 
-  /* ── APPEARANCE (Ultra accounts): accent colour, background, glow, density. Saved in localStorage "pm_ui"
-     and the account (extras.ui). Anyone else always gets their plan's normal theme. ── */
+  /* ── APPEARANCE: accent colour, background, glow, density. Saved in localStorage "pm_ui".
+     Ultra accounts: every colour, a custom colour, background, glow and density (saved in extras.ui).
+     Everyone else: the colours they've unlocked by levelling up on the Daily page (saved in their progress). ── */
   (function () {
-    const KEY = 'pm_ui', B = () => window.PMBackend;
+    const KEY = 'pm_ui', B = () => window.PMBackend, C = () => window.PMCore;
     const get = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+    const put = ui => { try { localStorage.setItem(KEY, JSON.stringify(ui)); } catch (e) { /* storage off */ } };
     const ultra = () => { try { return !!(B() && B().tier && B().tier() === 'ultra'); } catch (e) { return false; } };
-    const paint = () => { const ui = get(); $$('[data-ui-set]').forEach(b => { const [k, v] = b.dataset.uiSet.split(':'); b.setAttribute('aria-pressed', String((ui[k] || 'default') === v)); }); };
+    const earned = id => { const c = C(); return !!(c && c.REWARDS && c.REWARDS.some(r => r.id === id) && c.unlocked(id)); };
+    const VARS = ['--bg', '--bg-2', '--bg-3', '--surface', '--surface-2', '--bg-rgb', '--bg2-rgb', '--bg3-rgb', '--accent', '--accent-2', '--accent-deep', '--accent-rgb', '--accent2-rgb', '--accent-dim', '--accent-glow', '--grad', '--text-2', '--text-3', '--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7'];
+    // a full palette from one colour (custom colour, Ultra): dark backgrounds tinted with its hue
+    function paletteCss(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return '';
+      const n = parseInt(m[1], 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+      const s = d ? d / (1 - Math.abs(2 * l - 1)) : 0; let h = !d ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360;
+      const hsl = (H, S, L) => { const c = (1 - Math.abs(2 * L - 1)) * S, x = c * (1 - Math.abs((H / 60) % 2 - 1)), q = L - c / 2, [a, bb, cc] = H < 60 ? [c, x, 0] : H < 120 ? [x, c, 0] : H < 180 ? [0, c, x] : H < 240 ? [0, x, c] : H < 300 ? [x, 0, c] : [c, 0, x];
+        return '#' + [a, bb, cc].map(v => Math.round(Math.max(0, Math.min(1, v + q)) * 255).toString(16).padStart(2, '0')).join(''); };
+      const rgb = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)).join(', '), ts = Math.min(s, .55), cl = v => Math.max(.08, Math.min(.92, v));
+      const ac = '#' + m[1].toLowerCase(), ac2 = hsl(h, s, cl(l - .12)), ga = hsl((h + 8) % 360, s, cl(l + .08)), gb = hsl((h + 352) % 360, s, cl(l - .2)), bg = hsl(h, ts, .022), b2 = hsl(h, ts, .045), b3 = hsl(h, ts, .07);
+      const v = [bg, b2, b3, hsl(h, ts, .085), hsl(h, ts, .12), rgb(bg), rgb(b2), rgb(b3), ac, ac2, hsl(h, s, .17), rgb(ac), rgb(ac2), `rgba(${rgb(ac)}, .14)`, `rgba(${rgb(ac)}, .42)`, `linear-gradient(120deg, ${ga} 0%, ${gb} 100%)`,
+        hsl(h, .12, .7), hsl(h, .1, .47), ga, '#f4f4f6', hsl(h, s, .72), hsl(h, .1, .6), ac2, hsl(h, s, .85), hsl(h, .08, .8)];
+      return VARS.map((k, i) => `${k}:${v[i]}`).join(';') + ';';
+    }
+    const paint = () => {
+      const ui = get(), cur = { ...ui, accent: ui.accent || 'default' };
+      $$('[data-ui-set]').forEach(b => { const [k, v] = b.dataset.uiSet.split(':'); b.setAttribute('aria-pressed', String((cur[k] || 'default') === v)); });
+      $$('[data-ui-custom]').forEach(i => { if (ui.custom) i.value = ui.custom; i.closest('.ui-custom') && i.closest('.ui-custom').setAttribute('aria-pressed', String(ui.accent === 'custom')); });
+    };
     function apply() {
-      const ui = ultra() ? get() : {};
-      ['accent', 'bg'].forEach(k => { if (ui[k]) doc.dataset[k] = ui[k]; else delete doc.dataset[k]; });
-      if (ui.glow === 'off') doc.dataset.glow = 'off'; else delete doc.dataset.glow;
-      if (ui.density === 'compact') doc.dataset.density = 'compact'; else delete doc.dataset.density;
+      const ui = get(), U = ultra(), acc = ui.accent && (U || earned(ui.accent)) ? ui.accent : null;
+      VARS.forEach(k => doc.style.removeProperty(k));
+      if (acc === 'custom') {
+        if (U && ui.custom) { doc.dataset.accent = 'custom'; (paletteCss(ui.custom) || '').split(';').forEach(p => { const i = p.indexOf(':'); if (i > 0) doc.style.setProperty(p.slice(0, i), p.slice(i + 1)); }); } else delete doc.dataset.accent;
+      } else if (acc) doc.dataset.accent = acc; else delete doc.dataset.accent;
+      if (U && ui.bg) doc.dataset.bg = ui.bg; else delete doc.dataset.bg;
+      if (U && ui.glow === 'off') doc.dataset.glow = 'off'; else delete doc.dataset.glow;
+      if (U && ui.density === 'compact') doc.dataset.density = 'compact'; else delete doc.dataset.density;
       paint();
     }
     function set(k, v) {
       const ui = get(); if (!v || v === 'default') delete ui[k]; else ui[k] = v;
-      try { localStorage.setItem(KEY, JSON.stringify(ui)); } catch (e) { /* storage off */ }
-      apply(); try { if (ultra()) B().updateExtras({ ui }).catch(() => {}); } catch (e) { /* not signed in */ }
+      if (k === 'custom') ui.accent = 'custom';
+      if (ui.accent === 'custom' && ui.custom) ui.css = paletteCss(ui.custom); else delete ui.css;
+      if (ui.accent && earned(ui.accent)) ui.free = true; else delete ui.free;
+      put(ui); apply();
+      try {
+        if (ultra()) B().updateExtras({ ui: { accent: ui.accent, bg: ui.bg, glow: ui.glow, density: ui.density, custom: ui.custom } }).catch(() => {});
+        else if (k === 'accent' && C()) C().setSetting('accent', ui.accent || null);
+      } catch (e) { /* not signed in */ }
     }
-    document.addEventListener('click', e => { const b = e.target.closest('[data-ui-set]'); if (!b) return; e.preventDefault(); const [k, v] = b.dataset.uiSet.split(':'); set(k, v); });
-    const fromAccount = () => { try { const u = B() && B().getUser && B().getUser(), a = u && u.extras && u.extras.ui; if (ultra() && a && JSON.stringify(a) !== JSON.stringify(get())) localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) { /* no account */ } apply(); };
+    document.addEventListener('click', e => { const b = e.target.closest('[data-ui-set]'); if (!b || b.disabled) return; e.preventDefault(); const [k, v] = b.dataset.uiSet.split(':'); set(k, v); });
+    document.addEventListener('input', e => { const i = e.target.closest('[data-ui-custom]'); if (i && /^#[0-9a-f]{6}$/i.test(i.value)) set('custom', i.value); });
+    // the account (Ultra) or the progress (everyone else) is the source of truth when signed in
+    const fromAccount = () => {
+      try {
+        const u = B() && B().getUser && B().getUser(), ui = get(), c = C();
+        if (ultra() && u && u.extras && u.extras.ui) {
+          const a = {}; Object.entries(u.extras.ui).forEach(([k, v]) => { if (v != null) a[k] = v; }); if (a.accent === 'custom' && a.custom) a.css = paletteCss(a.custom);
+          const mine = { ...ui }; delete mine.free; if (JSON.stringify(a) !== JSON.stringify(mine)) put(a);
+        } else if (!ultra() && c && c.settings && c.settings.accent !== undefined && (c.settings.accent || undefined) !== ui.accent) {
+          const a = { ...ui }; if (c.settings.accent) { a.accent = c.settings.accent; a.free = true; } else { delete a.accent; delete a.free; } put(a);
+        }
+      } catch (e) { /* no account */ }
+      apply();
+    };
     fromAccount(); if (B() && B().on) B().on(fromAccount);
-    window.PMUI = { apply, set, get, paint };
+    document.addEventListener('pm:core', () => { const ui = get(); if (ui.accent && !ultra() && earned(ui.accent) !== (doc.dataset.accent === ui.accent)) apply(); });
+    window.PMUI = { apply, set, get, paint, paletteCss, earned, ultra };
   })();
 
   /* ── MOBILE MENU + DROPDOWN ARIA ── */

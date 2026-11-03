@@ -11,6 +11,21 @@ P = {  # name: (bg, bg2, bg3, surface, surface2, accent, accent2, deep, gradA, g
  'cyan':    ('#02080a','#051114','#08191e','#0a1e24','#0f2a33','#06b6d4','#0891b2','#053845','#22d3ee','#0e7490','#9db5bb','#617c83',['#22d3ee','#effcff','#67e8f9','#8ea5ab','#0891b2','#a5f3fc','#c6dbe0']),
  'mono':    ('#060606','#0c0c0d','#141415','#18181a','#222225','#a1a1aa','#71717a','#27272a','#e4e4e7','#71717a','#a7a7ae','#6e6e76',['#e4e4e7','#fafafa','#d4d4d8','#a1a1aa','#71717a','#f4f4f5','#d4d4d8']),
 }
+import colorsys
+def hx(r, g, b): return '#%02x%02x%02x' % tuple(max(0, min(255, round(v * 255))) for v in (r, g, b))
+def derive(ac, ac2, ga, gb):
+    """Dark backgrounds, surfaces, text and chart colours tinted with the accent's hue."""
+    r, g, b = (int(ac[i:i + 2], 16) / 255 for i in (1, 3, 5)); h, l, sat = colorsys.rgb_to_hls(r, g, b); ts = min(sat, .55)
+    tone = lambda L, S=ts: hx(*colorsys.hls_to_rgb(h, L, S))
+    return (tone(.022), tone(.045), tone(.07), tone(.085), tone(.12), ac, ac2, tone(.17, sat), ga, gb, tone(.7, .12), tone(.47, .1),
+            [ga, '#f4f4f6', tone(.72, sat), tone(.6, .1), ac2, tone(.85, sat), tone(.8, .08)])
+MORE = {  # name: (accent, accent-2, gradient from, gradient to)
+ 'lime': ('#84cc16', '#65a30d', '#a3e635', '#4d7c0f'), 'ocean': ('#0ea5e9', '#0369a1', '#38bdf8', '#1e3a8a'), 'sunset': ('#f97316', '#e11d48', '#fb923c', '#be123c'),
+ 'violet': ('#8b5cf6', '#6d28d9', '#a78bfa', '#5b21b6'), 'gold': ('#eab308', '#ca8a04', '#fde047', '#a16207'), 'ice': ('#7dd3fc', '#38bdf8', '#e0f2fe', '#0ea5e9'),
+ 'coral': ('#fb7185', '#f43f5e', '#fda4af', '#e11d48'), 'teal': ('#14b8a6', '#0f766e', '#2dd4bf', '#115e59'), 'crimson': ('#dc2626', '#991b1b', '#ef4444', '#7f1d1d'),
+ 'lavender': ('#c4b5fd', '#a78bfa', '#ede9fe', '#8b5cf6'), 'toxic': ('#a3ff12', '#22c55e', '#d9f99d', '#16a34a'),
+}
+for k, v in MORE.items(): P[k] = derive(*v)
 def rgb(h): return ', '.join(str(int(h[i:i + 2], 16)) for i in (1, 3, 5))
 MARK = '/* ===== Appearance (Ultra accounts) ===== */'
 out = [MARK, '/* html[data-accent], data-bg, data-glow, data-density: set in account settings, applied before first paint by the <head> script. */']
@@ -18,7 +33,7 @@ for k, (bg, b2, b3, s1, s2, ac, ac2, deep, ga, gb, t2, t3, ser) in P.items():
     out.append(f'html[data-accent="{k}"] {{ --bg: {bg}; --bg-2: {b2}; --bg-3: {b3}; --surface: {s1}; --surface-2: {s2}; --bg-rgb: {rgb(bg)}; --bg2-rgb: {rgb(b2)}; --bg3-rgb: {rgb(b3)}; '
                f'--accent: {ac}; --accent-2: {ac2}; --accent-deep: {deep}; --accent-rgb: {rgb(ac)}; --accent2-rgb: {rgb(ac2)}; --accent-dim: rgba({rgb(ac)}, .14); --accent-glow: rgba({rgb(ac)}, .42); '
                f'--grad: linear-gradient(120deg, {ga} 0%, {gb} 100%); --text-2: {t2}; --text-3: {t3}; ' + ' '.join(f'--s{i + 1}: {c};' for i, c in enumerate(ser)) + ' }')
-out.append('''html[data-accent="mono"] .btn-primary { color: #0a0a0b; }
+out.append('''html[data-accent="mono"] .btn-primary, html[data-accent="ice"] .btn-primary, html[data-accent="lavender"] .btn-primary, html[data-accent="toxic"] .btn-primary, html[data-accent="gold"] .btn-primary, html[data-accent="lime"] .btn-primary { color: #0a0a0b; }
 html[data-bg="plain"] .hero-bg-grid, html[data-bg="plain"] .ambient .grain { display: none; }
 html[data-bg="aurora"] .ambient::before { opacity: .85; width: 80vmax; height: 80vmax; } html[data-bg="aurora"] .ambient::after { opacity: .8; background: radial-gradient(circle, rgba(var(--accent-rgb), .3), transparent 65%); }
 html[data-glow="off"] { --accent-glow: transparent; --shadow-accent: none; } html[data-glow="off"] .ambient { display: none; }
@@ -30,7 +45,16 @@ html[data-density="compact"] { --section-y: clamp(40px, 6vw, 76px); font-size: 1
 .ui-sw[aria-pressed="true"] { border-color: #fff; } .ui-sw[aria-pressed="true"]::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 800; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
 .ui-seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid var(--border); justify-self: start; }
 .ui-seg button { padding: .4rem .9rem; border: 0; border-radius: 999px; background: none; color: var(--text-3); font: 600 .84rem var(--font-body); cursor: pointer; } .ui-seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }''')
+END = '/* ===== /Appearance ===== */'
 css = open(os.path.join(ROOT, 'style.css')).read()
-if MARK in css: css = css[:css.index(MARK)].rstrip() + '\n'
-open(os.path.join(ROOT, 'style.css'), 'w').write(css + '\n' + '\n'.join(out) + '\n')
+block = '\n'.join(out) + '\n' + END
+if MARK in css:   # replace only our own block, keep everything around it
+    a = css.index(MARK)
+    if END in css: b = css.index(END) + len(END)
+    else:          # first run with an end marker: the old block ended with the .ui-seg button rule
+        i = css.index('.ui-seg button {', a); b = css.index('\n', i)
+    css = css[:a] + block + css[b:]
+else:
+    css = css.rstrip() + '\n\n' + block + '\n'
+open(os.path.join(ROOT, 'style.css'), 'w').write(css)
 print('palettes:', ', '.join(P))

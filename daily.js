@@ -1,7 +1,9 @@
 /* =====================================================================
    ProMouser Daily (daily.html): level and streak, today's challenge,
    Mousle (guess the mouse of the day), training plans, the streak
-   calendar and achievements. All progress lives in core.js (PMCore).
+   calendar and achievements, weekly quests, level rewards (colours),
+   your skill profile with the coach, and pop-up settings.
+   All progress lives in core.js (PMCore).
    ===================================================================== */
 (() => {
   'use strict';
@@ -19,13 +21,19 @@
       <section class="panel dy-challenge" id="dyChallenge"></section>
       <section class="panel dy-week" id="dyWeek"></section>
     </div>
+    <section class="panel dy-quests" id="dyQuests"></section>
+    <section class="panel dy-skills" data-skills-mini></section>
     <section class="panel dy-mousle" id="mousle"></section>
     <div class="section-header reveal visible" style="margin:56px 0 18px"><span class="section-label">Training plans</span><h2>Get better, <em>one session a day</em></h2><p>Each session is a few tests you’d do anyway. They tick themselves off as you finish them.</p></div>
     <div class="dy-plans" id="dyPlans"></div>
     <div class="section-header reveal visible" style="margin:56px 0 18px"><span class="section-label">Your streak</span><h2>The last <em>five weeks</em></h2></div>
     <section class="panel" id="dyCal"></section>
     <div class="section-header reveal visible" style="margin:56px 0 18px"><span class="section-label">Achievements</span><h2>Badges <em>to unlock</em></h2></div>
-    <div class="dy-ach" id="dyAch"></div>`;
+    <div class="dy-ach" id="dyAch"></div>
+    <div class="section-header reveal visible" style="margin:56px 0 18px"><span class="section-label">Level rewards</span><h2>Colours <em>you’ve earned</em></h2><p>Every few levels unlocks a new colour for the whole site. Pick one and it’s used on every page.</p></div>
+    <section class="panel" id="dyRewards"></section>
+    <div class="section-header reveal visible" id="settings" style="margin:56px 0 18px;scroll-margin-top:calc(var(--nav-h) + 20px)"><span class="section-label">Settings</span><h2>Make it <em>yours</em></h2></div>
+    <section class="panel dy-settings" id="dySettings"></section>`;
 
   /* ---------- hero: level, XP, streak ---------- */
   function hero() {
@@ -57,7 +65,7 @@
     $('#dyWeek').innerHTML = `<span class="section-label">This week</span>
       <div class="dy-tiles"><div><span>XP</span><b>${num(sum(x => x.xp || 0))}</b></div><div><span>Challenges</span><b>${sum(x => (x.ch ? 1 : 0))}/7</b></div>
       <div><span>Tests</span><b>${sum(x => Object.values(x.tests || {}).reduce((a, b) => a + b, 0))}</b></div><div><span>Mice viewed</span><b>${sum(x => (x.views || []).length)}</b></div></div>
-      <div class="dy-best">${[['cps', 'Best CPS', v => v.toFixed(1)], ['reaction', 'Best reaction', v => Math.round(v) + ' ms'], ['aim', 'Best aim', v => Math.round(v) + ' ms/target']].map(([k, l, f]) => `<div><span>${l}</span><b>${C.state.best[k] != null ? f(C.state.best[k]) : '—'}</b></div>`).join('')}</div>
+      <div class="dy-best">${(() => { const have = C.SKILL.filter(k => C.state.best[k] != null), list = (have.length ? have : ['cps', 'reaction', 'aim']).slice(0, 5); return list.map(k => `<div><span>Best ${esc(C.TNAME[k].toLowerCase())}</span><b>${C.state.best[k] != null ? esc(C.TFMT[k](C.state.best[k])) : '—'}</b></div>`).join(''); })()}</div>
       <a class="dy-link" href="${root}my-stats">All your stats →</a>`;
   }
 
@@ -110,7 +118,7 @@
       if (!ps) return `<article class="panel dy-plan"><span class="section-label">${P.days} sessions</span><h3>${esc(P.name)}</h3><p class="panel-note">${esc(P.desc)}</p><button class="btn btn-primary btn-sm" type="button" data-start="${id}">Start the plan</button></article>`;
       return `<article class="panel dy-plan on"><div class="dy-plan-top"><div><span class="section-label">${ps.finished ? 'Complete' : `Session ${ps.session} of ${P.days}`}</span><h3>${esc(P.name)}</h3></div>${ps.doneToday ? '<span class="dy-done">✓ Today done</span>' : '<span class="dy-reward">+30 XP</span>'}</div>
         <div class="dy-xpbar"><i style="width:${Math.round(ps.progress * 100)}%"></i></div>
-        ${ps.finished ? '<p class="panel-note">You finished every session. Start again any time to keep your edge.</p>' : `<ul class="dy-tasks">${ps.tasks.map(t => `<li class="${t.ok ? 'ok' : ''}">${t.manual && !ps.doneToday ? `<button type="button" data-tick="${id}:${t.i}" aria-pressed="${t.ok}">${t.ok ? '✓' : ''}</button>` : `<i>${t.ok ? '✓' : ''}</i>`}<span>${esc(t.t)}</span>${!t.manual && !t.ok ? `<a href="${root}${({ cps: 'cps-test', aim: 'aim-trainer', reaction: 'reaction-test', doubleclick: 'double-click-test' })[t.test]}">Go →</a>` : ''}</li>`).join('')}</ul>`}
+        ${ps.finished ? '<p class="panel-note">You finished every session. Start again any time to keep your edge.</p>' : `<ul class="dy-tasks">${ps.tasks.map(t => `<li class="${t.ok ? 'ok' : ''}">${t.manual && !ps.doneToday ? `<button type="button" data-tick="${id}:${t.i}" aria-pressed="${t.ok}">${t.ok ? '✓' : ''}</button>` : `<i>${t.ok ? '✓' : ''}</i>`}<span>${esc(t.t)}</span>${!t.manual && !t.ok ? `<a href="${root}${({ cps: 'cps-test', aim: 'aim-trainer', reaction: 'reaction-test', doubleclick: 'double-click-test', tracking: 'tracking-test', flick: 'flick-test', rush: 'target-rush', rhythm: 'rhythm-test', circle: 'circle-test' })[t.test]}">Go →</a>` : ''}</li>`).join('')}</ul>`}
         <button class="linkish dy-stop" type="button" data-stop="${id}">${ps.finished ? 'Start over' : 'Leave plan'}</button></article>`;
     }).join('');
   }
@@ -134,8 +142,37 @@
     $('#dyAch').innerHTML = C.ACH.map(a => { const on = !!S.ach[a.id]; return `<div class="dy-badge${on ? ' on' : ''}"><span class="dy-badge-ico">${icon(a.icon)}</span><b>${esc(a.name)}</b><small>${esc(a.desc)}</small>${on ? `<em>Unlocked ${new Date(S.ach[a.id]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</em>` : a.xp ? `<em>+${a.xp} XP</em>` : ''}</div>`; }).join('');
   }
 
-  function render() { hero(); challenge(); plans(); calendar(); achievements(); }
+  /* ---------- weekly quests ---------- */
+  function questsPanel() {
+    const qs = C.quests(), left = C.dayNum(C.weekEnds()) - C.dayNum() + 1, done = qs.filter(q => q.done).length;
+    $('#dyQuests').innerHTML = `<div class="dy-ch-top"><div><span class="section-label">Weekly quests</span><h3 class="dy-q-title">${done}/3 done this week</h3></div><span class="dy-reward">+${C.QUEST_XP} XP each · ${left} day${left === 1 ? '' : 's'} left</span></div>
+      <div class="dy-q">${qs.map(q => `<div class="dy-q-item${q.done ? ' ok' : ''}"><b>${esc(q.text)}</b><div class="dy-xpbar"><i style="width:${Math.round(q.have / q.n * 100)}%"></i></div><small>${q.done ? '✓ Done' : `${num(q.have)} / ${num(q.n)}`}</small></div>`).join('')}</div>
+      ${done === 3 ? '<p class="panel-note" style="margin:12px 0 0">Clean sweep! New quests arrive on Monday.</p>' : ''}`;
+  }
+
+  /* ---------- level rewards: colours ---------- */
+  function rewards() {
+    const L = C.levelOf(C.state.xp), U = window.PMUI && PMUI.ultra(), cur = (window.PMUI ? PMUI.get().accent : '') || 'default';
+    const card = (id, name, c, level) => { const open = U || id === 'default' || L >= level, on = cur === id;
+      return `<button type="button" class="dy-rw${open ? '' : ' locked'}${on ? ' on' : ''}" ${open ? `data-ui-set="accent:${id}"` : 'disabled'} aria-pressed="${on}"><i style="background:linear-gradient(135deg, ${c[0]}, ${c[1]})"></i><b>${esc(name)}</b><small>${on ? 'In use' : open ? 'Use' : 'Level ' + level}</small></button>`; };
+    const next = C.REWARDS.find(r => r.level > L);
+    $('#dyRewards').innerHTML = `${!U && next ? `<p class="panel-note" style="margin-top:0">Next: <b>${esc(next.name)}</b> at level ${next.level} (${num(C.xpFor(next.level) - C.state.xp)} XP to go).</p>` : ''}
+      <div class="dy-rws">${card('default', 'Plan colours', ['#a855f7', '#ef4444'], 1)}${C.REWARDS.map(r => card(r.id, r.name, r.c, r.level)).join('')}</div>`;
+  }
+
+  /* ---------- settings ---------- */
+  function settings() {
+    const st = C.settings, seg = (k, opts) => `<div class="ui-seg">${opts.map(([v, l]) => `<button type="button" data-core-set="${k}:${v}" aria-pressed="${String(st[k]) === String(v)}">${l}</button>`).join('')}</div>`;
+    $('#dySettings').innerHTML = `<div class="ui-row"><span>Progress pop-ups</span>${seg('toasts', [['all', 'All'], ['big', 'Big moments only'], ['off', 'Off']])}<small class="dy-set-note">${st.toasts === 'all' ? 'XP after every test, plus level-ups, personal bests, streaks and achievements.' : st.toasts === 'big' ? 'Only level-ups, personal bests, streaks, quests and achievements.' : 'No pop-ups. You still earn XP and unlock everything.'}</small></div>
+      <div class="ui-row"><span>Streak and reminder dot in the menu</span>${seg('navStreak', [['true', 'Show'], ['false', 'Hide']])}</div>`;
+  }
+  host.addEventListener('click', e => { const b = e.target.closest('[data-core-set]'); if (!b) return; const [k, v] = b.dataset.coreSet.split(':'); C.setSetting(k, v === 'true' ? true : v === 'false' ? false : v); settings(); });
+  document.addEventListener('click', e => { if (e.target.closest('[data-ui-set]')) setTimeout(rewards, 0); });
+
+  function render() { hero(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); settings(); if (window.PMSkills) PMSkills.render(); }
   render(); mousle();
-  document.addEventListener('pm:core', () => { hero(); challenge(); plans(); calendar(); achievements(); });
+  document.addEventListener('DOMContentLoaded', () => { rewards(); if (window.PMSkills) PMSkills.render(); });
+  document.addEventListener('pm:core', () => { hero(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); });
+  if (location.hash === '#settings') setTimeout(() => $('#settings').scrollIntoView({ block: 'start' }), 200);
   if (location.hash === '#mousle') setTimeout(() => $('#mousle').scrollIntoView({ block: 'start' }), 200);
 })();

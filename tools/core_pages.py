@@ -5,7 +5,8 @@
 import re, glob, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 files = [f for f in glob.glob(ROOT + '/**/*.html', recursive=True) if '/vendor/' not in f and '/node_modules/' not in f]
-UI = "try{if(localStorage.getItem('pm_plan')==='ultra'){var ui=JSON.parse(localStorage.getItem('pm_ui')||'{}'),h=document.documentElement;if(ui.accent)h.dataset.accent=ui.accent;if(ui.bg)h.dataset.bg=ui.bg;if(ui.glow==='off')h.dataset.glow='off';if(ui.density==='compact')h.dataset.density='compact';}}catch(e){}"
+UI = "try{var ui=JSON.parse(localStorage.getItem('pm_ui')||'{}'),h=document.documentElement,u=localStorage.getItem('pm_plan')==='ultra';if(ui.accent&&(u||ui.free)){h.dataset.accent=ui.accent;if(u&&ui.css)h.style.cssText+=ui.css;}if(u){if(ui.bg)h.dataset.bg=ui.bg;if(ui.glow==='off')h.dataset.glow='off';if(ui.density==='compact')h.dataset.density='compact';}}catch(e){}"
+OLD_UI = ["try{if(localStorage.getItem('pm_plan')==='ultra'){var ui=JSON.parse(localStorage.getItem('pm_ui')||'{}'),h=document.documentElement;if(ui.accent)h.dataset.accent=ui.accent;if(ui.bg)h.dataset.bg=ui.bg;if(ui.glow==='off')h.dataset.glow='off';if(ui.density==='compact')h.dataset.density='compact';}}catch(e){}"]   # earlier versions, swapped for UI
 DD = ('<li><a href="{p}setup"><span class="dd-ico" data-icon="Setup"></span><span class="dd-txt"><b>My setup <span class="badge">New</span></b><small>eDPI, cm/360, pad and fit check</small></span></a></li>'
       '<li><a href="{p}daily"><span class="dd-ico" data-icon="Time"></span><span class="dd-txt"><b>Daily challenge &amp; Mousle <span class="badge">New</span></b><small>Streaks, levels and achievements</small></span></a></li>')
 n = {'core': 0, 'nav': 0, 'menu': 0, 'ui': 0}
@@ -22,6 +23,8 @@ for f in files:
     se = re.search(r'(<li><a href="([^"]*)sens(?:\.html)?"><span class="dd-ico" data-icon="Aim"></span>.*?</a></li>)', s)
     if se and 'data-icon="Setup"' not in s:
         s = s.replace(se.group(1), se.group(1) + DD.format(p=se.group(2)), 1); n['menu'] += 1
+    for old in OLD_UI:
+        if old in s: s = s.replace(old, UI); n['ui'] += 1
     if "pm_ui" not in s and "dataset.mode=" in s:
         s = s.replace("document.documentElement.dataset.mode='recommend';}", "document.documentElement.dataset.mode='recommend';}" + UI, 1); n['ui'] += 1
     if s != o: open(f, 'w').write(s)

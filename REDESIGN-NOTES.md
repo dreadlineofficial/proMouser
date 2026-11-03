@@ -1,10 +1,19 @@
-# ProMouser redesign — notes (v10)
+# ProMouser redesign — notes (v11)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v10: reasons to come back
+## What's new in v11: more tests, a skill profile, and Daily that pays off
+
+- **Six new tests** (`tests2.js`, one page each): **Tracking** (stay on a moving target, % on target), **Flick** (20 flicks from the centre: time, accuracy and path efficiency), **Target rush** (shrinking targets that speed up, 3 lives), **Rhythm** (click on the beat at 90–180 BPM: ms off the beat, early/late tendency), **Circle** (draw a perfect circle; also an angle-snapping check) and the **DPI analyzer** (move a measured distance with a ruler and get your real DPI; raw input in Chrome/Edge). 13 tests in all, with stats, personal bests, hub cards and XP.
+- **Skill profile** (`skills.js`, on My stats and Daily, free for everyone): eight skills scored 0–100 from your last 5 results against rough benchmarks, an overall score, trends, a **coach** that picks what to practise next, **personal records** for every test and a 12-week **activity** heatmap.
+- **Daily that pays off**: **weekly quests** (3 a week, +150 XP each), **personal-best alerts**, new daily challenges and 10 new achievements for the new tests, a **14-day all-rounder** training plan, and **level rewards**: 16 colours that unlock as you level up (Emerald at level 2 … Toxic at level 30) and apply across the whole site.
+- **Pop-ups are optional**: every pop-up has a close button and a "Fewer pop-ups" / "Turn off pop-ups" button. Daily → Settings (also linked from the account page) has All / Big moments only / Off, and a switch to hide the streak and dot in the menu. Settings follow the account.
+- **More colours**: 19 palettes in all (new: Lime, Ocean, Sunset, Violet, Gold, Ice, Coral, Teal, Crimson, Lavender, Toxic). Ultra accounts can use every colour straight away, plus a **custom colour** picker that builds a full palette from any colour.
+- Fixes: a leftover merge line in `style.css` stopped the Glorious Model O loading screen from being styled; `tools/appearance_css.py` now only replaces its own block.
+
+## v10: reasons to come back
 
 - **Progress (core.js).** Everything you do earns XP: tests, recommendations, ProMouser AI, viewing mice, comparing, Mousle, saving your setup, and training plans. XP has daily caps so it can't be farmed. Levels go from Rookie to Legend, and there are 28 achievements. Progress is stored in this browser for guests and in `profiles.progress` for accounts (synced, so it follows you between devices).
 - **Daily page (daily.html).** A new challenge every day (the same for everyone), a streak with a 🔥 counter in the nav, a 35-day calendar, this week's bests and the achievements grid.

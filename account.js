@@ -228,13 +228,16 @@
     return `<article class="panel acct-prog"><div class="panel-head"><h3>Your progress</h3><span class="plan-tag">Level ${L} · ${C.titleOf(L)}</span></div>
       <div class="ap-bar"><i style="width:${Math.round((S.xp - lo) / (hi - lo) * 100)}%"></i></div><p class="panel-note">${S.xp - lo} / ${hi - lo} XP to level ${L + 1}</p>
       <div class="credit-stats"><div><span>Streak</span><b>${st ? '🔥 ' + st : '0'}</b><em>best ${S.streak.best}</em></div><div><span>Achievements</span><b>${Object.keys(S.ach).length}<small> / ${C.ACH.length}</small></b><em>unlocked</em></div><div><span>Today</span><b>${ch.done ? '✓' : '—'}</b><em>${ch.done ? 'challenge done' : esc(ch.text)}</em></div></div>
-      <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats">My stats</a></div></article>`;
+      ${B.tier() === 'ultra' ? '' : `<div class="ui-row"><span>Colour · unlock more by levelling up</span><div class="ui-swatches">${swatch(BASE_ACCENTS[0])}${C.REWARDS.map(r => swatch([r.id, r.name, r.c[0], r.c[1]], L >= r.level ? 0 : r.level)).join('')}</div></div>`}
+      <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats">My stats</a><a class="btn btn-ghost btn-sm" href="${root}daily#settings">Pop-up settings</a></div></article>`;
   }
-  const ACCENTS = [['default', 'Default', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80'], ['emerald', 'Emerald', '#34d399', '#047857'], ['amber', 'Amber', '#fbbf24', '#ea580c'], ['sakura', 'Sakura', '#f472b6', '#be185d'], ['cyan', 'Cyan', '#22d3ee', '#0e7490'], ['mono', 'Mono', '#e4e4e7', '#71717a']];
+  const BASE_ACCENTS = [['default', 'Default', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80']];
+  const ACCENTS = () => [...BASE_ACCENTS, ...((window.PMCore && PMCore.REWARDS) || []).map(r => [r.id, r.name, r.c[0], r.c[1]])];
+  const swatch = ([v, l, a2, b2], locked) => `<button type="button" class="ui-sw" ${locked ? `disabled title="${l}: level ${locked}"` : `data-ui-set="accent:${v}" title="${l}"`} aria-label="${l}${locked ? ', locked' : ''}" style="background:linear-gradient(135deg, ${a2}, ${b2})"></button>`;
   function appearancePanel() {
     const seg = (k, opts) => `<div class="ui-seg">${opts.map(([v, l]) => `<button type="button" data-ui-set="${k}:${v}">${l}</button>`).join('')}</div>`;
     return `<article class="panel ui-panel"><h3>Appearance</h3><p class="panel-note">Make ProMouser yours. Changes apply straight away and follow your account.</p>
-      <div class="ui-row"><span>Colour</span><div class="ui-swatches">${ACCENTS.map(([v, l, a, b]) => `<button type="button" class="ui-sw" data-ui-set="accent:${v}" title="${l}" aria-label="${l}" style="background:linear-gradient(135deg, ${a}, ${b})"></button>`).join('')}</div></div>
+      <div class="ui-row"><span>Colour</span><div class="ui-swatches">${ACCENTS().map(x => swatch(x)).join('')}<label class="ui-sw ui-custom" title="Custom colour"><input type="color" data-ui-custom value="#a855f7" aria-label="Custom colour"><span aria-hidden="true">+</span></label></div></div>
       <div class="ui-row"><span>Background</span>${seg('bg', [['default', 'Grid'], ['plain', 'Plain'], ['aurora', 'Aurora']])}</div>
       <div class="ui-row"><span>Glow effects</span>${seg('glow', [['default', 'On'], ['off', 'Off']])}</div>
       <div class="ui-row"><span>Density</span>${seg('density', [['default', 'Comfortable'], ['compact', 'Compact']])}</div></article>`;

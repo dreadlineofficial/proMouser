@@ -174,7 +174,7 @@
       if (patch.watchlist) ex.watchlist = patch.watchlist.slice(0, C.maxWatch);
       if (patch.profiles) ex.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) ex.memory = patch.memory;
-      if (patch.ui) ex.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k]) => ['accent', 'bg', 'glow', 'density'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
+      if (patch.ui) ex.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k, v]) => v != null && ['accent', 'bg', 'glow', 'density', 'custom'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
       if (patch.testLog) ex.testLog = Object.fromEntries(Object.entries(patch.testLog).slice(0, 12).map(([k, v]) => [k, (v || []).slice(0, 60)]));
       setUser(Object.assign(clone(u), { extras: ex }));   // show it straight away
       const { error } = await (await ready).from('profiles').update({ extras: ex }).eq('id', u.id);

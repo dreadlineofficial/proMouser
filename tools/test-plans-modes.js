@@ -12,7 +12,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   ok(await p.evaluate(() => document.documentElement.dataset.mode) === 'hub', 'hub mode set');
   ok(await p.isVisible('#hub') && !(await p.isVisible('#hero')), 'hub hero shown, recommend hero hidden');
   ok(await p.isVisible('.nav-links a[href="my-stats"]') && !(await p.isVisible('.nav-rec')), 'hub nav (My stats shown, Recommend hidden)');
-  ok(await p.$$eval('.hub-test', a => a.length) === 8 && await p.$$eval('.hub-lead', a => a.length) >= 6 && await p.isVisible('.motd-specs'), 'hub tests, leaders, mouse of the day');
+  ok(await p.$$eval('.hub-test', a => a.length) === 14 && await p.$$eval('.hub-lead', a => a.length) >= 6 && await p.isVisible('.motd-specs'), 'hub tests, leaders, mouse of the day');
   await p.fill('[data-hub-search] input', 'wireless under 60 g'); await p.waitForTimeout(200);
   const res = await p.$$eval('.hub-results a', a => a.map(x => x.textContent));
   ok(res.length > 0, 'hub search finds light wireless mice: ' + res.slice(0, 2).join(' | '));
@@ -84,11 +84,18 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.evaluate(() => PMBackend.applyOrder({ id: 'T4', createdAt: Date.now(), total: 2499, items: [{ ...PM_CONFIG.lite.product }] }));
   ok(await p.evaluate(() => PMBackend.tier()) === 'ultra', 'buying Lite never downgrades Ultra');
   // 5. pages render without errors
-  for (const pg of ['shop', 'basic', 'lite', 'ultra', 'my-stats', 'tests', 'cps-test', 'aim-trainer', 'double-click-test', 'scroll-test', 'mouse-button-test', 'polling-rate-test', 'account', 'elite', 'mice', 'mice/compare', 'blog/']) { await p.goto(BASE + pg); await p.waitForTimeout(500); }
+  for (const pg of ['shop', 'basic', 'lite', 'ultra', 'my-stats', 'tests', 'cps-test', 'aim-trainer', 'double-click-test', 'scroll-test', 'mouse-button-test', 'polling-rate-test', 'account', 'elite', 'mice', 'mice/compare', 'blog/', 'daily', 'setup', 'tracking-test', 'flick-test', 'target-rush', 'rhythm-test', 'circle-test', 'dpi-analyzer']) { await p.goto(BASE + pg); await p.waitForTimeout(500); }
   await p.goto(BASE + 'shop'); await p.waitForTimeout(600);
   ok(await p.$$eval('.shop-hero', a => a.length) === 5, 'shop shows Basic, Lite, Ultra, Turbo, Pass');
   await p.goto(BASE + 'my-stats'); await p.waitForTimeout(600);
-  ok(await p.$$eval('[data-tstats] .ts-head', a => a.length) === 7, 'My stats shows all 7 tests');
+  ok(await p.$$eval('[data-tstats] .ts-head', a => a.length) === 13, 'My stats shows all 13 tests');
+  ok(await p.$$eval('.sk-list li', a => a.length) === 8 && await p.isVisible('.sk-coach'), 'skill profile: 8 skills and the coach');
+  // 6. Daily: quests, rewards, pop-up settings
+  await p.goto(BASE + 'daily'); await p.waitForTimeout(600);
+  ok(await p.$$eval('.dy-q-item', a => a.length) === 3 && await p.$$eval('.dy-rw', a => a.length) === 17, 'Daily: 3 weekly quests and 17 colour rewards');
+  await p.click('[data-core-set="toasts:off"]'); await p.evaluate(() => PMStats.record('reaction', 199, '')); await p.waitForTimeout(300);
+  ok(!(await p.isVisible('.core-toast.on')), 'pop-ups can be turned off');
+  await p.click('[data-core-set="toasts:all"]');
   ok(errs.length === 0, 'no console errors' + (errs.length ? ':\n  ' + errs.slice(0, 8).join('\n  ') : ''));
   await b.close(); console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
 })();
