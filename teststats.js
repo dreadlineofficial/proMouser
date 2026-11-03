@@ -52,6 +52,7 @@
       }, 800);
     }
     document.querySelectorAll(`[data-tstats="${test}"]`).forEach(render);
+    if (window.PMCore) PMCore.event('test', { test, v: s.v, k: s.k || '' });   // XP, daily challenge, plans
   }
 
   /* ---------- maths ---------- */

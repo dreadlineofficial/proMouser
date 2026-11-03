@@ -1,10 +1,22 @@
-# ProMouser redesign — notes (v9)
+# ProMouser redesign — notes (v10)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v9
+## What's new in v10: reasons to come back
+
+- **Progress (core.js).** Everything you do earns XP: tests, recommendations, ProMouser AI, viewing mice, comparing, Mousle, saving your setup, and training plans. XP has daily caps so it can't be farmed. Levels go from Rookie to Legend, and there are 28 achievements. Progress is stored in this browser for guests and in `profiles.progress` for accounts (synced, so it follows you between devices).
+- **Daily page (daily.html).** A new challenge every day (the same for everyone), a streak with a 🔥 counter in the nav, a 35-day calendar, this week's bests and the achievements grid.
+- **Mousle.** A daily guess-the-mouse game: 6 guesses, with hints on brand, weight, price, polling, connection, shape and double-clicking. The result can be shared as an emoji grid.
+- **Training plans.** *28-day CPS* and *30-day Aim* plans with a session each day and benchmark days.
+- **My setup (setup.html).** Enter your mouse, DPI, game and sensitivity to get eDPI, cm/360, whether your mousepad is big enough, how well your mouse fits your grip and hand, and tips. It is saved to your account.
+- **Account page.** A new progress panel for everyone. Ultra accounts also get an **Appearance** panel: 9 colours (Purple, Red, Blue, Navy, Emerald, Amber, Sakura, Cyan, Mono), Grid/Plain/Aurora background, glow on or off, and comfortable or compact density. It is saved in `extras.ui` and applied before the first paint. It is deliberately not advertised anywhere.
+- Nav: a new **Daily** link. The Tests menu and account menu link to Daily and My setup.
+
+**Supabase:** re-run `supabase/schema.sql`, which adds the `progress` column (64 KB cap) and includes it in `get_my_state`.
+
+## v9
 
 - **Only verified mice double-click.** ProMouser has verified six: Glorious Model O, Model O-,
   Model D, Bloody A70, HyperX Pulsefire Haste 2 and Ant Esports GM320 (`cps.verified` in

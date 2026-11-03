@@ -181,6 +181,31 @@
     paint(); window.PMPct = { paint, on };
   })();
 
+  /* ── APPEARANCE (Ultra accounts): accent colour, background, glow, density. Saved in localStorage "pm_ui"
+     and the account (extras.ui). Anyone else always gets their plan's normal theme. ── */
+  (function () {
+    const KEY = 'pm_ui', B = () => window.PMBackend;
+    const get = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+    const ultra = () => { try { return !!(B() && B().tier && B().tier() === 'ultra'); } catch (e) { return false; } };
+    const paint = () => { const ui = get(); $$('[data-ui-set]').forEach(b => { const [k, v] = b.dataset.uiSet.split(':'); b.setAttribute('aria-pressed', String((ui[k] || 'default') === v)); }); };
+    function apply() {
+      const ui = ultra() ? get() : {};
+      ['accent', 'bg'].forEach(k => { if (ui[k]) doc.dataset[k] = ui[k]; else delete doc.dataset[k]; });
+      if (ui.glow === 'off') doc.dataset.glow = 'off'; else delete doc.dataset.glow;
+      if (ui.density === 'compact') doc.dataset.density = 'compact'; else delete doc.dataset.density;
+      paint();
+    }
+    function set(k, v) {
+      const ui = get(); if (!v || v === 'default') delete ui[k]; else ui[k] = v;
+      try { localStorage.setItem(KEY, JSON.stringify(ui)); } catch (e) { /* storage off */ }
+      apply(); try { if (ultra()) B().updateExtras({ ui }).catch(() => {}); } catch (e) { /* not signed in */ }
+    }
+    document.addEventListener('click', e => { const b = e.target.closest('[data-ui-set]'); if (!b) return; e.preventDefault(); const [k, v] = b.dataset.uiSet.split(':'); set(k, v); });
+    const fromAccount = () => { try { const u = B() && B().getUser && B().getUser(), a = u && u.extras && u.extras.ui; if (ultra() && a && JSON.stringify(a) !== JSON.stringify(get())) localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) { /* no account */ } apply(); };
+    fromAccount(); if (B() && B().on) B().on(fromAccount);
+    window.PMUI = { apply, set, get, paint };
+  })();
+
   /* ── MOBILE MENU + DROPDOWN ARIA ── */
   (function () {
     const burger = $('#hamburger'), links = $('#navLinks');

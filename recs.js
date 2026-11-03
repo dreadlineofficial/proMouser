@@ -166,6 +166,7 @@
       B.addHistory({ top: (panels.length > 1 ? PM.recommend(p) : panels[0].res)[0].m.name, topIds: panels[0].res.slice(0, keep).map(r => r.m.id), panels: panels.map(x => ({ game: x.game, topIds: x.res.slice(0, keep).map(r => r.m.id) })),
         prefs: p, cost: charged, summary: summarise(p).slice(0, 4).join(' · ') });
       renderHistory();
+      if (window.PMCore) PMCore.event('rec');
     } catch (ex) {
       await B.refund(charged); $('#recsOut').innerHTML = `<div class="panel out-empty"><h3>Something went wrong</h3><p>We refunded your credits. Please try again.</p></div>`;
     } finally { running = false; $('#genLabel').textContent = 'Generate recommendations'; updateStatus(); }

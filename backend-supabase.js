@@ -67,8 +67,8 @@
       id: s.id, name: s.name, email: s.email, createdAt: ms(s.created_at), onboarded: !!s.onboarded,
       prefs: Object.assign({ games: [], weight: 'any', grip: 'any', connection: 'any' }, s.prefs || {}),
       plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
-      extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null, testLog: ex.testLog || {} },
-      turboUntil: ms(s.turbo_until), cpsBest: s.cps_best || {},
+      extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null, testLog: ex.testLog || {}, ui: ex.ui || null },
+      turboUntil: ms(s.turbo_until), cpsBest: s.cps_best || {}, progress: s.progress || {},
       credits: { date: s.credits.date, daily: s.credits.daily, purchased: s.credits.purchased },
       passes,
       orders: orders.map(o => ({ id: o.id, createdAt: ms(o.created_at), items: o.items, total: o.total_inr, method: o.provider, status: o.status, paymentId: o.provider_payment_id })),
@@ -149,10 +149,18 @@
       if (patch.watchlist) ex.watchlist = patch.watchlist.slice(0, C.maxWatch);
       if (patch.profiles) ex.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) ex.memory = patch.memory;
+      if (patch.ui) ex.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k]) => ['accent', 'bg', 'glow', 'density'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
       if (patch.testLog) ex.testLog = Object.fromEntries(Object.entries(patch.testLog).slice(0, 12).map(([k, v]) => [k, (v || []).slice(0, 60)]));
       setUser(Object.assign(clone(u), { extras: ex }));   // show it straight away
       const { error } = await (await ready).from('profiles').update({ extras: ex }).eq('id', u.id);
       if (error) { await refresh().catch(() => {}); throw fail(/NEEDS_ULTRA/.test(error.message) ? 'That’s a ProMouser Ultra feature.' : friendly(error), 'NEEDS_ULTRA'); }
+      return clone(user);
+    },
+    async updateProgress(p) {
+      const u = need(); const prog = JSON.parse(JSON.stringify(p || {}));
+      user = Object.assign(clone(u), { progress: prog }); write(KEY_CACHE, user);
+      const { error } = await (await ready).from('profiles').update({ progress: prog }).eq('id', u.id);
+      if (error) throw fail(friendly(error));
       return clone(user);
     },
     async updateProfile(patch) {

@@ -59,7 +59,7 @@
   const FEATURES = {
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
-    freeRecs: 'ultra', freeAI: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
+    freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
@@ -158,14 +158,21 @@
     /* Ultra extras: watchlist [{id, price, at}], saved profiles [{name, prefs}], assistant memory (prefs object) */
     async updateExtras(patch) {
       const u = current(); if (!u) throw new Error('Please sign in first.');
-      const need = { watchlist: 'watchlist', profiles: 'profiles', memory: 'memory', testLog: 'testLog' };
+      const need = { watchlist: 'watchlist', profiles: 'profiles', memory: 'memory', testLog: 'testLog', ui: 'ui' };
       Object.keys(patch).forEach(k => { if (need[k] && !PLAN.has(u, need[k])) { const e = new Error('That’s a ProMouser Ultra feature.'); e.code = 'NEEDS_ULTRA'; throw e; } });
       const C = CONFIG.ultra;
       if (patch.watchlist) u.extras.watchlist = patch.watchlist.slice(0, C.maxWatch);
       if (patch.profiles) u.extras.profiles = patch.profiles.slice(0, C.maxProfiles);
       if ('memory' in patch) u.extras.memory = patch.memory;
       if (patch.testLog) u.extras.testLog = trimLog(patch.testLog);
+      if (patch.ui) u.extras.ui = Object.fromEntries(Object.entries(patch.ui).filter(([k]) => ['accent', 'bg', 'glow', 'density'].includes(k)).map(([k, v]) => [k, String(v).slice(0, 16)]));
       saveUser(u); emit(); return clean(u);
+    },
+    /* ProMouser Core progress (XP, streaks, achievements, plans): any signed-in account */
+    async updateProgress(p) {
+      const u = current(); if (!u) return null;
+      const s = JSON.stringify(p || {}); if (s.length > 60000) throw new Error('Progress is too large.');
+      u.progress = JSON.parse(s); saveUser(u); return clean(u);   // no emit: core.js already repainted
     },
     async updateProfile(patch) {
       const u = current(); if (!u) throw new Error('Not signed in.');

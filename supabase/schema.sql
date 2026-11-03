@@ -58,6 +58,10 @@ alter table public.profiles add constraint profiles_plan_check check (plan in ('
 alter table public.profiles add column if not exists turbo_until timestamptz;
 -- CPS test personal bests per test length ("5": 9.4), shown on ProMouser Online profiles
 alter table public.profiles add column if not exists cps_best jsonb not null default '{}'::jsonb;
+-- ProMouser Core progress (XP, streaks, achievements, training plans, Mousle): every account, written by the browser
+alter table public.profiles add column if not exists progress jsonb not null default '{}'::jsonb;
+alter table public.profiles drop constraint if exists profiles_progress_check;
+alter table public.profiles add constraint profiles_progress_check check (jsonb_typeof(progress) = 'object' and pg_column_size(progress) < 64000);
 -- Ultra extras: watchlist, saved preference profiles, assistant memory
 alter table public.profiles add column if not exists extras jsonb not null default '{}'::jsonb;
 alter table public.profiles drop constraint if exists profiles_extras_check;
@@ -157,7 +161,7 @@ create policy "own runs insert"    on public.recommendation_runs for insert to a
 revoke insert, update, delete on public.profiles, public.credit_balances, public.user_passes, public.products, public.orders from anon, authenticated;
 revoke insert, update, delete on public.recommendation_runs from anon;
 revoke update, delete on public.recommendation_runs from authenticated;
-grant update (name, prefs, onboarded, plan_cancelled, extras) on public.profiles to authenticated;
+grant update (name, prefs, onboarded, plan_cancelled, extras, progress) on public.profiles to authenticated;
 
 -- only Ultra accounts may change their extras (the browser can't flip this: plan isn't writable)
 create or replace function public.pm_guard_extras() returns trigger
@@ -211,7 +215,7 @@ begin
   select jsonb_build_object(
       'id', p.id, 'email', u.email, 'name', p.name, 'prefs', p.prefs, 'onboarded', p.onboarded,
       'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at,
-      'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best,
+      'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best, 'progress', p.progress,
       'passes', coalesce((select jsonb_object_agg(x.feature, x.until) from public.user_passes x where x.user_id = p.id and x.until > now()), '{}'::jsonb),
       'credits', jsonb_build_object('date', b.daily_date, 'daily', b.daily, 'purchased', b.purchased))
     into r

@@ -856,7 +856,7 @@
     if (typing) typing.remove();
     if (o.blocks.length) draw(o, !opts.quiet);
     renderChips(o.chips.length ? o.chips : DEFAULT_CHIPS); renderProfile();
-    if (!opts.quiet) { ctx.log.push(text); save(); remember(); }
+    if (!opts.quiet) { ctx.log.push(text); save(); remember(); if (window.PMCore) PMCore.event('ai'); }
     busy = false;
   }
   const REC_CHIPS = [['Pick a mouse for me', 'Help me choose a mouse'], ['Best for Minecraft 1.8', 'Best mouse for Minecraft 1.8 PvP'], ['FPS under ₹5,000', 'Best FPS mouse under ₹5000'], ['Model O vs G102', 'Model O vs G102'], ['Lightest wireless', 'Lightest wireless mice'], ['What is debounce?', 'What is debounce?']];

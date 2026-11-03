@@ -155,6 +155,8 @@
           <a role="menuitem" href="${root}elite.html">Elite Dashboard</a>
           <a role="menuitem" href="${root}account.html">My account</a>
           <a role="menuitem" href="${root}recommendations.html">Recommendations</a>
+          <a role="menuitem" href="${root}daily.html">Daily &amp; Mousle</a>
+          <a role="menuitem" href="${root}setup.html">My setup</a>
           <a role="menuitem" href="${root}shop.html">Shop &amp; credits</a>
           ${t === 'ultra' ? `<a role="menuitem" href="${root}sens.html">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra.html" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite.html" class="upsell">Upgrade to Lite</a>` : ''}
           <button role="menuitem" type="button" data-auth="signout">Sign out</button>
@@ -203,6 +205,25 @@
     requireAuth(cb, opts) { const u = B.getUser(); if (u) { if (!u.onboarded) { startOnboarding(u, cb); return false; } cb && cb(u); return true; } openAuth('signup', { after: cb, ...opts }); return false; }
   };
 
+  /* ---------- account page: progress (everyone) and appearance (Ultra accounts only) ---------- */
+  function progressPanel() {
+    const C = window.PMCore; if (!C) return '';
+    const S = C.state, L = C.levelOf(S.xp), lo = C.xpFor(L), hi = C.xpFor(L + 1), st = C.streakNow(), ch = C.challenge();
+    return `<article class="panel acct-prog"><div class="panel-head"><h3>Your progress</h3><span class="plan-tag">Level ${L} · ${C.titleOf(L)}</span></div>
+      <div class="ap-bar"><i style="width:${Math.round((S.xp - lo) / (hi - lo) * 100)}%"></i></div><p class="panel-note">${S.xp - lo} / ${hi - lo} XP to level ${L + 1}</p>
+      <div class="credit-stats"><div><span>Streak</span><b>${st ? '🔥 ' + st : '0'}</b><em>best ${S.streak.best}</em></div><div><span>Achievements</span><b>${Object.keys(S.ach).length}<small> / ${C.ACH.length}</small></b><em>unlocked</em></div><div><span>Today</span><b>${ch.done ? '✓' : '—'}</b><em>${ch.done ? 'challenge done' : esc(ch.text)}</em></div></div>
+      <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily.html">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup.html">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats.html">My stats</a></div></article>`;
+  }
+  const ACCENTS = [['default', 'Purple', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80'], ['emerald', 'Emerald', '#34d399', '#047857'], ['amber', 'Amber', '#fbbf24', '#ea580c'], ['sakura', 'Sakura', '#f472b6', '#be185d'], ['cyan', 'Cyan', '#22d3ee', '#0e7490'], ['mono', 'Mono', '#e4e4e7', '#71717a']];
+  function appearancePanel() {
+    const seg = (k, opts) => `<div class="ui-seg">${opts.map(([v, l]) => `<button type="button" data-ui-set="${k}:${v}">${l}</button>`).join('')}</div>`;
+    return `<article class="panel ui-panel"><h3>Appearance</h3><p class="panel-note">Make ProMouser yours. Changes apply straight away and follow your account.</p>
+      <div class="ui-row"><span>Colour</span><div class="ui-swatches">${ACCENTS.map(([v, l, a, b]) => `<button type="button" class="ui-sw" data-ui-set="accent:${v}" title="${l}" aria-label="${l}" style="background:linear-gradient(135deg, ${a}, ${b})"></button>`).join('')}</div></div>
+      <div class="ui-row"><span>Background</span>${seg('bg', [['default', 'Grid'], ['plain', 'Plain'], ['aurora', 'Aurora']])}</div>
+      <div class="ui-row"><span>Glow effects</span>${seg('glow', [['default', 'On'], ['off', 'Off']])}</div>
+      <div class="ui-row"><span>Density</span>${seg('density', [['default', 'Comfortable'], ['compact', 'Compact']])}</div></article>`;
+  }
+
   /* ---------- account page ---------- */
   function renderAccountPage(host) {
     const u = B.getUser();
@@ -227,6 +248,7 @@
           <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
           <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic.html">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
         </article>
+        ${progressPanel()}${t === 'ultra' ? appearancePanel() : ''}
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
           <form id="prefsForm" class="pref-form">
             <fieldset><legend>Games</legend><div class="chip-set">${GAMES.map(g => `<label class="pick"><input type="checkbox" name="games" value="${g.id}" ${p.games.includes(g.id) ? 'checked' : ''}><span>${g.label}</span></label>`).join('')}</div></fieldset>
@@ -244,6 +266,7 @@
       await B.updateProfile({ prefs: { games: f.getAll('games'), weight: f.get('weight') || 'any', grip: f.get('grip') || 'any', connection: f.get('connection') || 'any' } });
       toast('Preferences saved.');
     });
+    if (window.PMUI) PMUI.paint();
     $('#delAcct', host).addEventListener('click', async () => { if (confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); } });
   }
 
