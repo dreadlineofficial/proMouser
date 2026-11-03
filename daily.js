@@ -58,7 +58,7 @@
       <div class="dy-tiles"><div><span>XP</span><b>${num(sum(x => x.xp || 0))}</b></div><div><span>Challenges</span><b>${sum(x => (x.ch ? 1 : 0))}/7</b></div>
       <div><span>Tests</span><b>${sum(x => Object.values(x.tests || {}).reduce((a, b) => a + b, 0))}</b></div><div><span>Mice viewed</span><b>${sum(x => (x.views || []).length)}</b></div></div>
       <div class="dy-best">${[['cps', 'Best CPS', v => v.toFixed(1)], ['reaction', 'Best reaction', v => Math.round(v) + ' ms'], ['aim', 'Best aim', v => Math.round(v) + ' ms/target']].map(([k, l, f]) => `<div><span>${l}</span><b>${C.state.best[k] != null ? f(C.state.best[k]) : '—'}</b></div>`).join('')}</div>
-      <a class="dy-link" href="${root}my-stats.html">All your stats →</a>`;
+      <a class="dy-link" href="${root}my-stats">All your stats →</a>`;
   }
 
   /* ---------- Mousle ---------- */
@@ -98,7 +98,7 @@
     const sh = $('#mlShare');
     sh && sh.addEventListener('click', () => {
       const em = { ok: '🟩', near: '🟨', no: '⬛' }, grid = guesses.map(g => COLS.map(c => em[c[2](g, ANS)]).join('')).join('\n');
-      const txt = `ProMouser Mousle #${puzzle} ${won ? guesses.length : 'X'}/${MAX}\n${grid}\npromouser.website/daily.html`;
+      const txt = `ProMouser Mousle #${puzzle} ${won ? guesses.length : 'X'}/${MAX}\n${grid}\npromouser.website/daily`;
       (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { sh.textContent = 'Copied!'; }).catch(() => { prompt('Copy your result:', txt); });
     });
   }
@@ -110,7 +110,7 @@
       if (!ps) return `<article class="panel dy-plan"><span class="section-label">${P.days} sessions</span><h3>${esc(P.name)}</h3><p class="panel-note">${esc(P.desc)}</p><button class="btn btn-primary btn-sm" type="button" data-start="${id}">Start the plan</button></article>`;
       return `<article class="panel dy-plan on"><div class="dy-plan-top"><div><span class="section-label">${ps.finished ? 'Complete' : `Session ${ps.session} of ${P.days}`}</span><h3>${esc(P.name)}</h3></div>${ps.doneToday ? '<span class="dy-done">✓ Today done</span>' : '<span class="dy-reward">+30 XP</span>'}</div>
         <div class="dy-xpbar"><i style="width:${Math.round(ps.progress * 100)}%"></i></div>
-        ${ps.finished ? '<p class="panel-note">You finished every session. Start again any time to keep your edge.</p>' : `<ul class="dy-tasks">${ps.tasks.map(t => `<li class="${t.ok ? 'ok' : ''}">${t.manual && !ps.doneToday ? `<button type="button" data-tick="${id}:${t.i}" aria-pressed="${t.ok}">${t.ok ? '✓' : ''}</button>` : `<i>${t.ok ? '✓' : ''}</i>`}<span>${esc(t.t)}</span>${!t.manual && !t.ok ? `<a href="${root}${({ cps: 'cps-test.html', aim: 'aim-trainer.html', reaction: 'reaction-test.html', doubleclick: 'double-click-test.html' })[t.test]}">Go →</a>` : ''}</li>`).join('')}</ul>`}
+        ${ps.finished ? '<p class="panel-note">You finished every session. Start again any time to keep your edge.</p>' : `<ul class="dy-tasks">${ps.tasks.map(t => `<li class="${t.ok ? 'ok' : ''}">${t.manual && !ps.doneToday ? `<button type="button" data-tick="${id}:${t.i}" aria-pressed="${t.ok}">${t.ok ? '✓' : ''}</button>` : `<i>${t.ok ? '✓' : ''}</i>`}<span>${esc(t.t)}</span>${!t.manual && !t.ok ? `<a href="${root}${({ cps: 'cps-test', aim: 'aim-trainer', reaction: 'reaction-test', doubleclick: 'double-click-test' })[t.test]}">Go →</a>` : ''}</li>`).join('')}</ul>`}
         <button class="linkish dy-stop" type="button" data-stop="${id}">${ps.finished ? 'Start over' : 'Leave plan'}</button></article>`;
     }).join('');
   }

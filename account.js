@@ -13,6 +13,15 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const avatarCrop = u => {
+    const crop = u && u.prefs && u.prefs.avatarCrop || {};
+    const bounded = (value, fallback, min, max) => Math.min(max, Math.max(min, Number.isFinite(+value) ? +value : fallback));
+    return { x: bounded(crop.x, 50, 0, 100), y: bounded(crop.y, 50, 0, 100), zoom: bounded(crop.zoom, 100, 100, 200) / 100 };
+  };
+  const avatarStyle = u => {
+    const crop = avatarCrop(u);
+    return `--avatar-x:${crop.x}%;--avatar-y:${crop.y}%;--avatar-zoom:${crop.zoom}`;
+  };
   const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
   const fmtDate = t => new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -87,6 +96,7 @@
           <p class="auth-error" role="alert" hidden></p>
           <button class="btn btn-primary btn-block" type="submit"><span>${up ? 'Create account' : 'Sign in'}</span></button>
         </form>
+        ${B.mode === 'supabase' ? `<div class="auth-provider-options"><span>Or continue with</span><button class="btn btn-ghost btn-block auth-provider-btn" type="button" data-auth-provider="google"><span class="provider-mark google" aria-hidden="true">G</span>Google</button><button class="btn btn-ghost btn-block auth-provider-btn" type="button" data-auth-provider="discord"><span class="provider-mark discord" aria-hidden="true">D</span>Discord</button></div>` : ''}
         ${B.mode === 'supabase' ? '' : '<p class="demo-note"><strong>Demo mode:</strong> accounts are stored only in this browser until the real sign-in service is connected. Don’t reuse an important password.</p>'}`;
       $$('.auth-tabs button', body).forEach(b => b.addEventListener('click', () => render(b.dataset.m)));
       const form = $('form', body), err = $('.auth-error', body), btn = $('button[type=submit]', body);
@@ -99,6 +109,11 @@
           if (!u.onboarded) startOnboarding(u, opts.after); else { toast(`Welcome back, ${u.name.split(' ')[0]}!`); opts.after && opts.after(u); }
         } catch (ex) { err.textContent = ex.message; err.hidden = false; err.classList.toggle('is-info', ex.code === 'CONFIRM_EMAIL'); btn.disabled = false; btn.classList.remove('loading'); form.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 260 }); }
       });
+      $$('[data-auth-provider]', body).forEach(providerButton => providerButton.addEventListener('click', async () => {
+        providerButton.disabled = true;
+        try { await B.signInWithProvider(providerButton.dataset.authProvider); }
+        catch (error) { err.textContent = error.message; err.hidden = false; providerButton.disabled = false; }
+      }));
       $('input', form).focus();
     };
     render(mode);
@@ -131,7 +146,7 @@
         });
       } else {
         body.innerHTML = `${dots()}<div class="auth-head center"><div class="done-badge" aria-hidden="true">✓</div><h2>You’re <em>all set</em></h2><p>Your preferences are saved. You get <strong>${CFG.free.dailyCredits} free credits every day</strong>, and each recommendation uses ${CFG.free.costPerRecommendation} credit.</p></div>
-          <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations.html" id="onbGo">Get my recommendations</a><button class="btn btn-ghost" type="button" id="onbClose">Explore the site</button></div>`;
+          <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations" id="onbGo">Get my recommendations</a><button class="btn btn-ghost" type="button" id="onbClose">Explore the site</button></div>`;
         $('#onbClose', body).addEventListener('click', () => { closeModal(true); after && after(B.getUser()); });
         $('#onbGo', body).addEventListener('click', () => closeModal(true));
       }
@@ -146,19 +161,20 @@
     const u = B.getUser();
     if (!u) { slot.innerHTML = '<button class="btn btn-ghost btn-sm" type="button" data-auth="signin">Sign in</button>'; return; }
     const bal = B.balance(), t = B.tier(), init = esc(u.name.trim().charAt(0).toUpperCase() || '?');
+    const avatar = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : init;
     slot.innerHTML = `
-      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop.html" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
+      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
       <div class="user-menu">
-        <button class="avatar ${t}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${init}</button>
+        <button class="avatar ${t}" style="${avatarStyle(u)}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${avatar}</button>
         <div class="user-dd" role="menu">
           <div class="user-dd-head"><b>${esc(u.name)}</b><small>${esc(u.email)}</small><span class="plan-tag ${t}">${t === 'free' ? 'Free plan' : PLAN.label(t)}</span></div>
-          <a role="menuitem" href="${root}elite.html">Elite Dashboard</a>
-          <a role="menuitem" href="${root}account.html">My account</a>
-          <a role="menuitem" href="${root}recommendations.html">Recommendations</a>
-          <a role="menuitem" href="${root}daily.html">Daily &amp; Mousle</a>
-          <a role="menuitem" href="${root}setup.html">My setup</a>
-          <a role="menuitem" href="${root}shop.html">Shop &amp; credits</a>
-          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens.html">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra.html" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite.html" class="upsell">Upgrade to Lite</a>` : ''}
+          <a role="menuitem" href="${root}elite">Elite Dashboard</a>
+          <a role="menuitem" href="${root}account">My account</a>
+          <a role="menuitem" href="${root}recommendations">Recommendations</a>
+          <a role="menuitem" href="${root}daily">Daily &amp; Mousle</a>
+          <a role="menuitem" href="${root}setup">My setup</a>
+          <a role="menuitem" href="${root}shop">Shop &amp; credits</a>
+          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite" class="upsell">Upgrade to Lite</a>` : ''}
           <button role="menuitem" type="button" data-auth="signout">Sign out</button>
         </div>
       </div>`;
@@ -178,7 +194,7 @@
   function ultraGate(what) {
     openModal(`<div class="auth-head"><span class="ultra-badge">Ultra</span><h2>${esc(what)} is part of <em>ProMouser Ultra</em></h2></div>
       <p class="panel-note">Ultra adds unlimited recommendations, statistics for every test, a year of ProMouser Turbo, saved profiles, a price watchlist, the sensitivity converter, shortlist export and an assistant that remembers you — plus everything in Lite and Basic.</p>
-      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra.html">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
+      <div class="onb-actions"><button class="btn btn-ghost" type="button" data-close>Not now</button><a class="btn btn-primary" href="${root}ultra">See Ultra · ${inr(CFG.ultra.product.price)} once</a></div>`);
     const c = $('#pmOverlay [data-close]'); c && c.addEventListener('click', () => closeModal());
   }
 
@@ -212,9 +228,9 @@
     return `<article class="panel acct-prog"><div class="panel-head"><h3>Your progress</h3><span class="plan-tag">Level ${L} · ${C.titleOf(L)}</span></div>
       <div class="ap-bar"><i style="width:${Math.round((S.xp - lo) / (hi - lo) * 100)}%"></i></div><p class="panel-note">${S.xp - lo} / ${hi - lo} XP to level ${L + 1}</p>
       <div class="credit-stats"><div><span>Streak</span><b>${st ? '🔥 ' + st : '0'}</b><em>best ${S.streak.best}</em></div><div><span>Achievements</span><b>${Object.keys(S.ach).length}<small> / ${C.ACH.length}</small></b><em>unlocked</em></div><div><span>Today</span><b>${ch.done ? '✓' : '—'}</b><em>${ch.done ? 'challenge done' : esc(ch.text)}</em></div></div>
-      <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily.html">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup.html">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats.html">My stats</a></div></article>`;
+      <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats">My stats</a></div></article>`;
   }
-  const ACCENTS = [['default', 'Purple', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80'], ['emerald', 'Emerald', '#34d399', '#047857'], ['amber', 'Amber', '#fbbf24', '#ea580c'], ['sakura', 'Sakura', '#f472b6', '#be185d'], ['cyan', 'Cyan', '#22d3ee', '#0e7490'], ['mono', 'Mono', '#e4e4e7', '#71717a']];
+  const ACCENTS = [['default', 'Default', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80'], ['emerald', 'Emerald', '#34d399', '#047857'], ['amber', 'Amber', '#fbbf24', '#ea580c'], ['sakura', 'Sakura', '#f472b6', '#be185d'], ['cyan', 'Cyan', '#22d3ee', '#0e7490'], ['mono', 'Mono', '#e4e4e7', '#71717a']];
   function appearancePanel() {
     const seg = (k, opts) => `<div class="ui-seg">${opts.map(([v, l]) => `<button type="button" data-ui-set="${k}:${v}">${l}</button>`).join('')}</div>`;
     return `<article class="panel ui-panel"><h3>Appearance</h3><p class="panel-note">Make ProMouser yours. Changes apply straight away and follow your account.</p>
@@ -225,6 +241,56 @@
   }
 
   /* ---------- account page ---------- */
+  function compressAvatar(file) {
+    if (!file) return Promise.reject(new Error('Choose a profile photo.'));
+    if (file.type === 'image/gif') {
+      if (!B.has('animatedAvatar')) return Promise.reject(new Error('Animated profile GIFs are available with ProMouser Ultra.'));
+      if (file.size > 1024 * 1024) return Promise.reject(new Error('Animated profile GIFs must be 1 MB or smaller.'));
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file), image = new Image();
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          if (image.naturalWidth * image.naturalHeight > 20000000) reject(new Error('This image is too large to process. Please choose a smaller GIF.'));
+          else resolve(file);
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read this image.')); };
+        image.src = url;
+      });
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return Promise.reject(new Error('Choose a JPG, PNG, WebP, or GIF image.'));
+    if (file.size > 8 * 1024 * 1024) return Promise.reject(new Error('Profile photos must be 8 MB or smaller.'));
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), image = new Image();
+      image.onload = async () => {
+        try {
+          if (image.naturalWidth * image.naturalHeight > 20000000) throw new Error('This image is too large to process. Please choose a smaller photo.');
+          const toJpeg = (width, height, quality) => new Promise((res, rej) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const context = canvas.getContext('2d');
+            if (!context) { rej(new Error('Could not process this image.')); return; }
+            context.drawImage(image, 0, 0, width, height);
+            canvas.toBlob(blob => blob ? res(blob) : rej(new Error('Could not process this image.')), 'image/jpeg', quality);
+          });
+          const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+          let width = Math.round(image.naturalWidth * scale), height = Math.round(image.naturalHeight * scale);
+          let blob = await toJpeg(width, height, .82);
+          if (blob.size > 500 * 1024) {
+            const fallbackScale = Math.min(1, 384 / Math.max(image.naturalWidth, image.naturalHeight));
+            width = Math.max(1, Math.round(image.naturalWidth * fallbackScale));
+            height = Math.max(1, Math.round(image.naturalHeight * fallbackScale));
+            blob = await toJpeg(width, height, .68);
+          }
+          if (blob.size > 500 * 1024) throw new Error('This image is too detailed to optimize. Please choose another photo.');
+          resolve(blob);
+        } catch (error) { reject(error); }
+        finally { URL.revokeObjectURL(url); }
+      };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read this image.')); };
+      image.src = url;
+    });
+  }
+
   function renderAccountPage(host) {
     const u = B.getUser();
     if (!u) {
@@ -235,9 +301,60 @@
     const hrs = Math.max(0, Math.round((bal.resetsAt - Date.now()) / 3600000));
     const tb = B.turbo ? B.turbo() : { active: false };
     const planLine = (paid ? (u.plan.renewsAt ? `${name} until ${fmtDate(u.plan.renewsAt)}` : `${name} · yours for life`) : (u.plan.lapsedAt ? 'Your paid plan has ended' : 'Free plan')) + (tb.active ? ` · <span class="turbo-text">Turbo</span> until ${fmtDate(tb.until)}` : '');
+    const avatarMarkup = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : esc(u.name.trim().charAt(0).toUpperCase() || '?');
+    const crop = avatarCrop(u);
+    const identities = u.identities || [];
+    const providers = [
+      { id: 'google', name: 'Google', mark: 'G' },
+      { id: 'discord', name: 'Discord', mark: 'D' }
+    ];
+    const providerCards = providers.map(provider => {
+      const identity = identities.find(i => i.provider === provider.id);
+      return `<div class="connected-account">
+        <span class="provider-mark ${provider.id}" aria-hidden="true">${provider.mark}</span>
+        <div class="connected-account-info"><strong>${provider.name}</strong><small>${identity ? esc(identity.label || 'Connected') : 'Not connected'}</small></div>
+        ${identity
+          ? `<button class="btn btn-outline btn-sm" type="button" data-disconnect="${provider.id}" aria-label="Disconnect ${provider.name}">Disconnect</button>`
+          : `<button class="btn btn-ghost btn-sm" type="button" data-connect="${provider.id}" aria-label="Connect ${provider.name}" ${B.mode !== 'supabase' ? 'disabled' : ''}>Connect</button>`}
+      </div>`;
+    }).join('');
     host.innerHTML = `
-      <div class="acct-head"><div class="avatar big ${t}">${esc(u.name.charAt(0).toUpperCase())}</div><div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p>${esc(u.email)} · member since ${fmtDate(u.createdAt)}</p></div></div>
+      <article class="panel acct-profile">
+        <div class="acct-profile-heading">
+          <div class="avatar big acct-avatar ${t}" style="${avatarStyle(u)}">${avatarMarkup}</div>
+          <div><span class="section-label">My account</span><h1>${esc(u.name)}</h1><p class="acct-handle">@${esc(u.username || 'player')} · member since ${fmtDate(u.createdAt)}</p><p>${esc(u.email)}</p></div>
+        </div>
+        <div class="acct-profile-editor">
+          <div class="avatar-controls">
+            <label class="btn btn-ghost btn-sm avatar-upload" for="profileAvatar">Change photo<input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+            ${u.avatarUrl ? '<button class="btn btn-outline btn-sm" type="button" id="removeAvatar">Remove photo</button>' : ''}
+            <small>JPG, PNG, or WebP · up to 8 MB. Animated GIFs are Ultra-only · up to 1 MB.</small>
+            ${u.avatarUrl ? `<div class="avatar-crop-controls" id="avatarCropControls">
+              <label>Horizontal framing<input type="range" name="x" min="0" max="100" value="${crop.x}"></label>
+              <label>Vertical framing<input type="range" name="y" min="0" max="100" value="${crop.y}"></label>
+              <label>Zoom<input type="range" name="zoom" min="100" max="200" value="${Math.round(crop.zoom * 100)}"></label>
+              <div><button class="btn btn-ghost btn-sm" type="button" id="resetAvatarCrop">Center crop</button><button class="btn btn-outline btn-sm" type="button" id="saveAvatarCrop">Save framing</button></div>
+            </div>` : ''}
+            <small>Photos are publicly viewable when Supabase is enabled.</small>
+          </div>
+          <form id="profileForm" class="profile-form">
+            <label>Display name<input name="name" autocomplete="name" maxlength="60" required value="${esc(u.name)}"></label>
+            <label>Username<input name="username" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" required value="${esc(u.username || '')}" aria-describedby="usernameHint"><small id="usernameHint">3–20 letters, numbers, or underscores</small></label>
+            <label class="profile-bio">About you<textarea name="bio" maxlength="240" rows="3" placeholder="Tell people a little about yourself">${esc(u.bio || '')}</textarea><small>Up to 240 characters</small></label>
+            <label>Location<input name="location" autocomplete="address-level2" maxlength="80" value="${esc(u.location || '')}" placeholder="City, country"></label>
+            <label>Website<input name="website" type="url" autocomplete="url" maxlength="300" value="${esc(u.website || '')}" placeholder="https://example.com"></label>
+            <button class="btn btn-primary btn-sm" type="submit">Save profile</button>
+          </form>
+        </div>
+      </article>
       <div class="acct-grid">
+        <article class="panel connected-panel"><h3>Connected accounts</h3><p class="panel-note">Link a provider to sign in with it. Your ProMouser profile stays the same.</p>
+          <div class="connected-list">
+            <div class="connected-account"><span class="provider-mark email" aria-hidden="true">@</span><div class="connected-account-info"><strong>Email &amp; password</strong><small>${esc(u.email)} · primary sign-in</small></div><span class="connected-status">Active</span></div>
+            ${providerCards}
+          </div>
+          <p class="panel-note">${B.mode === 'supabase' ? 'Google and Discord must be enabled in the site’s Supabase Authentication settings.' : 'Social sign-in connections are unavailable in demo mode. Profile changes are saved in this browser.'}</p>
+        </article>
         <article class="panel"><div class="panel-head"><h3>Plan &amp; credits</h3><span class="plan-tag ${t}">${t === 'free' ? 'Free' : PLAN.label(t)}</span></div>
           <p class="panel-note">${planLine}</p>
           <div class="credit-stats">
@@ -246,7 +363,7 @@
             <div><span>Recommendation Pass</span><b>${bal.recPass ? 'Active' : '—'}</b><em>${bal.recPass ? 'free recommendations until ' + fmtDate(bal.recPassUntil) : 'unlimited recommendations for 1 month'}</em></div>
           </div>
           <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
-          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop.html">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite.html">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic.html">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra.html">See Ultra</a>` : ''}</div>
+          <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra">See Ultra</a>` : ''}</div>
         </article>
         ${progressPanel()}${t === 'ultra' ? appearancePanel() : ''}
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
@@ -257,17 +374,107 @@
             <fieldset><legend>Connection</legend><div class="chip-set">${CONNS.map(g => `<label class="pick"><input type="radio" name="connection" value="${g.id}" ${(p.connection || 'any') === g.id ? 'checked' : ''}><span>${g.label}</span></label>`).join('')}</div></fieldset>
             <button class="btn btn-primary btn-sm" type="submit">Save preferences</button>
           </form></article>
-        <article class="panel"><h3>Recent recommendations</h3>${u.history.length ? `<ul class="hist">${u.history.slice(0, 6).map(h => `<li><b>${esc(h.top || '—')}</b><small>${fmtDate(h.at)} · ${esc(h.summary || '')}</small></li>`).join('')}</ul>` : '<p class="panel-note">Nothing yet. <a href="' + root + 'recommendations.html" style="color:var(--accent)">Generate your first shortlist</a>.</p>'}</article>
+        <article class="panel"><h3>Recent recommendations</h3>${u.history.length ? `<ul class="hist">${u.history.slice(0, 6).map(h => `<li><b>${esc(h.top || '—')}</b><small>${fmtDate(h.at)} · ${esc(h.summary || '')}</small></li>`).join('')}</ul>` : '<p class="panel-note">Nothing yet. <a href="' + root + 'recommendations" style="color:var(--accent)">Generate your first shortlist</a>.</p>'}</article>
         <article class="panel"><h3>Orders</h3>${u.orders.length ? `<ul class="hist">${u.orders.slice(0, 8).map(o => `<li><b>${esc(o.items.map(i => i.name).join(', '))}</b><small>${o.id} · ${fmtDate(o.createdAt)} · ${inr(o.total)} · demo payment</small></li>`).join('')}</ul>` : '<p class="panel-note">No orders yet.</p>'}</article>
       </div>
       <div class="acct-foot"><button class="btn btn-ghost btn-sm" type="button" data-auth="signout">Sign out</button><button class="btn btn-outline btn-sm danger" type="button" id="delAcct">Delete account</button></div>`;
+    $('#profileForm', host).addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.currentTarget, data = new FormData(form), button = $('button[type=submit]', form);
+      button.disabled = true;
+      try {
+        await B.updateProfile({
+          name: data.get('name'), username: data.get('username'), bio: data.get('bio'),
+          location: data.get('location'), website: data.get('website')
+        });
+        toast('Profile saved.');
+      } catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    });
+    $('#profileAvatar', host).addEventListener('change', async e => {
+      const input = e.currentTarget, file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const blob = await compressAvatar(file);
+        if (B.mode === 'supabase') await B.uploadAvatar(blob);
+        else {
+          const avatarUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Could not read this image.'));
+            reader.readAsDataURL(blob);
+          });
+          await B.updateProfile({ avatarUrl });
+        }
+        toast('Profile photo updated.');
+      } catch (error) { toast(error.message, 'err'); }
+      finally { input.value = ''; }
+    });
+    const cropControls = $('#avatarCropControls', host);
+    if (cropControls) {
+      const currentCrop = () => ({
+        x: +$('input[name=x]', cropControls).value,
+        y: +$('input[name=y]', cropControls).value,
+        zoom: +$('input[name=zoom]', cropControls).value
+      });
+      const applyCrop = () => {
+        const crop = currentCrop();
+        $$('.avatar', document).forEach(avatar => {
+          avatar.style.setProperty('--avatar-x', crop.x + '%');
+          avatar.style.setProperty('--avatar-y', crop.y + '%');
+          avatar.style.setProperty('--avatar-zoom', crop.zoom / 100);
+        });
+      };
+      cropControls.addEventListener('input', applyCrop);
+      $('#resetAvatarCrop', cropControls).addEventListener('click', () => {
+        $('input[name=x]', cropControls).value = '50';
+        $('input[name=y]', cropControls).value = '50';
+        $('input[name=zoom]', cropControls).value = '100';
+        applyCrop();
+      });
+      $('#saveAvatarCrop', cropControls).addEventListener('click', async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+          await B.updateProfile({ prefs: { avatarCrop: currentCrop() } });
+          toast('Profile photo framing saved.');
+        } catch (error) {
+          toast(error.message, 'err');
+          button.disabled = false;
+        }
+      });
+    }
+    const removeAvatar = $('#removeAvatar', host);
+    if (removeAvatar) removeAvatar.addEventListener('click', async () => {
+      removeAvatar.disabled = true;
+      try {
+        if (B.mode === 'supabase') await B.removeAvatar();
+        else await B.updateProfile({ avatarUrl: null });
+        toast('Profile photo removed.');
+      } catch (error) { toast(error.message, 'err'); removeAvatar.disabled = false; }
+    });
+    $$('[data-connect]', host).forEach(button => button.addEventListener('click', async () => {
+      button.disabled = true;
+      try { await B.linkIdentity(button.dataset.connect); }
+      catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    }));
+    $$('[data-disconnect]', host).forEach(button => button.addEventListener('click', async () => {
+      const provider = button.dataset.disconnect;
+      if (!confirm(`Disconnect your ${provider === 'google' ? 'Google' : 'Discord'} account?`)) return;
+      button.disabled = true;
+      try { await B.unlinkIdentity(provider); toast('Account disconnected.'); }
+      catch (error) { toast(error.message, 'err'); button.disabled = false; }
+    }));
     $('#prefsForm', host).addEventListener('submit', async e => {
       e.preventDefault(); const f = new FormData(e.target);
       await B.updateProfile({ prefs: { games: f.getAll('games'), weight: f.get('weight') || 'any', grip: f.get('grip') || 'any', connection: f.get('connection') || 'any' } });
       toast('Preferences saved.');
     });
     if (window.PMUI) PMUI.paint();
-    $('#delAcct', host).addEventListener('click', async () => { if (confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); } });
+    $('#delAcct', host).addEventListener('click', async () => {
+      if (!confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) return;
+      try { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); }
+      catch (error) { toast(error.message, 'err'); }
+    });
   }
 
   /* ---------- boot ---------- */

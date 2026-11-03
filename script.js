@@ -2,18 +2,81 @@
    ProMouser — site script
    Navigation, search, icons, scroll + pointer effects, page transitions.
    Stats / charts live in stats.js; tool logic lives inline on its page.
-   Browser storage used (see privacy.html): sessionStorage "pm_banner_closed".
+   Browser storage used (see privacy): localStorage "pm_accessibility";
+   sessionStorage "pm_banner_closed".
    ===================================================================== */
 'use strict';
 
 (function () {
   const doc = document.documentElement;
   const root = doc.dataset.root || '';
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ACCESSIBILITY_KEY = 'pm_accessibility';
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const readAccessibility = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ACCESSIBILITY_KEY) || '{}');
+      return {
+        performance: saved.performance === true,
+        motion: ['system', 'reduce', 'full'].includes(saved.motion) ? saved.motion : 'system'
+      };
+    } catch (e) { return { performance: false, motion: 'system' }; }
+  };
+  let accessibility = readAccessibility();
+  let performanceMode = accessibility.performance;
+  let reduce = false;
+  const applyAccessibility = () => {
+    performanceMode = accessibility.performance;
+    reduce = performanceMode || accessibility.motion === 'reduce' || (accessibility.motion === 'system' && motionQuery.matches);
+    doc.dataset.performance = performanceMode ? 'on' : 'off';
+    doc.dataset.motion = reduce ? 'reduce' : 'full';
+  };
+  applyAccessibility();
+  const saveAccessibility = next => {
+    accessibility = {
+      performance: next.performance === true,
+      motion: ['system', 'reduce', 'full'].includes(next.motion) ? next.motion : 'system'
+    };
+    applyAccessibility();
+    try { localStorage.setItem(ACCESSIBILITY_KEY, JSON.stringify(accessibility)); return true; }
+    catch (e) { return false; }
+  };
   const finePointer = window.matchMedia('(pointer: fine)').matches;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   doc.classList.remove('no-js');
+  if (motionQuery.addEventListener) motionQuery.addEventListener('change', () => {
+    if (accessibility.motion === 'system' && !performanceMode) applyAccessibility();
+  });
+
+  /* Accessibility and performance preferences apply site-wide and stay on this device. */
+  (function () {
+    const performanceToggle = $('#performanceMode');
+    const motionSelect = $('#motionPreference');
+    const status = $('#accessibilityStatus');
+    const sync = () => {
+      if (performanceToggle) performanceToggle.checked = accessibility.performance;
+      if (motionSelect) motionSelect.value = accessibility.motion;
+    };
+    const save = () => {
+      const persisted = saveAccessibility({
+        performance: performanceToggle ? performanceToggle.checked : accessibility.performance,
+        motion: motionSelect ? motionSelect.value : accessibility.motion
+      });
+      if (status) status.textContent = persisted
+        ? 'Your accessibility settings are saved on this device.'
+        : 'Settings are active for this visit, but could not be saved in this browser.';
+    };
+    performanceToggle && performanceToggle.addEventListener('change', save);
+    motionSelect && motionSelect.addEventListener('change', save);
+    sync();
+    const moreMenu = $('#nav-menu-4');
+    if (moreMenu && !$('#accessibilityNavLink', moreMenu)) {
+      const item = document.createElement('li');
+      item.innerHTML = `<a id="accessibilityNavLink" href="${root}account#accessibility"><span class="dd-ico" data-icon="Fix"></span><span class="dd-txt"><b>Accessibility settings</b><small>Motion and performance options</small></span></a>`;
+      moreMenu.appendChild(item);
+      window.PMIcons && window.PMIcons(item);
+    }
+  })();
 
   /* ── ICONS (data-icon="Name" → inline SVG) ── */
   const P = {
@@ -152,7 +215,7 @@
     // first visit to the home page: ask which ProMouser they want
     function closeChooser() { const c = $('.mode-chooser'); if (c) { c.classList.remove('open'); setTimeout(() => c.remove(), 300); document.body.style.overflow = ''; } }
     const home = !root && /(^|\/)(index\.html)?$/.test(location.pathname);
-    if (home && !stored() && !/[?&]nochooser/.test(location.search)) setTimeout(() => {
+    if (home && !performanceMode && !stored() && !/[?&]nochooser/.test(location.search)) setTimeout(() => {
       if (stored()) return;
       const c = document.createElement('div'); c.className = 'mode-chooser'; c.setAttribute('role', 'dialog'); c.setAttribute('aria-modal', 'true'); c.setAttribute('aria-labelledby', 'mcTitle');
       c.innerHTML = `<div class="mc-card"><span class="section-label">Welcome to ProMouser</span><h2 id="mcTitle">How do you want to use <em>ProMouser</em>?</h2>
@@ -246,81 +309,82 @@
     const open = $('#navSearchBtn'), overlay = $('#searchOverlay'), close = $('#closeSearch'), input = $('#searchInput');
     if (!open || !overlay || !input) return;
     const PAGES = [
-      ['Home', 'index.html', 'ProMouser home — mouse guides, recommendations and tools'],
-      ['Recommendations', 'recommendations.html', 'Credits-based personal mouse shortlist from your games, weight and grip'],
-      ['Shop', 'shop.html', 'Credits, the Recommendation Pass and ProMouser Lite'],
-      ['ProMouser Lite', 'lite.html', 'Blue theme, every match and advanced preferences'],
-      ['ProMouser Ultra', 'ultra.html', 'Purple theme, unlimited recommendations, watchlist, profiles, sensitivity converter'],
-      ['Sensitivity converter', 'sens.html', 'Convert sensitivity between CS2, Valorant, Apex, Overwatch 2 and TF2 (Ultra)'],
-      ['My account', 'account.html', 'Preferences, credits, plan and orders'],
-      ['Browse mice', 'mice.html', 'Every mouse with spec sheets, filters and a spec map'],
-      ['Compare mice', 'mice/compare.html', 'Up to four mice side by side'],
-      ['FPS mice', 'mice/first-person-shooters.html', 'Best mice for fast aim: Valorant, CS2, Fortnite, TF2'],
-      ['Minecraft mice', 'mice/minecraft.html', 'The 7 verified double-clickers first, and why most mice can’t double-click'],
-      ['Extra picks', 'mice/extra.html', 'Budget and legacy mouse pages'],
+      ['Home', './', 'ProMouser home — mouse guides, recommendations and tools'],
+      ['Recommendations', 'recommendations', 'Credits-based personal mouse shortlist from your games, weight and grip'],
+      ['Shop', 'shop', 'Credits, the Recommendation Pass and ProMouser Lite'],
+      ['ProMouser Lite', 'lite', 'Blue theme, every match and advanced preferences'],
+      ['ProMouser Ultra', 'ultra', 'Purple theme, unlimited recommendations, watchlist, profiles, sensitivity converter'],
+      ['Sensitivity converter', 'sens', 'Convert sensitivity between CS2, Valorant, Apex, Overwatch 2 and TF2 (Ultra)'],
+      ['My account', 'account', 'Preferences, credits, plan and orders'],
+      ['Accessibility settings', 'account#accessibility', 'Performance mode and reduced motion preferences'],
+      ['Browse mice', 'mice', 'Every mouse with spec sheets, filters and a spec map'],
+      ['Compare mice', 'mice/compare', 'Up to four mice side by side'],
+      ['FPS mice', 'mice/first-person-shooters', 'Best mice for fast aim: Valorant, CS2, Fortnite, TF2'],
+      ['Minecraft mice', 'mice/minecraft', 'The 7 verified double-clickers first, and why most mice can’t double-click'],
+      ['Extra picks', 'mice/extra', 'Budget and legacy mouse pages'],
       /*mice:start*/
-      ["Razer DeathAdder V3", "mice/razer-deathadder-v3.html", "59 g · wired · Fast, precise FPS aim"],
-      ["Logitech Superlight Pro X", "mice/logitech-superlight-pro-x.html", "63 g · wireless · Low-friction aim and long competitive sessions"],
-      ["Glorious Model O", "mice/glorious-model-o.html", "67 g · wired · Butterfly and jitter clicking, precise aim, a lighter feel"],
-      ["Logitech G502 HERO", "mice/logitech-g502-hero.html", "121 g · wired · Custom buttons, strong sensor, jitter clicking"],
-      ["Bloody A70", "mice/bloody-a70.html", "150 g · wired · Drag clicking and bridging practice"],
-      ["Razer Cobra", "mice/razer-cobra.html", "58 g · wired · Value-focused FPS and everyday play"],
-      ["Logitech G PRO X2 SUPERSTRIKE", "mice/logitech-g-pro-x2-superstrike.html", "61 g · wireless · Players who want to tune their own click feel"],
-      ["Logitech G102 Lightsync", "mice/logitech-g102-lightsync.html", "85 g · wired · A cheap, reliable all-rounder"],
-      ["Logitech G304 Lightspeed", "mice/logitech-g304-lightspeed.html", "99 g · wireless · Affordable wireless with a huge battery life"],
-      ["Logitech G502 X", "mice/logitech-g502-x.html", "89 g · wired · Lots of buttons in a much lighter G502 body"],
-      ["Logitech G502 X Plus", "mice/logitech-g502-x-plus.html", "106 g · wireless · The flagship wireless G502, with RGB"],
-      ["Logitech G PRO X Superlight 2", "mice/logitech-g-pro-x-superlight-2.html", "60 g · wireless · Pro-level wireless FPS that weighs almost nothing"],
-      ["Logitech G Pro Wireless", "mice/logitech-g-pro-wireless.html", "80 g · wireless · A truly ambidextrous wireless mouse for lefties and righties"],
-      ["Logitech G703 Lightspeed", "mice/logitech-g703-lightspeed.html", "95 g · wireless · A comfortable wireless palm-grip shape"],
-      ["Razer Viper V3 Pro", "mice/razer-viper-v3-pro.html", "54 g · wireless · Esports-grade wireless aim at 54 g"],
-      ["Razer Viper Mini", "mice/razer-viper-mini.html", "61 g · wired · Small, light and cheap"],
-      ["Razer DeathAdder Essential", "mice/razer-deathadder-essential.html", "96 g · wired · The classic DeathAdder shape at a budget price"],
-      ["Razer DeathAdder V3 Pro", "mice/razer-deathadder-v3-pro.html", "63 g · wireless · The DeathAdder V3 shape without the cable"],
-      ["Razer Basilisk V3", "mice/razer-basilisk-v3.html", "101 g · wired · 11 buttons and a free-spinning scroll wheel"],
-      ["Razer Orochi V2", "mice/razer-orochi-v2.html", "60 g · wireless · A tiny travel mouse with months of battery"],
-      ["Razer Naga V2 HyperSpeed", "mice/razer-naga-v2-hyperspeed.html", "95 g · wireless · A 12-button thumb grid for MMOs and macros"],
-      ["Glorious Model O-", "mice/glorious-model-o-minus.html", "58 g · wired · The Model O’s clicking in a smaller shell"],
-      ["Glorious Model D", "mice/glorious-model-d.html", "68 g · wired · An ergonomic honeycomb shape that still clicks fast"],
-      ["Glorious Model O Wireless", "mice/glorious-model-o-wireless.html", "69 g · wireless · The Model O shape without a cable"],
-      ["Glorious Model I", "mice/glorious-model-i.html", "69 g · wired · Swappable side buttons for MMO and work binds"],
-      ["Bloody A90", "mice/bloody-a90.html", "106 g · wired · A budget Bloody for everyday play and 1.9+"],
-      ["Bloody W70 Max", "mice/bloody-w70-max.html", "108 g · wired · Bloody’s 10K-CPI RGB model"],
-      ["SteelSeries Rival 3", "mice/steelseries-rival-3.html", "77 g · wired · A budget all-rounder with solid clicks"],
-      ["SteelSeries Aerox 3", "mice/steelseries-aerox-3.html", "57 g · wired · A water-resistant honeycomb ultralight"],
-      ["HyperX Pulsefire Haste", "mice/hyperx-pulsefire-haste.html", "59 g · wired · A light honeycomb shell for FPS and 1.9+ PvP"],
-      ["HyperX Pulsefire Haste 2", "mice/hyperx-pulsefire-haste-2.html", "53 g · wired · A solid-shell ultralight with 8K polling"],
-      ["Zowie EC2-C", "mice/zowie-ec2-c.html", "73 g · wired · No-software esports ergonomics"],
-      ["Cooler Master MM710", "mice/cooler-master-mm710.html", "53 g · wired · A 53 g honeycomb mouse on a budget"],
-      ["Endgame Gear XM1r", "mice/endgame-gear-xm1r.html", "63 g · wired · Crisp, low-latency clicks for FPS and jitter clicking"],
-      ["Corsair Harpoon RGB Pro", "mice/corsair-harpoon-rgb-pro.html", "85 g · wired · A small, grippy budget mouse"],
-      ["Corsair M65 RGB Ultra", "mice/corsair-m65-rgb-ultra.html", "97 g · wired · Tunable weight and a sniper button"],
-      ["Redragon M711 Cobra", "mice/redragon-m711-cobra.html", "100 g · wired · The classic cheap RGB mouse, and it drag clicks"],
-      ["Attack Shark X3", "mice/attack-shark-x3.html", "49 g · wireless · A flagship sensor at 49 g for very little money"],
-      ["Ant Esports GM320", "mice/ant-esports-gm320.html", "120 g · wired · Double-clicking on a tight budget"],
-      ["Kreo Hawk", "mice/kreo-hawk.html", "110 g · wired · A comfy budget ergonomic mouse with RGB"],
+      ["Razer DeathAdder V3", "mice/razer-deathadder-v3", "59 g · wired · Fast, precise FPS aim"],
+      ["Logitech Superlight Pro X", "mice/logitech-superlight-pro-x", "63 g · wireless · Low-friction aim and long competitive sessions"],
+      ["Glorious Model O", "mice/glorious-model-o", "67 g · wired · Butterfly and jitter clicking, precise aim, a lighter feel"],
+      ["Logitech G502 HERO", "mice/logitech-g502-hero", "121 g · wired · Custom buttons, strong sensor, jitter clicking"],
+      ["Bloody A70", "mice/bloody-a70", "150 g · wired · Drag clicking and bridging practice"],
+      ["Razer Cobra", "mice/razer-cobra", "58 g · wired · Value-focused FPS and everyday play"],
+      ["Logitech G PRO X2 SUPERSTRIKE", "mice/logitech-g-pro-x2-superstrike", "61 g · wireless · Players who want to tune their own click feel"],
+      ["Logitech G102 Lightsync", "mice/logitech-g102-lightsync", "85 g · wired · A cheap, reliable all-rounder"],
+      ["Logitech G304 Lightspeed", "mice/logitech-g304-lightspeed", "99 g · wireless · Affordable wireless with a huge battery life"],
+      ["Logitech G502 X", "mice/logitech-g502-x", "89 g · wired · Lots of buttons in a much lighter G502 body"],
+      ["Logitech G502 X Plus", "mice/logitech-g502-x-plus", "106 g · wireless · The flagship wireless G502, with RGB"],
+      ["Logitech G PRO X Superlight 2", "mice/logitech-g-pro-x-superlight-2", "60 g · wireless · Pro-level wireless FPS that weighs almost nothing"],
+      ["Logitech G Pro Wireless", "mice/logitech-g-pro-wireless", "80 g · wireless · A truly ambidextrous wireless mouse for lefties and righties"],
+      ["Logitech G703 Lightspeed", "mice/logitech-g703-lightspeed", "95 g · wireless · A comfortable wireless palm-grip shape"],
+      ["Razer Viper V3 Pro", "mice/razer-viper-v3-pro", "54 g · wireless · Esports-grade wireless aim at 54 g"],
+      ["Razer Viper Mini", "mice/razer-viper-mini", "61 g · wired · Small, light and cheap"],
+      ["Razer DeathAdder Essential", "mice/razer-deathadder-essential", "96 g · wired · The classic DeathAdder shape at a budget price"],
+      ["Razer DeathAdder V3 Pro", "mice/razer-deathadder-v3-pro", "63 g · wireless · The DeathAdder V3 shape without the cable"],
+      ["Razer Basilisk V3", "mice/razer-basilisk-v3", "101 g · wired · 11 buttons and a free-spinning scroll wheel"],
+      ["Razer Orochi V2", "mice/razer-orochi-v2", "60 g · wireless · A tiny travel mouse with months of battery"],
+      ["Razer Naga V2 HyperSpeed", "mice/razer-naga-v2-hyperspeed", "95 g · wireless · A 12-button thumb grid for MMOs and macros"],
+      ["Glorious Model O-", "mice/glorious-model-o-minus", "58 g · wired · The Model O’s clicking in a smaller shell"],
+      ["Glorious Model D", "mice/glorious-model-d", "68 g · wired · An ergonomic honeycomb shape that still clicks fast"],
+      ["Glorious Model O Wireless", "mice/glorious-model-o-wireless", "69 g · wireless · The Model O shape without a cable"],
+      ["Glorious Model I", "mice/glorious-model-i", "69 g · wired · Swappable side buttons for MMO and work binds"],
+      ["Bloody A90", "mice/bloody-a90", "106 g · wired · A budget Bloody for everyday play and 1.9+"],
+      ["Bloody W70 Max", "mice/bloody-w70-max", "108 g · wired · Bloody’s 10K-CPI RGB model"],
+      ["SteelSeries Rival 3", "mice/steelseries-rival-3", "77 g · wired · A budget all-rounder with solid clicks"],
+      ["SteelSeries Aerox 3", "mice/steelseries-aerox-3", "57 g · wired · A water-resistant honeycomb ultralight"],
+      ["HyperX Pulsefire Haste", "mice/hyperx-pulsefire-haste", "59 g · wired · A light honeycomb shell for FPS and 1.9+ PvP"],
+      ["HyperX Pulsefire Haste 2", "mice/hyperx-pulsefire-haste-2", "53 g · wired · A solid-shell ultralight with 8K polling"],
+      ["Zowie EC2-C", "mice/zowie-ec2-c", "73 g · wired · No-software esports ergonomics"],
+      ["Cooler Master MM710", "mice/cooler-master-mm710", "53 g · wired · A 53 g honeycomb mouse on a budget"],
+      ["Endgame Gear XM1r", "mice/endgame-gear-xm1r", "63 g · wired · Crisp, low-latency clicks for FPS and jitter clicking"],
+      ["Corsair Harpoon RGB Pro", "mice/corsair-harpoon-rgb-pro", "85 g · wired · A small, grippy budget mouse"],
+      ["Corsair M65 RGB Ultra", "mice/corsair-m65-rgb-ultra", "97 g · wired · Tunable weight and a sniper button"],
+      ["Redragon M711 Cobra", "mice/redragon-m711-cobra", "100 g · wired · The classic cheap RGB mouse, and it drag clicks"],
+      ["Attack Shark X3", "mice/attack-shark-x3", "49 g · wireless · A flagship sensor at 49 g for very little money"],
+      ["Ant Esports GM320", "mice/ant-esports-gm320", "120 g · wired · Double-clicking on a tight budget"],
+      ["Kreo Hawk", "mice/kreo-hawk", "110 g · wired · A comfy budget ergonomic mouse with RGB"],
       /*mice:end*/
-      ['ProMouser AI', 'mouse-ai.html', 'Ask questions and compare mice, grounded in ProMouser pages'],
-      ['Hand grip guide', 'hand-grip.html', 'Palm, claw and fingertip grips explained'],
-      ['Mouse tips', 'mouse-tips.html', 'DPI, polling rate, surface and lift-off settings'],
-      ['Minecraft tips', 'minecraft-tips.html', 'Setups for builders and PvP players'],
+      ['ProMouser AI', 'mouse-ai', 'Ask questions and compare mice, grounded in ProMouser pages'],
+      ['Hand grip guide', 'hand-grip', 'Palm, claw and fingertip grips explained'],
+      ['Mouse tips', 'mouse-tips', 'DPI, polling rate, surface and lift-off settings'],
+      ['Minecraft tips', 'minecraft-tips', 'Setups for builders and PvP players'],
       ['ProMouser Online', 'https://dreadlineofficial.github.io/ProMouser-Online/', 'Games, CPS duels, friends, lobbies and 3D digital mice'],
-      ['Test hub', 'tests.html', 'CPS, reaction, aim, polling rate, scroll and button tests'],
-      ['CPS test', 'cps-test.html', 'Clicks per second, double clicks and stray right clicks'],
-      ['Reaction time test', 'reaction-test.html', 'Wait for green, then click as fast as you can'],
-      ['Aim trainer', 'aim-trainer.html', 'Hit targets fast: time, accuracy and bests'],
-      ['Polling rate test', 'polling-rate-test.html', 'Check how many Hz your mouse reports at'],
-      ['Scroll wheel test', 'scroll-test.html', 'Find a scroll wheel that jumps the wrong way'],
-      ['Mouse button test', 'mouse-button-test.html', 'Test every button and catch double-clicking switches'],
-      ['Double click test', 'double-click-test.html', 'Check timing and consistency of double clicks'],
+      ['Test hub', 'tests', 'CPS, reaction, aim, polling rate, scroll and button tests'],
+      ['CPS test', 'cps-test', 'Clicks per second, double clicks and stray right clicks'],
+      ['Reaction time test', 'reaction-test', 'Wait for green, then click as fast as you can'],
+      ['Aim trainer', 'aim-trainer', 'Hit targets fast: time, accuracy and bests'],
+      ['Polling rate test', 'polling-rate-test', 'Check how many Hz your mouse reports at'],
+      ['Scroll wheel test', 'scroll-test', 'Find a scroll wheel that jumps the wrong way'],
+      ['Mouse button test', 'mouse-button-test', 'Test every button and catch double-clicking switches'],
+      ['Double click test', 'double-click-test', 'Check timing and consistency of double clicks'],
       ['Blog', 'blog/', 'Practical mouse guides'],
-      ['How to choose a gaming mouse', 'blog/choosing-a-gaming-mouse.html', 'Grip, weight, wireless, DPI and budget explained'],
-      ['About us', 'about.html', 'Who we are and what ProMouser stands for'],
-      ['Elite Dashboard', 'elite.html', 'Your credits, recommendation activity and latest shortlists'],
-      ['Image generation', 'image-gen.html', 'Visual ideas for setups and content'],
-      ['Contact', 'contact.html', 'Feedback, corrections and questions'],
-      ['Privacy policy', 'privacy.html', 'What the site stores in your browser'],
-      ['Terms of use', 'terms.html', 'Terms for using ProMouser']
+      ['How to choose a gaming mouse', 'blog/choosing-a-gaming-mouse', 'Grip, weight, wireless, DPI and budget explained'],
+      ['About us', 'about', 'Who we are and what ProMouser stands for'],
+      ['Elite Dashboard', 'elite', 'Your credits, recommendation activity and latest shortlists'],
+      ['Image generation', 'image-gen', 'Visual ideas for setups and content'],
+      ['Contact', 'contact', 'Feedback, corrections and questions'],
+      ['Privacy policy', 'privacy', 'What the site stores in your browser'],
+      ['Terms of use', 'terms', 'Terms for using ProMouser']
     ].map(([t, u, d]) => ({ t, u: /^https?:/.test(u) ? u : root + u, d, k: (t + ' ' + d).toLowerCase() }));
 
     let host = $('#searchResults');
@@ -401,9 +465,10 @@
   })();
 
   /* ── POINTER EFFECTS: card spotlight, ambient glow, hero parallax, magnetic buttons ── */
-  if (finePointer && !reduce) {
+  if (finePointer) {
     let raf = 0, px = 0, py = 0, target = null;
     document.addEventListener('pointermove', e => {
+      if (performanceMode || reduce) return;
       px = e.clientX; py = e.clientY; target = e.target;
       if (raf) return;
       raf = requestAnimationFrame(() => {
@@ -426,7 +491,10 @@
     }, { passive: true });
     document.addEventListener('pointerleave', () => { const p = $('.hero-product, .review-stage picture'); p && (p.style.transform = ''); }, true);
     $$('.btn-primary, .btn-ghost').forEach(b => {
-      b.addEventListener('pointermove', e => { const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .16}px, ${(e.clientY - r.top - r.height / 2) * .22 - 2}px)`; });
+      b.addEventListener('pointermove', e => {
+        if (performanceMode || reduce) return;
+        const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .16}px, ${(e.clientY - r.top - r.height / 2) * .22 - 2}px)`;
+      });
       b.addEventListener('pointerleave', () => { b.style.transform = ''; });
     });
   }
@@ -439,12 +507,12 @@
         const u = new URL(a.href, location.href);
         if (u.origin !== location.origin || !/^https?:$/.test(u.protocol)) return false;
         if (u.pathname === location.pathname && u.search === location.search) return false;
-        return /(\.html?|\/)$/.test(u.pathname);
+        return /(\.html?|\/)$/.test(u.pathname) || !/\.[^/]+$/.test(u.pathname);
       } catch (e) { return false; }
     };
     document.addEventListener('click', e => {
       const a = e.target.closest('a');
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !internal(a) || reduce) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !internal(a) || reduce || performanceMode) return;
       e.preventDefault();
       document.body.classList.add('page-transitioning');
       setTimeout(() => { location.href = a.href; }, 240);
@@ -452,6 +520,7 @@
     addEventListener('pageshow', () => document.body.classList.remove('page-transitioning'));
     const done = new Set();
     document.addEventListener('pointerover', e => {
+      if (performanceMode) return;
       const a = e.target.closest && e.target.closest('a');
       if (!internal(a) || done.has(a.href)) return;
       done.add(a.href);

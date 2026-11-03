@@ -6,7 +6,7 @@
 
      [data-mouse-profile="id"]  review-page spec scales + "who it fits"
      [data-explorer]            filter-first table + spec map
-     [data-catalog]             mice.html card catalogue (search, chips, sort)
+     [data-catalog]             mice card catalogue (search, chips, sort)
      [data-compare-lab]         pick up to 4 mice and compare them
      [data-hero-rotator]        rotating hero product with live stat chips
      #generatorRunBtn           "pro generator" on the mice page
@@ -199,7 +199,7 @@
   }
   const recommend = p => MICE.map(m => fit(m, p)).sort((a, b) => b.score - a.score || a.m.weight - b.m.weight);
 
-  /* ---------- 3. explorer (mice.html): filter-first, no ranking ---------- */
+  /* ---------- 3. explorer (mice): filter-first, no ranking ---------- */
   function buildExplorer(host) {
     const vals = k => MICE.map(BANDS[k].get).filter(v => v != null);
     const mn = k => Math.min(...vals(k)), mx = k => Math.max(...vals(k));
@@ -414,7 +414,7 @@
     render();
   }
 
-  /* ---------- 6. catalog (mice.html): search, chips, brand, sort ---------- */
+  /* ---------- 6. catalog (mice): search, chips, brand, sort ---------- */
   function initCatalog(grid) {
     const cards = $$('.mouse-card', grid), q = $('#catQ'), brand = $('#catBrand'), sort = $('#catSort'), count = $('#catCount'), empty = $('#catEmpty');
     let chip = 'all';

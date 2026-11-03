@@ -80,10 +80,10 @@
       <div class="receipt"><div><span>Order</span><b>${order.id}</b></div><div><span>Date</span><b>${fmtDate(order.createdAt)}</b></div><div><span>Total</span><b>${inr(order.total)}</b></div></div>
       <ul class="order-lines compact">${order.items.map(i => `<li><div><b>${esc(i.name)}</b><small>${i.type === 'credits' ? `+${i.credits} credits added` : i.type === 'pass' ? `Free recommendations until ${fmtDate(bal.recPassUntil)}` : i.type === 'turbo' ? `Turbo active on ProMouser Online until ${fmtDate(B.turbo().until)}` : `${PL[i.type]} unlocked for life${i.type === 'ultra' ? ` · plus Turbo until ${fmtDate(B.turbo().until)}` : ''}`}</small></div><span>${inr(i.price)}</span></li>`).join('')}</ul>
       ${gotLite ? `<p class="lite-welcome${plan === 'ultra' ? ' ultra' : ''}">Welcome to <strong>ProMouser ${PL[plan]}</strong>. We’re switching you to the ${({ basic: 'dark blue', lite: 'blue', ultra: 'purple' })[plan]} theme now.</p>` : ''}
-      <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations.html" id="coGo">Get recommendations</a><button class="btn btn-ghost" type="button" id="coDone">Done</button></div></div>`;
+      <div class="onb-actions center"><a class="btn btn-primary" href="${root}recommendations" id="coGo">Get recommendations</a><button class="btn btn-ghost" type="button" id="coDone">Done</button></div></div>`;
     const done = () => { A.closeModal(true); if (gotLite) location.reload(); };
     $('#coDone', body).addEventListener('click', done);
-    $('#coGo', body).addEventListener('click', e => { if (gotLite) { e.preventDefault(); A.closeModal(true); location.href = root + 'recommendations.html'; } });
+    $('#coGo', body).addEventListener('click', e => { if (gotLite) { e.preventDefault(); A.closeModal(true); location.href = root + 'recommendations'; } });
     if (gotLite && !reduce) setTimeout(() => { if ($('.lite-welcome')) $('.lite-welcome').classList.add('pop'); }, 100);
   }
   window.PMCheckout = { open: openCheckout };
@@ -108,14 +108,14 @@
             <h3>ProMouser <em>Basic</em></h3>
             <p class="shop-price"><b>${inr(CFG.basic.product.price)}</b> once</p>
             <ul class="tick-list"><li><strong>${CFG.basic.dailyCredits} credits a day</strong> instead of ${CFG.free.dailyCredits}</li><li>Your top ${CFG.basic.resultsLimit} matches instead of ${CFG.free.resultsLimit}</li><li>A match breakdown on every pick</li><li>Check any mouse against your answers</li><li>History of your last ${CFG.basic.historyLimit} runs</li><li>Dark blue &amp; black theme</li></ul>
-            ${R[t] >= 1 ? `<p class="panel-note">${t === 'basic' ? 'You own Basic for life. ✓' : 'Your plan already includes everything in Basic.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.basic.product.id}" type="button">Get Basic</button><a class="btn btn-ghost" href="${root}basic.html">What’s included</a></div>`}
+            ${R[t] >= 1 ? `<p class="panel-note">${t === 'basic' ? 'You own Basic for life. ✓' : 'Your plan already includes everything in Basic.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.basic.product.id}" type="button">Get Basic</button><a class="btn btn-ghost" href="${root}basic">What’s included</a></div>`}
           </article>
           <article class="shop-hero theme-lite reveal visible" id="lite">
             <span class="plan-tag lite">One-time · yours forever</span>
             <h3>ProMouser <em>Lite</em></h3>
             <p class="shop-price"><b>${inr(CFG.lite.product.price)}</b> once</p>
             <ul class="tick-list"><li>Everything in Basic</li><li><strong>${CFG.lite.dailyCredits} credits a day</strong>, ${CFG.lite.costPerRecommendation} per run</li><li>Every match, not just the top few</li><li>Advanced preferences: hand length, left-handed, Minecraft 1.8 vs 1.9+, budget, buttons, click style</li><li>Advanced CPS stats and personal bests on every test</li><li>Blue &amp; black theme</li></ul>
-            ${R[t] >= 2 ? `<p class="panel-note">${t === 'lite' ? 'You own Lite for life. ✓' : 'You’re on Ultra, which already includes everything in Lite.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">${t === 'basic' ? 'Upgrade to Lite' : 'Get Lite'}</button><a class="btn btn-ghost" href="${root}lite.html">What’s included</a></div>`}
+            ${R[t] >= 2 ? `<p class="panel-note">${t === 'lite' ? 'You own Lite for life. ✓' : 'You’re on Ultra, which already includes everything in Lite.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">${t === 'basic' ? 'Upgrade to Lite' : 'Get Lite'}</button><a class="btn btn-ghost" href="${root}lite">What’s included</a></div>`}
           </article>
           <article class="shop-hero theme-ultra shop-best reveal visible" id="ultra">
             <span class="ultra-badge">Best value · One-time</span>
@@ -123,7 +123,7 @@
             <p class="shop-price"><b>${inr(CFG.ultra.product.price)}</b> once <small class="was">${inr(worth)} value</small></p>
             <ul class="tick-list"><li>Everything in Lite</li><li><strong>Unlimited recommendations</strong>, never uses credits</li><li><strong>Statistics for every test</strong>: trend charts, consistency, percentile, CSV export</li><li><strong>1 year of ProMouser Turbo</strong> (${inr(CFG.turbo.product.price * 12)} on its own)</li><li>Saved profiles, price watchlist, sensitivity converter, shortlist export, assistant memory</li><li>${CFG.ultra.dailyCredits} credits a day · purple &amp; black theme</li></ul>
             ${t === 'ultra' ? `<p class="panel-note">You own Ultra for life. ✓</p>`
-              : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">${R[t] ? 'Upgrade to Ultra' : 'Get Ultra'}</button><a class="btn btn-ghost" href="${root}ultra.html">What’s included</a></div>`}
+              : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">${R[t] ? 'Upgrade to Ultra' : 'Get Ultra'}</button><a class="btn btn-ghost" href="${root}ultra">What’s included</a></div>`}
           </article>
           <article class="shop-hero theme-turbo reveal visible" id="turbo">
             <span class="plan-tag turbo">Monthly · ProMouser Online</span>

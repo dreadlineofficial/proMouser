@@ -59,17 +59,17 @@
       const p = { games: [{ cs2: 'fps', valorant: 'fps', apex: 'fps', ow2: 'fps', tf2: 'fps', minecraft: 'minecraft' }[s.game] || 'fps'], weight: 'any', grip: s.grip, connection: 'any', handLength: s.hand || null, mcVersion: 'any' };
       const r = PM.fit(m, p), w = r.score >= 85 ? 'Great' : r.score >= 70 ? 'Good' : r.score >= 55 ? 'Okay' : 'Weak';
       fit = `<div class="su-fit"><span class="section-label">How your mouse fits you</span><b>${w} fit<span class="pct-only"> · ${r.score}%</span></b>${r.pros.length ? `<p>✓ ${r.pros.slice(0, 2).map(esc).join('<br>✓ ')}</p>` : ''}${r.cons.length ? `<p class="su-con">⚠ ${r.cons.slice(0, 2).map(esc).join('<br>⚠ ')}</p>` : ''}
-        ${r.score < 70 ? `<a class="btn btn-ghost btn-sm" href="${root}recommendations.html">Find a better fit</a>` : ''}</div>`;
+        ${r.score < 70 ? `<a class="btn btn-ghost btn-sm" href="${root}recommendations">Find a better fit</a>` : ''}</div>`;
     }
     $('#suOut').innerHTML = `<div class="panel su-card"><span class="section-label">Your sensitivity</span>
       <div class="su-nums"><div><span>eDPI</span><b>${num(edpi)}</b><small>${esc(g[0])}</small></div><div><span>cm / 360°</span><b>${cm == null ? '—' : cm.toFixed(1)}</b><small>${band ? band[0] : 'not available'}</small></div><div><span>in / 360°</span><b>${cm == null ? '—' : (cm / 2.54).toFixed(1)}</b><small>inches</small></div></div>
       ${band ? `<p class="su-band">${esc(band[1])}</p>` : ''}
-      <p class="small su-conv"><a href="${root}sens.html">Convert this to another game →</a></p></div>
+      <p class="small su-conv"><a href="${root}sens">Convert this to another game →</a></p></div>
       ${m ? `<a class="panel su-mouse" href="${root}${m.page}"><img src="${PM.IMG(m, 480)}" alt="" width="90" height="90"><div><span class="section-label">Your mouse</span><b>${esc(m.name)}</b><small>${m.weight} g · ${num(m.dpi)} DPI · ${num(m.poll)} Hz · ${m.connection}${m.price ? ' · ' + inr(m.price) : ''}</small><em class="${m.cps.verified ? 'ok' : m.cps.drag ? 'mid' : 'no'}">${esc(m.cps.label)}</em></div></a>${fit}` : ''}
       ${tips.length ? `<div class="panel su-tips"><span class="section-label">Tips for your setup</span><ul>${tips.map(([k, t]) => `<li class="${k}">${esc(t)}</li>`).join('')}</ul></div>` : ''}`;
   }
   const text = () => { const s = val(), { g, edpi, cm } = calc(s), m = s.mouse && PM.byId[s.mouse];
-    return `My setup (ProMouser)\nMouse: ${m ? m.name : 'other'}\nDPI: ${s.dpi} · ${g[0]} sens ${s.sens} · eDPI ${edpi}${cm ? ` · ${cm.toFixed(1)} cm/360` : ''}\nMonitor: ${s.hz} Hz · Pad: ~${s.pad} cm\npromouser.website/setup.html`; };
+    return `My setup (ProMouser)\nMouse: ${m ? m.name : 'other'}\nDPI: ${s.dpi} · ${g[0]} sens ${s.sens} · eDPI ${edpi}${cm ? ` · ${cm.toFixed(1)} cm/360` : ''}\nMonitor: ${s.hz} Hz · Pad: ~${s.pad} cm\npromouser.website/setup`; };
   $('#suForm').addEventListener('input', render); $('#suForm').addEventListener('change', render);
   $('#suForm').addEventListener('submit', async e => {
     e.preventDefault(); const s = val();

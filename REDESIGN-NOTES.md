@@ -12,6 +12,7 @@ http://localhost:8000. Everything works from either.
 - **Training plans.** *28-day CPS* and *30-day Aim* plans with a session each day and benchmark days.
 - **My setup (setup.html).** Enter your mouse, DPI, game and sensitivity to get eDPI, cm/360, whether your mousepad is big enough, how well your mouse fits your grip and hand, and tips. It is saved to your account.
 - **Account page.** A new progress panel for everyone. Ultra accounts also get an **Appearance** panel: 9 colours (Purple, Red, Blue, Navy, Emerald, Amber, Sakura, Cyan, Mono), Grid/Plain/Aurora background, glow on or off, and comfortable or compact density. It is saved in `extras.ui` and applied before the first paint. It is deliberately not advertised anywhere.
+- Merged with the clean-URL, personalisation, profile and accessibility updates. The Ultra appearance colours sit on top of the Lite/Ultra site theme; saving a site theme on the dashboard clears the custom colour. Fixed three words the `index.html` → `./` replace broke: `tabindex` (the mice catalogue map crashed), `noindex` (404 and account pages) and "index finger" in ProMouser AI's clicking tips.
 - Nav: a new **Daily** link. The Tests menu and account menu link to Daily and My setup.
 
 **Supabase:** re-run `supabase/schema.sql`, which adds the `progress` column (64 KB cap) and includes it in `get_my_state`.

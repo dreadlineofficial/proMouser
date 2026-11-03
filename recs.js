@@ -50,7 +50,7 @@
 
           <div class="adv${lite ? '' : ' locked'}" id="adv">
             <div class="adv-head"><h4>Advanced preferences</h4><span class="plan-tag lite">Lite</span></div>
-            ${lite ? '' : `<div class="adv-lock"><div><b>Unlock with ProMouser Lite</b><p>Hand size, Minecraft version, budget, buttons, customisation and more.</p><a class="btn btn-primary btn-sm" href="${root}lite.html">See Lite</a></div></div>`}
+            ${lite ? '' : `<div class="adv-lock"><div><b>Unlock with ProMouser Lite</b><p>Hand size, Minecraft version, budget, buttons, customisation and more.</p><a class="btn btn-primary btn-sm" href="${root}lite">See Lite</a></div></div>`}
             <fieldset class="adv-fields" ${lite ? '' : 'disabled aria-hidden="true"'}>
               <fieldset><legend>Hand size</legend><div class="chip-set">${[['any', 'Any'], ['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']].map(([v, l]) => chip('handSize', v, l, p.handSize === v, 'radio', !lite)).join('')}</div>
                 <label class="pick inline"><input type="checkbox" id="useLen" ${p.handLength ? 'checked' : ''} ${lite ? '' : 'disabled'}><span>I know my hand length</span></label>
@@ -110,10 +110,10 @@
       <div class="rs-item"><span>Credits</span><b>${bal.total}</b><small>${bal.daily} daily · ${bal.purchased} bought</small></div>
       <div class="rs-item"><span>This run costs</span><b>${free ? '0' : cost}</b><small>${ultra ? 'unlimited on Ultra' : bal.recPass ? 'free with your Recommendation Pass' : lite ? 'credits (Lite)' : cost === 1 ? 'credit' : 'credits'}</small></div>
       <div class="rs-item"><span>You’ll see</span><b>${limit === Infinity ? 'All' : 'Top ' + limit}</b><small>${limit === Infinity ? 'matches, with breakdown' : 'matches · Lite shows all'}</small></div>
-      <div class="rs-item rs-cta"><small>${bal.recPass ? `Pass active until ${A.fmtDate(bal.recPassUntil)}` : `Daily credits reset in ~${hrs} h`}</small><a class="btn btn-outline btn-sm" href="${root}shop.html">Get more credits</a></div>`;
+      <div class="rs-item rs-cta"><small>${bal.recPass ? `Pass active until ${A.fmtDate(bal.recPassUntil)}` : `Daily credits reset in ~${hrs} h`}</small><a class="btn btn-outline btn-sm" href="${root}shop">Get more credits</a></div>`;
     const line = $('#costLine'), btn = $('#genBtn'); if (!line) return;
     const short = !free && bal.total < cost;
-    line.innerHTML = short ? `You’re out of credits. <a href="${root}shop.html">Get credits or a Recommendation Pass</a> — or come back after your daily reset.` : ultra ? 'Unlimited on Ultra — your credits stay untouched.' : bal.recPass ? 'Free with your Recommendation Pass — your credits stay untouched.' : `Uses ${cost} credit${cost > 1 ? 's' : ''} · ${bal.total - cost} left after`;
+    line.innerHTML = short ? `You’re out of credits. <a href="${root}shop">Get credits or a Recommendation Pass</a> — or come back after your daily reset.` : ultra ? 'Unlimited on Ultra — your credits stay untouched.' : bal.recPass ? 'Free with your Recommendation Pass — your credits stay untouched.' : `Uses ${cost} credit${cost > 1 ? 's' : ''} · ${bal.total - cost} left after`;
     line.classList.toggle('warn', short); btn.disabled = running || short;
   }
   B.on(() => { if (host.isConnected) updateStatus(); });
@@ -204,7 +204,7 @@
       ${both ? `<a class="both-banner" href="${root}${both.m.page}"><img src="${PM.IMG(both.m, 480)}" alt="" width="54" height="54"><span><small>One mouse for ${panels.map(x => esc(GAME(x.game).label)).join(' and ')}</small><b>${esc(both.m.name)}</b></span><em><span class="pct-only">${both.score}% </span><span class="word-only">${FW(both.score)} </span>fit</em></a>` : ''}
       <div class="game-panels${multi ? ' multi' : ''}${panels.length > 2 ? ' many' : ''}">${panelHtml}</div>
       ${hidden > 0 ? `<div class="upsell-card slim"><div class="upsell-body static"><span class="plan-tag lite">Lite</span><h4>${hidden} more match${hidden > 1 ? 'es' : ''} hidden</h4><p>Lite shows every mouse in every panel with a full breakdown, and adds hand size, Minecraft version, budget, buttons and customisation preferences.</p>
-        <a class="btn btn-primary btn-sm" href="${root}lite.html">Unlock with Lite</a></div></div>` : ''}
+        <a class="btn btn-primary btn-sm" href="${root}lite">Unlock with Lite</a></div></div>` : ''}
       ${checkAnyHtml()}
       <p class="fine">Matches come from published specs and editorial fit estimates for your answers. They aren’t a ranking of overall quality — read the reviews and try before you buy if you can.</p>`;
     $$('.game-panel', out).forEach(gp => {
@@ -226,7 +226,7 @@
     return `<section class="panel check-any"><div class="ca-head"><div><span class="plan-tag basic">Basic</span><h4>Check any mouse</h4>
       <p class="panel-note">Already have a mouse in mind? See how it scores for these answers, where it would rank, and what holds it back.</p></div>
       ${open ? `<select id="caPick" aria-label="Pick a mouse"><option value="">Pick a mouse…</option>${PM.MICE.slice().sort((a, b) => a.name.localeCompare(b.name)).map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>`
-        : `<a class="btn btn-primary btn-sm" href="${root}basic.html">Unlock with Basic</a>`}</div><div id="caOut"></div></section>`;
+        : `<a class="btn btn-primary btn-sm" href="${root}basic">Unlock with Basic</a>`}</div><div id="caOut"></div></section>`;
   }
   function bindCheckAny(p) {
     const sel = $('#caPick'); if (!sel) return;

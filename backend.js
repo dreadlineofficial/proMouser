@@ -11,7 +11,7 @@
    replaces window.PMBackend with a Supabase version (same methods, enforced
    on the server). See SUPABASE-SETUP.md.
 
-   Storage keys (listed in privacy.html):
+   Storage keys (listed in privacy):
      pm_users    demo accounts      pm_session  signed-in user id
      pm_plan     'free' | 'basic' | 'lite' | 'ultra' (so the plan's theme can apply before the page paints)
    ===================================================================== */
@@ -59,10 +59,16 @@
   const FEATURES = {
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
-    freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra'   // Ultra only
+    freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra', animatedAvatar: 'ultra'   // Ultra only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
+    themes: [
+      { id: 'plan', label: 'Plan colors', description: 'Keep your Lite blue or Ultra purple theme.' },
+      { id: 'classic', label: 'Classic red', description: 'Bring back the original ProMouser look.' },
+      { id: 'emerald', label: 'Emerald', description: 'A fresh green accent.' },
+      { id: 'sunset', label: 'Sunset', description: 'A warm orange accent.' }
+    ],
     tierOf: u => (u && u.plan && RANK[u.plan.tier] != null ? u.plan.tier : 'free'),
     has: (u, f) => RANK[PLAN.tierOf(u)] >= RANK[FEATURES[f] || 'free'],
     cfg: u => CONFIG[PLAN.tierOf(u)] || CONFIG.free,
@@ -70,11 +76,19 @@
     short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
     paid: t => t === 'basic' || t === 'lite' || t === 'ultra',
     themed: t => t === 'basic' || t === 'lite' || t === 'ultra',   // Basic navy, Lite blue, Ultra purple
-    applyTheme(t) { if (PLAN.themed(t)) document.documentElement.dataset.plan = t; else delete document.documentElement.dataset.plan; }
+    applyTheme(t, preference = 'plan') {
+      if (PLAN.themed(t)) document.documentElement.dataset.plan = t;
+      else delete document.documentElement.dataset.plan;
+      if ((t === 'lite' || t === 'ultra') && PLAN.themes.some(theme => theme.id === preference) && preference !== 'plan') {
+        document.documentElement.dataset.theme = preference;
+      } else {
+        delete document.documentElement.dataset.theme;
+      }
+    }
   };
   const trimLog = log => Object.fromEntries(Object.entries(log || {}).slice(0, 12).map(([k, v]) => [String(k).slice(0, 20), (Array.isArray(v) ? v : []).slice(0, 60).map(s => ({ at: +s.at || 0, v: +s.v || 0, ...(s.k ? { k: String(s.k).slice(0, 24) } : {}) }))]));
   const passFor = feature => CONFIG.passes.find(p => p.feature === feature);
-  const KEY_USERS = 'pm_users', KEY_SESSION = 'pm_session', KEY_PLAN = 'pm_plan';
+  const KEY_USERS = 'pm_users', KEY_SESSION = 'pm_session', KEY_PLAN = 'pm_plan', KEY_THEME = 'pm_theme';
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -96,7 +110,12 @@
   }
 
   const allUsers = () => read(KEY_USERS, {});
-  const saveUser = u => { const all = allUsers(); all[u.id] = u; write(KEY_USERS, all); try { localStorage.setItem(KEY_PLAN, u.plan.tier); } catch (e) { /* storage unavailable */ } applyTheme(u.plan.tier); };
+  const makeUsername = (name, id) => {
+    const base = String(name || 'player').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 7) || 'player';
+    const suffix = String(id || '').replace(/[^a-z0-9]/gi, '').slice(-12).toLowerCase();
+    return (base + suffix).slice(0, 20);
+  };
+  const saveUser = u => { const all = allUsers(); all[u.id] = u; write(KEY_USERS, all); try { localStorage.setItem(KEY_PLAN, u.plan.tier); localStorage.setItem(KEY_THEME, u.prefs.theme || 'plan'); } catch (e) { /* storage unavailable */ } applyTheme(u.plan.tier, u.prefs.theme); };
   const applyTheme = PLAN.applyTheme;
   const allowance = u => PLAN.cfg(u).dailyCredits;
 
@@ -105,6 +124,12 @@
     let changed = false; const now = Date.now();
     if (PLAN.paid(u.plan.tier) && u.plan.renewsAt && now > u.plan.renewsAt) { u.plan = { tier: 'free', lapsedAt: now }; changed = true; }
     if (!u.extras) { u.extras = { watchlist: [], profiles: [], memory: null }; changed = true; }
+    if (!u.username) { u.username = makeUsername(u.name, u.id); changed = true; }
+    if (u.bio == null) { u.bio = ''; changed = true; }
+    if (u.location == null) { u.location = ''; changed = true; }
+    if (u.website == null) { u.website = ''; changed = true; }
+    if (!Object.prototype.hasOwnProperty.call(u, 'avatarUrl')) { u.avatarUrl = null; changed = true; }
+    if (!u.identities) { u.identities = [{ provider: 'email' }]; changed = true; }
     if (u.pass !== undefined) { u.passes = u.passes || {}; if (u.pass && u.pass.until) u.passes.recommendation = u.pass.until; delete u.pass; changed = true; }   // older demo accounts had one "Credit Pass"
     if (!u.passes) { u.passes = {}; changed = true; }
     Object.keys(u.passes).forEach(f => { if (now > u.passes[f]) { delete u.passes[f]; changed = true; } });
@@ -134,9 +159,11 @@
       if (Object.values(all).some(u => u.email === email)) throw new Error('An account with that email already exists. Try signing in.');
       const salt = uid('s');
       const u = { id: uid('u'), name, email, salt, pwHash: await hash(password, salt), createdAt: Date.now(), onboarded: false,
+        username: '', bio: '', location: '', website: '', avatarUrl: null, identities: [{ provider: 'email' }],
         prefs: { games: [], weight: 'any', grip: 'any', connection: 'any' },
         plan: { tier: 'free' }, credits: { date: today(), daily: CONFIG.free.dailyCredits, purchased: 0 }, passes: {}, orders: [], history: [],
         extras: { watchlist: [], profiles: [], memory: null } };
+      u.username = makeUsername(name, u.id);
       saveUser(u); write(KEY_SESSION, u.id); emit();
       return clean(u);
     },
@@ -148,7 +175,7 @@
       write(KEY_SESSION, u.id); normalize(u); saveUser(u); emit();
       return clean(u);
     },
-    async signOut() { try { localStorage.removeItem(KEY_SESSION); localStorage.removeItem(KEY_PLAN); } catch (e) { /* noop */ } applyTheme('free'); emit(); },
+    async signOut() { try { localStorage.removeItem(KEY_SESSION); localStorage.removeItem(KEY_PLAN); localStorage.removeItem(KEY_THEME); } catch (e) { /* noop */ } applyTheme('free'); emit(); },
     async deleteAccount() { const u = current(); if (!u) return; const all = allUsers(); delete all[u.id]; write(KEY_USERS, all); await PMBackend.signOut(); },
 
     getUser() { return clean(current()); },
@@ -176,11 +203,56 @@
     },
     async updateProfile(patch) {
       const u = current(); if (!u) throw new Error('Not signed in.');
-      if (patch.name != null) u.name = String(patch.name).trim() || u.name;
-      if (patch.prefs) u.prefs = { ...u.prefs, ...patch.prefs };
+      if (patch.name != null) {
+        const name = String(patch.name).trim();
+        if (!name || name.length > 60) throw new Error('Your name must be between 1 and 60 characters.');
+        u.name = name;
+      }
+      if (patch.username != null) {
+        const username = String(patch.username).trim().replace(/^@/, '').toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(username)) throw new Error('Your username must be 3–20 letters, numbers, or underscores.');
+        if (Object.values(allUsers()).some(other => other.id !== u.id && String(other.username || '').toLowerCase() === username)) throw new Error('That username is already taken.');
+        u.username = username;
+      }
+      if (patch.bio != null) {
+        const bio = String(patch.bio).trim();
+        if (bio.length > 240) throw new Error('Your bio must be 240 characters or fewer.');
+        u.bio = bio;
+      }
+      if (patch.location != null) {
+        const location = String(patch.location).trim();
+        if (location.length > 80) throw new Error('Your location must be 80 characters or fewer.');
+        u.location = location;
+      }
+      if (patch.website != null) {
+        const website = String(patch.website).trim();
+        if (website) {
+          try { if (!['http:', 'https:'].includes(new URL(website).protocol)) throw new Error(); }
+          catch (e) { throw new Error('Enter a valid website URL beginning with http:// or https://.'); }
+        }
+        if (website.length > 300) throw new Error('Your website URL is too long.');
+        u.website = website;
+      }
+      if (patch.avatarUrl !== undefined) {
+        const avatarUrl = patch.avatarUrl == null ? null : String(patch.avatarUrl);
+        const isGif = avatarUrl && avatarUrl.startsWith('data:image/gif;base64,');
+        if (isGif && !PLAN.has(u, 'animatedAvatar')) { const e = new Error('Animated profile GIFs are available with ProMouser Ultra.'); e.code = 'NEEDS_ULTRA'; throw e; }
+        if (avatarUrl && (isGif ? avatarUrl.length > 1400000 : (!avatarUrl.startsWith('data:image/jpeg;base64,') || avatarUrl.length > 750000))) throw new Error(isGif ? 'Choose a GIF profile photo smaller than 1 MB.' : 'Choose a smaller JPEG profile photo.');
+        u.avatarUrl = avatarUrl;
+      }
+      if (patch.prefs) {
+        if (patch.prefs.theme != null) {
+          if (!PLAN.has(u, 'advanced')) { const e = new Error('Custom themes are available with ProMouser Lite and Ultra.'); e.code = 'NEEDS_LITE'; throw e; }
+          if (!PLAN.themes.some(theme => theme.id === patch.prefs.theme)) throw new Error('Choose a supported theme.');
+        }
+        u.prefs = { ...u.prefs, ...patch.prefs };
+      }
       if (patch.onboarded != null) u.onboarded = !!patch.onboarded;
       saveUser(u); emit(); return clean(u);
     },
+    async signInWithProvider() { throw new Error('Social sign-in is available when Supabase authentication is configured.'); },
+    async linkIdentity() { throw new Error('Connected sign-in accounts are available when Supabase authentication is configured.'); },
+    async unlinkIdentity() { throw new Error('Connected sign-in accounts are available when Supabase authentication is configured.'); },
 
     /* credits ---------------------------------------------------------- */
     costPerRecommendation() { return PLAN.cfg(current()).costPerRecommendation; },
@@ -262,6 +334,6 @@
   };
 
   // apply stored theme right away (the inline <head> script already did the first paint)
-  const u0 = current(); applyTheme(u0 ? u0.plan.tier : 'free');
-  addEventListener('storage', e => { if ([KEY_USERS, KEY_SESSION, KEY_PLAN].includes(e.key)) { const u = current(); applyTheme(u ? u.plan.tier : 'free'); emit(); } });
+  const u0 = current(); applyTheme(u0 ? u0.plan.tier : 'free', u0 && u0.prefs.theme);
+  addEventListener('storage', e => { if ([KEY_USERS, KEY_SESSION, KEY_PLAN, KEY_THEME].includes(e.key)) { const u = current(); applyTheme(u ? u.plan.tier : 'free', u && u.prefs.theme); emit(); } });
 })();

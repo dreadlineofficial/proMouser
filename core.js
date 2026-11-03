@@ -58,14 +58,14 @@
 
   /* ---------- daily challenge (same for everyone each day) ---------- */
   const CH = [
-    { id: 'cps', icon: 'Click', href: 'cps-test.html', t: n => `Score ${n}+ CPS on the CPS test (5 s or longer)`, n: [7, 8, 9, 10], ok: (d, n) => (d.best.cps || 0) >= n },
-    { id: 'react', icon: 'Speed', href: 'reaction-test.html', t: n => `Average under ${n} ms on the reaction test`, n: [300, 280, 265, 250], ok: (d, n) => d.best.reaction && d.best.reaction <= n },
-    { id: 'aim', icon: 'Aim', href: 'aim-trainer.html', t: n => `Aim trainer: under ${n} ms per target`, n: [800, 700, 650, 600], ok: (d, n) => d.best.aim && d.best.aim <= n },
-    { id: 'variety', icon: 'Test', href: 'tests.html', t: n => `Take ${n} different tests today`, n: [2, 3, 3, 4], ok: (d, n) => Object.keys(d.tests).length >= n },
-    { id: 'mousle', icon: 'Hub', href: 'daily.html#mousle', t: () => 'Solve today’s Mousle', n: [0], ok: d => !!(d.mousle && d.mousle.won) },
-    { id: 'explore', icon: 'Mouse', href: 'mice.html#catalog', t: n => `Open ${n} mouse pages`, n: [3, 4, 5], ok: (d, n) => d.views.length >= n },
-    { id: 'compare', icon: 'Versus', href: 'mice/compare.html', t: () => 'Compare two mice in the compare lab', n: [0], ok: d => d.cmp >= 1 },
-    { id: 'dclick', icon: 'Click', href: 'double-click-test.html', t: () => 'Check your switches on the double click test', n: [0], ok: d => (d.tests.doubleclick || 0) >= 1 }
+    { id: 'cps', icon: 'Click', href: 'cps-test', t: n => `Score ${n}+ CPS on the CPS test (5 s or longer)`, n: [7, 8, 9, 10], ok: (d, n) => (d.best.cps || 0) >= n },
+    { id: 'react', icon: 'Speed', href: 'reaction-test', t: n => `Average under ${n} ms on the reaction test`, n: [300, 280, 265, 250], ok: (d, n) => d.best.reaction && d.best.reaction <= n },
+    { id: 'aim', icon: 'Aim', href: 'aim-trainer', t: n => `Aim trainer: under ${n} ms per target`, n: [800, 700, 650, 600], ok: (d, n) => d.best.aim && d.best.aim <= n },
+    { id: 'variety', icon: 'Test', href: 'tests', t: n => `Take ${n} different tests today`, n: [2, 3, 3, 4], ok: (d, n) => Object.keys(d.tests).length >= n },
+    { id: 'mousle', icon: 'Hub', href: 'daily#mousle', t: () => 'Solve today’s Mousle', n: [0], ok: d => !!(d.mousle && d.mousle.won) },
+    { id: 'explore', icon: 'Mouse', href: 'mice#catalog', t: n => `Open ${n} mouse pages`, n: [3, 4, 5], ok: (d, n) => d.views.length >= n },
+    { id: 'compare', icon: 'Versus', href: 'mice/compare', t: () => 'Compare two mice in the compare lab', n: [0], ok: d => d.cmp >= 1 },
+    { id: 'dclick', icon: 'Click', href: 'double-click-test', t: () => 'Check your switches on the double click test', n: [0], ok: d => (d.tests.doubleclick || 0) >= 1 }
   ];
   function challenge(k = dayKey()) {
     const n = dayNum(k), c = CH[hash(n) % CH.length], v = c.n[hash(n + 7) % c.n.length];

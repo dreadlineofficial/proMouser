@@ -116,7 +116,7 @@
         <h4>Recent sessions</h4><ul class="ts-list">${list.slice(0, 5).map(s => `<li><span>${new Date(s.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span><small>${esc(s.k || '')}</small><b>${fmt(s.v, d.dp)}</b></li>`).join('')}</ul>` : ''}
       <div class="ts-lock"><div class="ts-blur" aria-hidden="true"><svg viewBox="0 0 640 120"><path d="M20,90 L80,70 L140,80 L200,50 L260,62 L320,40 L380,48 L440,30 L500,36 L560,22 L620,18" class="ts-line"/></svg>
         <div class="ts-tiles"><div><span>Average</span><b>000</b></div><div><span>Consistency</span><b>00%</b></div><div><span>Improvement</span><b>+0.0%</b></div><div><span>Percentile</span><b>Top 00%</b></div></div></div>
-        <div class="ts-lock-body"><b>Statistics for every test</b><p>Trend charts, averages, consistency, improvement and percentile for all ${Object.keys(DEF).length} tests, saved to your account. Part of ProMouser Ultra.</p><a class="btn btn-primary btn-sm" href="ultra.html">See Ultra</a></div></div>`;
+        <div class="ts-lock-body"><b>Statistics for every test</b><p>Trend charts, averages, consistency, improvement and percentile for all ${Object.keys(DEF).length} tests, saved to your account. Part of ProMouser Ultra.</p><a class="btn btn-primary btn-sm" href="ultra">See Ultra</a></div></div>`;
   }
 
   /* add a panel under each test that doesn't have one yet */

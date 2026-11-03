@@ -21,7 +21,7 @@
 
   const demo = window.PMBackend, CONFIG = demo.CONFIG;
   const LIB = 'vendor/supabase-2.117.3.js';
-  const KEY_CACHE = 'pm_sb_user', KEY_PLAN = 'pm_plan';
+  const KEY_CACHE = 'pm_sb_user', KEY_PLAN = 'pm_plan', KEY_THEME = 'pm_theme';
   const IST = 330 * 60000;   // daily credits reset at midnight India time (matches pm_today() in schema.sql)
 
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -34,15 +34,18 @@
   const fail = (msg, code) => { const e = new Error(msg); if (code) e.code = code; return e; };
 
   const PLAN = window.PM_PLAN, applyTheme = PLAN.applyTheme;
+  const OAUTH_PROVIDERS = ['google', 'discord'];
 
   let user = read(KEY_CACHE, null);
   function setUser(u) {
     const before = JSON.stringify(user);
     user = u;
-    write(KEY_CACHE, u); write(KEY_PLAN, u ? u.plan.tier : null); applyTheme(u ? u.plan.tier : 'free');
+    write(KEY_CACHE, u); write(KEY_PLAN, u ? u.plan.tier : null);
+    write(KEY_THEME, u && u.prefs && u.prefs.theme || 'plan');
+    applyTheme(u ? u.plan.tier : 'free', u && u.prefs && u.prefs.theme);
     if (JSON.stringify(u) !== before) emit();
   }
-  applyTheme(user ? user.plan.tier : 'free');
+  applyTheme(user ? user.plan.tier : 'free', user && user.prefs && user.prefs.theme);
 
   /* ---------- load the library and create the client ---------- */
   const ready = new Promise((resolve, reject) => {
@@ -60,11 +63,17 @@
     });
   }).catch(() => { /* reported when a method is used */ });
 
-  function toUser(s, orders, runs) {
+  function toUser(s, orders, runs, authUser) {
     const paid = PLAN.paid(s.plan), passes = {}, ex = s.extras || {};
     Object.entries(s.passes || {}).forEach(([f, t]) => { if (ms(t) > Date.now()) passes[f] = ms(t); });
     return {
-      id: s.id, name: s.name, email: s.email, createdAt: ms(s.created_at), onboarded: !!s.onboarded,
+      id: s.id, name: s.name, username: s.username, bio: s.bio || '', location: s.location || '',
+      website: s.website || '', avatarUrl: s.avatar_url || null,
+      identities: (authUser && authUser.identities || []).map(i => ({
+        provider: i.provider,
+        label: i.identity_data && (i.identity_data.preferred_username || i.identity_data.user_name || i.identity_data.full_name || i.identity_data.name) || ''
+      })),
+      email: s.email, createdAt: ms(s.created_at), onboarded: !!s.onboarded,
       prefs: Object.assign({ games: [], weight: 'any', grip: 'any', connection: 'any' }, s.prefs || {}),
       plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
       extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null, testLog: ex.testLog || {}, ui: ex.ui || null },
@@ -80,13 +89,15 @@
     const c = await ready;
     const { data: { session } } = await c.auth.getSession();
     if (!session) { setUser(null); return null; }
-    const [st, ord, runs] = await Promise.all([
+    const [auth, st, ord, runs] = await Promise.all([
+      c.auth.getUser(),
       c.rpc('get_my_state'),
       c.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
       c.from('recommendation_runs').select('id, data, created_at').order('created_at', { ascending: false }).limit(100)
     ]);
+    if (auth.error) throw fail(friendly(auth.error));
     if (st.error) throw fail(friendly(st.error));
-    setUser(toUser(st.data, ord.data || [], runs.data || []));
+    setUser(toUser(st.data, ord.data || [], runs.data || [], auth.data.user));
     return user;
   }
 
@@ -96,6 +107,9 @@
     if (/Email not confirmed/i.test(m)) return 'Please confirm your email first. The link is in your inbox.';
     if (/already registered|already exists/i.test(m)) return 'An account with that email already exists. Try signing in.';
     if (/Password should be/i.test(m)) return m;
+    if (/profiles_username_lower_(?:key|idx)/i.test(m)) return 'That username is already taken.';
+    if (/profiles_(bio|location|website|avatar_url|username)_check/i.test(m)) return 'One of your profile fields is invalid. Check the limits and try again.';
+    if (/provider.*not enabled|unsupported provider/i.test(m)) return 'Enable this sign-in provider in your Supabase Authentication settings first.';
     if (/rate limit|too many/i.test(m)) return 'Too many attempts. Please wait a minute and try again.';
     if (/NOT_SIGNED_IN|JWT/i.test(m)) return 'Please sign in again.';
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Can’t reach the server. Check your connection.';
@@ -117,7 +131,7 @@
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw fail('Please enter a valid email address.');
       if (String(password || '').length < 8) throw fail('Use a password with at least 8 characters.');
       const c = await ready;
-      const redirect = new URL((document.documentElement.dataset.root || '') + 'account.html', location.href).href;
+      const redirect = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
       const { data, error } = await c.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirect } });
       if (error) throw fail(friendly(error));
       // email confirmation is on: no session until they click the link
@@ -130,9 +144,20 @@
       if (error) throw fail(friendly(error));
       return clone(await refresh());
     },
+    async signInWithProvider(provider) {
+      if (!OAUTH_PROVIDERS.includes(provider)) throw fail('That sign-in provider is not supported.');
+      const c = await ready;
+      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
+      const { error } = await c.auth.signInWithOAuth({ provider, options: { redirectTo } });
+      if (error) throw fail(friendly(error));
+    },
     async signOut() { const c = await ready; await c.auth.signOut({ scope: 'local' }); setUser(null); },
     async deleteAccount() {
-      const c = await ready;
+      const u = need(), c = await ready;
+      if (u.avatarUrl) {
+        const { error: avatarError } = await c.storage.from('avatars').remove([`${u.id}/profile.jpg`]);
+        if (avatarError) throw fail(friendly(avatarError));
+      }
       const { error } = await c.rpc('delete_my_account');
       if (error) throw fail(friendly(error));
       await c.auth.signOut({ scope: 'local' }); setUser(null);
@@ -165,12 +190,94 @@
     },
     async updateProfile(patch) {
       const u = need(), row = {};
-      if (patch.name != null) row.name = String(patch.name).trim().slice(0, 60) || u.name;
-      if (patch.prefs) row.prefs = Object.assign({}, u.prefs, patch.prefs);
+      if (patch.name != null) {
+        row.name = String(patch.name).trim();
+        if (!row.name || row.name.length > 60) throw fail('Your name must be between 1 and 60 characters.');
+      }
+      if (patch.username != null) {
+        row.username = String(patch.username).trim().replace(/^@/, '').toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(row.username)) throw fail('Your username must be 3–20 letters, numbers, or underscores.');
+      }
+      if (patch.bio != null) {
+        row.bio = String(patch.bio).trim();
+        if (row.bio.length > 240) throw fail('Your bio must be 240 characters or fewer.');
+      }
+      if (patch.location != null) {
+        row.location = String(patch.location).trim();
+        if (row.location.length > 80) throw fail('Your location must be 80 characters or fewer.');
+      }
+      if (patch.website != null) {
+        row.website = String(patch.website).trim();
+        if (row.website.length > 300) throw fail('Your website URL is too long.');
+        if (row.website) {
+          try { if (!['http:', 'https:'].includes(new URL(row.website).protocol)) throw new Error(); }
+          catch (e) { throw fail('Enter a valid website URL beginning with http:// or https://.'); }
+        }
+      }
+      if (patch.avatarUrl !== undefined) {
+        const avatarUrl = patch.avatarUrl || null;
+        const isGif = typeof avatarUrl === 'string' && (/^data:image\/gif;base64,/i.test(avatarUrl) || /\/profile\.gif(?:[?#]|$)/i.test(avatarUrl));
+        if (isGif && !PLAN.has(u, 'animatedAvatar')) throw fail('Animated profile GIFs are available with ProMouser Ultra.', 'NEEDS_ULTRA');
+        row.avatar_url = avatarUrl;
+      }
+      if (patch.prefs) {
+        if (patch.prefs.theme != null) {
+          if (!PLAN.has(u, 'advanced')) throw fail('Custom themes are available with ProMouser Lite and Ultra.', 'NEEDS_LITE');
+          if (!PLAN.themes.some(theme => theme.id === patch.prefs.theme)) throw fail('Choose a supported theme.');
+        }
+        row.prefs = Object.assign({}, u.prefs, patch.prefs);
+      }
       if (patch.onboarded != null) row.onboarded = !!patch.onboarded;
       setUser(Object.assign(clone(u), row));   // show the change straight away
       const { error } = await (await ready).from('profiles').update(row).eq('id', u.id);
       if (error) { await refresh().catch(() => {}); throw fail(friendly(error)); }
+      return clone(await refresh());
+    },
+    async uploadAvatar(file) {
+      const u = need();
+      const isGif = file && file.type === 'image/gif';
+      if (!isGif && (!file || file.type !== 'image/jpeg')) throw fail('Choose a JPEG or GIF profile photo.');
+      if (isGif && !PLAN.has(u, 'animatedAvatar')) throw fail('Animated profile GIFs are available with ProMouser Ultra.', 'NEEDS_ULTRA');
+      if (file.size > (isGif ? 1024 * 1024 : 500 * 1024)) throw fail(isGif ? 'Animated profile GIFs must be 1 MB or smaller.' : 'Choose a smaller JPEG profile photo.');
+      const c = await ready;
+      const path = `${u.id}/profile.${isGif ? 'gif' : 'jpg'}`;
+      const { error } = await c.storage.from('avatars').upload(path, file, {
+        upsert: true, contentType: isGif ? 'image/gif' : 'image/jpeg', cacheControl: '3600'
+      });
+      if (error) throw fail(friendly(error));
+      const { data } = c.storage.from('avatars').getPublicUrl(path);
+      const result = await PMBackend.updateProfile({ avatarUrl: `${data.publicUrl}?v=${Date.now()}` });
+      const { error: cleanupError } = await c.storage.from('avatars').remove([`${u.id}/profile.${isGif ? 'jpg' : 'gif'}`]);
+      if (cleanupError) throw fail(`Profile photo updated, but the previous photo could not be removed: ${friendly(cleanupError)}`);
+      return result;
+    },
+    async removeAvatar() {
+      const u = need();
+      const c = await ready;
+      await PMBackend.updateProfile({ avatarUrl: null });
+      const { error } = await c.storage.from('avatars').remove([`${u.id}/profile.jpg`, `${u.id}/profile.gif`]);
+      if (error) throw fail(friendly(error));
+      return clone(user);
+    },
+    async linkIdentity(provider) {
+      need();
+      if (!OAUTH_PROVIDERS.includes(provider)) throw fail('That sign-in provider is not supported.');
+      const c = await ready;
+      const redirectTo = new URL((document.documentElement.dataset.root || '') + 'account', location.href).href;
+      const { error } = await c.auth.linkIdentity({ provider, options: { redirectTo } });
+      if (error) throw fail(friendly(error));
+    },
+    async unlinkIdentity(provider) {
+      need();
+      const c = await ready;
+      const { data, error: userError } = await c.auth.getUser();
+      if (userError) throw fail(friendly(userError));
+      const identities = data.user.identities || [];
+      const identity = identities.find(i => i.provider === provider);
+      if (!identity) throw fail('That account is not connected.');
+      if (identities.length <= 1) throw fail('Connect another sign-in method before disconnecting this account.');
+      const { error } = await c.auth.unlinkIdentity(identity);
+      if (error) throw fail(friendly(error));
       return clone(await refresh());
     },
 
@@ -261,5 +368,5 @@
   }
 
   // other tabs: follow sign-in / sign-out and plan changes
-  addEventListener('storage', e => { if (e.key === KEY_CACHE) { user = read(KEY_CACHE, null); applyTheme(user ? user.plan.tier : 'free'); emit(); } });
+  addEventListener('storage', e => { if ([KEY_CACHE, KEY_THEME].includes(e.key)) { user = read(KEY_CACHE, null); applyTheme(user ? user.plan.tier : 'free', user && user.prefs && user.prefs.theme); emit(); } });
 })();

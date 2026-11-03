@@ -23,7 +23,9 @@ It takes about 10 minutes.
    This keeps the fake checkout working, so test purchases really add credits, a pass or Lite.
 
 Check that it worked: **Table Editor** should now list `profiles`, `credit_balances`,
-`products`, `orders` and `recommendation_runs`.
+`products`, `orders` and `recommendation_runs`. The profile migration adds a unique
+username, bio, location, website and avatar URL to `profiles`; existing accounts receive
+a generated username. Running the schema again is safe.
 
 ## 3. Set up sign-in
 1. **Authentication → Sign In / Providers → Email** should be enabled (it is by default).
@@ -32,8 +34,13 @@ Check that it worked: **Table Editor** should now list `profiles`, `credit_balan
    - Turning it OFF makes testing quicker, because sign-up logs you straight in.
 2. **Authentication → URL Configuration**
    - **Site URL:** `https://promouser.website`
-   - **Redirect URLs:** add `https://promouser.website/account.html`.
-     For local testing, also add `http://localhost:8000/account.html`.
+   - **Redirect URLs:** add `https://promouser.website/account`.
+     For local testing, also add `http://localhost:8000/account`.
+3. To enable connected sign-in accounts, open **Authentication → Sign In / Providers** and
+   configure Google and/or Discord with credentials from those providers. Add the account
+   page URLs above to the allowed redirect URLs. Users can sign in with those providers,
+   or link/unlink an identity from **My account**; they must keep at least one sign-in
+   method connected.
 
 ## 4. Paste your keys into the site
 1. Click **Connect** at the top of the dashboard, or go to **Project Settings → API Keys**.
@@ -57,14 +64,21 @@ Test locally with `python3 -m http.server 8000` in this folder, then open
 1. Create an account and finish onboarding.
 2. In Supabase, **Table Editor → profiles** should show your row, with your games and weight
    saved in `prefs`.
-3. Run a recommendation. In `credit_balances`, `daily` drops from 5 to 4.
-4. Buy something in the shop (test payment). It shows up in `orders`.
+3. Edit your profile and upload a photo. The schema creates a public `avatars` storage
+   bucket (JPEG or GIF, 1 MB maximum); users can write only to their own folder, and GIF
+   uploads are restricted to Ultra accounts. Profile photos are publicly readable, so only
+   upload an image you are comfortable sharing. Rerun the updated `supabase/schema.sql` to
+   enable GIF uploads on an existing project.
+4. Link a configured Google or Discord identity from **My account**.
+5. Run a recommendation. In `credit_balances`, `daily` drops from 5 to 4.
+6. Buy something in the shop (test payment). It shows up in `orders`.
 
 ---
 
 ## What's protected
 I tested all of this against a real Postgres database:
-- Users can read only their own data.
+- Users can read only their own account data and update only allowed profile fields. Avatar
+  images are intentionally public; only upload photos you are comfortable sharing.
 - Users can't change their own credits, plan, pass or orders, even by calling the API directly.
 - The server decides what a run costs (1 credit on Free, 3 on Lite, 0 on Ultra, free with a Recommendation Pass).
   Passes live in `user_passes`, one row per feature, so a pass never touches your credits.

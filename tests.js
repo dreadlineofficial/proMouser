@@ -1,7 +1,7 @@
 /* =====================================================================
    ProMouser: Test hub tests — reaction-test, aim-trainer, polling-rate-test,
    scroll-test, mouse-button-test pages ([data-test="…"]) and the hub's
-   "your best" badges on tests.html ([data-test-hub]).
+   "your best" badges on tests ([data-test-hub]).
 
    Every test reads presses from mousedown / pointerdown with the event's own
    timestamp, and blocks the right-click menu, middle-click autoscroll and the
