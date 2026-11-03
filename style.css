@@ -1996,3 +1996,9 @@ html[data-performance="on"] .reveal { opacity: 1 !important; transform: none !im
 .ui-custom[aria-pressed="true"] { border-color: #fff; } .ui-custom[aria-pressed="true"] span { font-size: 0; } .ui-custom[aria-pressed="true"] span::after { content: '✓'; font-size: 1.1rem; }
 .acct-prog .ui-row { display: grid; gap: 8px; margin-top: 14px; } .acct-prog .ui-row > span { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
 .acct-prog .ui-sw { width: 34px; height: 34px; border-radius: 10px; }
+
+/* Tests menu: two columns on desktop (14 items) */
+@media (min-width: 1061px) {
+  .dropdown.dd-wide { display: grid; grid-template-columns: 1fr 1fr; column-gap: 4px; min-width: 620px; max-height: calc(100vh - var(--nav-h) - 30px); overflow-y: auto; }
+  .dropdown.dd-wide > li:first-child { grid-column: 1 / -1; }
+}

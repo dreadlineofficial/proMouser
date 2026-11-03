@@ -71,7 +71,7 @@ for f in ['aim-trainer.html', 'cps-test.html', 'mouse-button-test.html', 'pollin
 
 # test hub: a "Skill tests" block of cards
 h = open('tests.html').read()
-cards = ''.join(f'<article class="hub-card reveal"><div class="hub-tags"><span class="plan-tag">New</span></div><div class="fc-icon" data-icon="{p[7]}"></div>\n          <h3><a href="{p[0]}">{p[2]}</a></h3><p>{p[4].split(": ", 1)[-1]}</p><small class="hub-best" data-best="{p[1]}" hidden></small></article>' for p in PAGES)
+cards = ''.join(f'<article class="hub-card reveal"><div class="hub-tags"><span class="plan-tag">New</span></div><div class="fc-icon" data-icon="{p[7]}"></div>\n          <h3><a href="{p[0]}">{p[2]}</a></h3><p>{(lambda t: t[0].upper() + t[1:])(p[4].split(": ", 1)[-1])}</p><small class="hub-best" data-best="{p[1]}" hidden></small></article>' for p in PAGES)
 block = f'<!-- skill-tests --><div class="section-header reveal" id="skill-tests" style="margin:64px 0 22px"><span class="section-label">New: skill tests</span><h2>Train every part of <em>your aim</em></h2><p>Tracking, flicks, speed, timing and control, plus a DPI analyzer to check your sensor. Every result counts towards your skill profile on My stats.</p></div>\n        <div class="hub-grid" data-test-hub2>{cards}</div><!-- /skill-tests -->'
 h = re.sub(r'\n        <!-- skill-tests -->.*?<!-- /skill-tests -->', '', h, flags=re.S)
 if 'tests2.js' not in h: h = h.replace('<script src="tests.js"></script>', '<script src="tests.js"></script>\n  <script src="tests2.js"></script>', 1)
@@ -85,3 +85,36 @@ for f in glob.glob('**/*.html', recursive=True):
     s = open(f).read(); s2 = re.sub(r'All \d+ mouse tests in one place', f'All {NTOOLS} mouse tests in one place', s)
     if s2 != s: open(f, 'w').write(s2); n += 1
 print('pages', len(PAGES), 'nav updated', n)
+
+# ---- discoverability -------------------------------------------------------------------------
+# 1. Tests menu (every page): the six skill tests after the aim trainer, as a two-column menu
+DDI = {'tracking-test': ('Track', 'Tracking test', 'Stay on a moving target'), 'flick-test': ('Aim', 'Flick test', 'Fast, clean flicks'),
+       'target-rush': ('Speed', 'Target rush', 'Shrinking targets, 3 lives'), 'rhythm-test': ('Time', 'Rhythm test', 'Click on the beat'),
+       'circle-test': ('Rate', 'Circle test', 'Perfect circle + angle snapping'), 'dpi-analyzer': ('Stats', 'DPI analyzer', 'Your mouse’s real DPI')}
+nm = 0
+for f in glob.glob('**/*.html', recursive=True):
+    s = open(f).read()
+    m = re.search(r'<ul class="dropdown" id="nav-menu-2">.*?</ul>', s, re.S)
+    if not m or 'tracking-test"><span class="dd-ico"' in m.group(0): continue
+    menu = m.group(0)
+    a = re.search(r'<li><a href="([^"]*)aim-trainer"><span class="dd-ico".*?</li>', menu)
+    if not a: continue
+    pre = a.group(1)
+    items = ''.join(f'<li><a href="{pre}{slug}"><span class="dd-ico" data-icon="{ic}"></span><span class="dd-txt"><b>{nme} <span class="badge">New</span></b><small>{sub}</small></span></a></li>' for slug, (ic, nme, sub) in DDI.items())
+    new = menu.replace(a.group(0), a.group(0) + items, 1).replace('<ul class="dropdown" id="nav-menu-2">', '<ul class="dropdown dd-wide" id="nav-menu-2">', 1)
+    open(f, 'w').write(s.replace(menu, new, 1)); nm += 1
+# 2. Test hub: the new skill tests first
+h = open('tests.html').read().replace('\n        <div class="section-header reveal" style="margin:64px 0 22px"><span class="section-label">Classic tests</span><h2>Clicks, reactions and <em>mouse checks</em></h2></div>', '')
+m = re.search(r'\n        <!-- skill-tests -->.*?<!-- /skill-tests -->', h, re.S)
+if m:
+    h = h.replace(m.group(0), '', 1)
+    blk = m.group(0).replace('style="margin:64px 0 22px"', 'style="margin:8px 0 22px"')
+    h = h.replace('\n        <div class="hub-grid" data-test-hub>', blk + '\n        <div class="section-header reveal" style="margin:64px 0 22px"><span class="section-label">Classic tests</span><h2>Clicks, reactions and <em>mouse checks</em></h2></div>\n        <div class="hub-grid" data-test-hub>', 1)
+    open('tests.html', 'w').write(h)
+# 3. Home page: a card for the skill tests, and the right count in hub mode
+i = open('index.html').read()
+if 'href="tests#skill-tests"' not in i:
+    i = re.sub(r'<a href="contact" class="ql-card reveal">.*?</a>', '<a href="tests#skill-tests" class="ql-card reveal">\n            <div class="ql-icon" data-icon="Track"></div>\n            <div class="ql-text"><h3>New skill tests</h3><p>Tracking, flicks, rhythm, circle and more</p></div>\n            <span class="ql-arrow">→</span>\n          </a>', i, count=1, flags=re.S)
+i = i.replace('<h2>Seven tests, <em>your</em> numbers</h2>', '<h2>Thirteen tests, <em>your</em> numbers</h2>')
+open('index.html', 'w').write(i)
+print('menus updated', nm)
