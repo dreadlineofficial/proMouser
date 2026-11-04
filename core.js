@@ -126,7 +126,11 @@
   const REWARDS = [[2, 'emerald', 'Emerald', '#34d399', '#047857'], [3, 'cyan', 'Cyan', '#22d3ee', '#0e7490'], [4, 'amber', 'Amber', '#fbbf24', '#ea580c'], [5, 'sakura', 'Sakura', '#f472b6', '#be185d'],
     [6, 'lime', 'Lime', '#a3e635', '#4d7c0f'], [7, 'ocean', 'Ocean', '#38bdf8', '#1e3a8a'], [8, 'sunset', 'Sunset', '#fb923c', '#be123c'], [9, 'violet', 'Violet', '#a78bfa', '#5b21b6'],
     [10, 'gold', 'Gold', '#fde047', '#a16207'], [12, 'ice', 'Ice', '#e0f2fe', '#0ea5e9'], [14, 'coral', 'Coral', '#fda4af', '#e11d48'], [16, 'teal', 'Teal', '#2dd4bf', '#115e59'],
-    [18, 'crimson', 'Crimson', '#ef4444', '#7f1d1d'], [20, 'mono', 'Mono', '#e4e4e7', '#71717a'], [25, 'lavender', 'Lavender', '#ede9fe', '#8b5cf6'], [30, 'toxic', 'Toxic', '#d9f99d', '#16a34a']]
+    [18, 'crimson', 'Crimson', '#ef4444', '#7f1d1d'], [20, 'mono', 'Mono', '#e4e4e7', '#71717a'], [25, 'lavender', 'Lavender', '#ede9fe', '#8b5cf6'], [30, 'toxic', 'Toxic', '#d9f99d', '#16a34a'],
+    [11, 'sky', 'Sky', '#bfdbfe', '#2563eb'], [13, 'mint', 'Mint', '#d1fae5', '#059669'], [15, 'rose', 'Rose', '#fb7185', '#9f1239'], [17, 'indigo', 'Indigo', '#818cf8', '#312e81'],
+    [19, 'peach', 'Peach', '#ffedd5', '#ea580c'], [21, 'forest', 'Forest', '#4ade80', '#14532d'], [22, 'aqua', 'Aqua', '#99f6e4', '#0e7490'], [23, 'plum', 'Plum', '#e879f9', '#701a75'],
+    [24, 'slate', 'Slate', '#cbd5e1', '#334155'], [26, 'copper', 'Copper', '#f59e0b', '#78350f'], [28, 'magenta', 'Magenta', '#f472b6', '#86198f'], [35, 'blood', 'Blood', '#dc2626', '#450a0a']]
+    .sort((a, b) => a[0] - b[0])
     .map(([level, id, name, a, b]) => ({ level, id, name, c: [a, b] }));
   const unlocked = id => { const r = REWARDS.find(x => x.id === id); return !r || levelOf(S.xp) >= r.level; };
 

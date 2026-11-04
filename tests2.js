@@ -220,7 +220,7 @@
   T.circle = host => {
     let mode = 'circle';
     host.innerHTML = `<div class="tst"><div class="panel tst-main"><div class="cps3-opts">${seg('ciM', 'Mode', [['circle', 'Perfect circle'], ['snap', 'Angle snapping check']], mode)}</div>
-      <div class="tst-stage t2-stage t2-draw" id="ciStage" role="application" aria-label="Drawing area"><canvas id="ciCv"></canvas><div class="t2-home" id="ciDot"></div><div class="aim-msg" id="ciMsg"><b>Hold the left button and draw a circle</b><small>Around the dot, in one stroke. Bigger circles are harder.</small></div></div></div>
+      <div class="tst-stage t2-stage t2-draw" id="ciStage" role="application" aria-label="Drawing area"><canvas id="ciCv"></canvas><div class="t2-home" id="ciDot"></div><div class="aim-msg" id="ciMsg"><b>Hold the left button and draw a circle</b><small>Anywhere in the box, in one stroke. Bigger circles are harder.</small></div></div></div>
       ${side(['Roundness', 'ciScore'], [['Size', 'ciSize'], ['Closed', 'ciClose'], ['Your best', 'ciBest']], ['ciNote', 'Drawing a clean circle shows smooth control of your arm and wrist, the same control you need for tracking.'])}</div>`;
     const $ = s => host.querySelector(s), st = $('#ciStage'), cv = $('#ciCv'), cx = cv.getContext('2d');
     let pts = null, dpr = 1;
@@ -233,18 +233,37 @@
     st.addEventListener('pointermove', e => { if (!pts) return; (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => pts.push(at(ev))); cx.clearRect(0, 0, cv.width, cv.height); draw(); });
     const up = () => { if (!pts) return; const p = pts; pts = null; mode === 'circle' ? judgeCircle(p) : judgeLine(p); };
     st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
-    function judgeCircle(p) {
-      const c = [st.clientWidth / 2, st.clientHeight / 2], rs = p.map(q => Math.hypot(q[0] - c[0], q[1] - c[1])), mr = mean(rs);
-      let sweep = 0; for (let i = 1; i < p.length; i++) { let d = Math.atan2(p[i][1] - c[1], p[i][0] - c[0]) - Math.atan2(p[i - 1][1] - c[1], p[i - 1][0] - c[0]); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; sweep += d; }
-      const deg = Math.abs(sweep) * 180 / Math.PI, gap = Math.hypot(p[0][0] - p[p.length - 1][0], p[0][1] - p[p.length - 1][1]);
-      pts = p; draw();
+    // the circle that fits the stroke best (least squares), so it can be drawn anywhere in the box
+    function fitCircle(p) {
+      let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, sz = 0, sxz = 0, syz = 0; const n = p.length;
+      p.forEach(([x, y]) => { const z = x * x + y * y; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y; sz += z; sxz += x * z; syz += y * z; });
+      // solve [sxx sxy sx; sxy syy sy; sx sy n] [D E F] = -[sxz syz sz]
+      const M = [[sxx, sxy, sx, -sxz], [sxy, syy, sy, -syz], [sx, sy, n, -sz]];
+      for (let i = 0; i < 3; i++) { let m = i; for (let r = i + 1; r < 3; r++) if (Math.abs(M[r][i]) > Math.abs(M[m][i])) m = r; [M[i], M[m]] = [M[m], M[i]]; if (Math.abs(M[i][i]) < 1e-9) return null;
+        for (let r = 0; r < 3; r++) if (r !== i) { const f = M[r][i] / M[i][i]; for (let c = i; c < 4; c++) M[r][c] -= f * M[i][c]; } }
+      const D = M[0][3] / M[0][0], E = M[1][3] / M[1][1], F = M[2][3] / M[2][2], cx0 = -D / 2, cy0 = -E / 2, r2 = cx0 * cx0 + cy0 * cy0 - F;
+      return r2 > 0 ? [cx0, cy0, Math.sqrt(r2)] : null;
+    }
+    function judgeCircle(raw) {
+      pts = raw; draw();
       const fail = msg => { $('#ciMsg').hidden = false; $('#ciMsg').innerHTML = `<b>${msg}</b><small>Hold the left button and try again</small>`; $('#ciScore').textContent = '—'; };
-      if (p.length < 20 || mr < 50) return fail('Draw a bigger circle');
-      if (deg < 320) return fail('Go all the way round');
-      if (deg > 450) return fail('Just one lap, please');
-      const score = Math.max(0, Math.min(100, 100 * (1 - 2.5 * sd(rs) / mr) - Math.max(0, gap / mr - .15) * 20));
+      const f = raw.length >= 20 && fitCircle(raw);
+      if (!f || f[2] < 45) return fail('Draw a bigger circle');
+      if (f[2] > Math.max(st.clientWidth, st.clientHeight)) return fail('That doesn’t look like a circle');
+      // how far round the stroke goes (around its own centre); only the first full lap is scored
+      let sweep = 0, cut = raw.length;
+      for (let i = 1; i < raw.length; i++) {
+        let d = Math.atan2(raw[i][1] - f[1], raw[i][0] - f[0]) - Math.atan2(raw[i - 1][1] - f[1], raw[i - 1][0] - f[0]);
+        if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; sweep += d;
+        if (Math.abs(sweep) >= 2 * Math.PI) { cut = i + 1; break; }
+      }
+      const deg = Math.abs(sweep) * 180 / Math.PI;
+      if (deg < 300) return fail('Go all the way round');
+      const p = raw.slice(0, cut), c = fitCircle(p) || f, rs = p.map(q => Math.hypot(q[0] - c[0], q[1] - c[1])), mr = mean(rs);
+      const gap = deg >= 359 ? 0 : Math.hypot(p[0][0] - p[p.length - 1][0], p[0][1] - p[p.length - 1][1]);
+      const score = Math.max(0, Math.min(100, 100 * (1 - 3 * sd(rs) / mr) - Math.max(0, gap / mr - .2) * 25));
       cx.save(); cx.setLineDash([6, 8]); cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(c[0], c[1], mr, 0, Math.PI * 2); cx.stroke(); cx.restore();
-      $('#ciScore').textContent = fmt(score, 1) + '%'; $('#ciSize').textContent = fmt(mr) + ' px'; $('#ciClose').textContent = gap < mr * .15 ? 'Yes' : fmt(gap) + ' px gap';
+      $('#ciScore').textContent = fmt(score, 1) + '%'; $('#ciSize').textContent = fmt(mr) + ' px'; $('#ciClose').textContent = gap < mr * .2 ? 'Yes' : fmt(gap) + ' px gap';
       const pb = best('circle', 'all', +score.toFixed(1), true); showBest(); record('circle', score, mr > 150 ? 'large' : 'small');
       $('#ciNote').textContent = (pb ? 'New personal best! ' : '') + (score >= 92 ? 'Near perfect. Try drawing it bigger.' : score >= 80 ? 'Nice and smooth. Watch for flat spots at the top and bottom.' : 'Go slower and use your arm, not just your fingers.');
       $('#ciMsg').hidden = false; $('#ciMsg').innerHTML = `<b>${fmt(score, 1)}% round</b><small>Draw again to improve it</small>`;
@@ -262,7 +281,7 @@
       $('#ciMsg').hidden = false; $('#ciMsg').innerHTML = `<b>${snapped ? 'Angle snapping: likely on' : 'Angle snapping: not seen'}</b><small>Wobble ±${fmt(res, 2)} px at ${fmt(ang, 1)}° off straight</small>`;
     }
     segOn(host, 'ciM', v => { mode = v; cx.clearRect(0, 0, cv.width, cv.height); $('#ciDot').hidden = v !== 'circle'; $('#ciMsg').hidden = false;
-      $('#ciMsg').innerHTML = v === 'circle' ? '<b>Hold the left button and draw a circle</b><small>Around the dot, in one stroke. Bigger circles are harder.</small>' : '<b>Hold the left button and draw a slow, straight line</b><small>Close to horizontal, across most of the box</small>';
+      $('#ciMsg').innerHTML = v === 'circle' ? '<b>Hold the left button and draw a circle</b><small>Anywhere in the box, in one stroke. Bigger circles are harder.</small>' : '<b>Hold the left button and draw a slow, straight line</b><small>Close to horizontal, across most of the box</small>';
       host.querySelector('.cps3-big small').textContent = v === 'circle' ? 'Roundness' : 'Angle snapping'; ['ciScore', 'ciSize', 'ciClose'].forEach(i => { $('#' + i).textContent = '—'; });
       host.querySelectorAll('.cps3-mini span')[1].textContent = v === 'circle' ? 'Closed' : 'Wobble'; host.querySelectorAll('.cps3-mini span')[0].textContent = v === 'circle' ? 'Size' : 'Length'; });
     guard(st); addEventListener('resize', size); size(); showBest();

@@ -47,7 +47,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.goto(BASE + './?nochooser'); await p.waitForTimeout(600);
   await p.evaluate(() => PMBackend.signUp({ name: 'Tester', email: 't' + Date.now() + '@x.com', password: 'longenough' }));
   await p.evaluate(() => PMBackend.updateProfile({ onboarded: true }));
-  await p.evaluate(() => PMBackend.applyOrder({ id: 'T1', createdAt: Date.now(), total: 599, items: [{ ...PM_CONFIG.basic.product }] }));
+  await p.evaluate(() => PMBackend.applyOrder({ id: 'T1', code: 'DEV1234', createdAt: Date.now(), total: 599, items: [{ ...PM_CONFIG.basic.product }] }));
   const s1 = await p.evaluate(() => ({ t: PMBackend.tier(), d: PMBackend.balance().daily, lim: PMBackend.resultsLimit(), bd: PMBackend.has('breakdown'), adv: PMBackend.has('advanced'), theme: document.documentElement.dataset.plan || '' }));
   ok(s1.t === 'basic' && s1.d === 7 && s1.lim === 5 && s1.bd && !s1.adv && s1.theme === 'basic', 'Basic: 7 credits, top 5, breakdown, no advanced, navy theme ' + JSON.stringify(s1));
   await p.goto(BASE + 'recommendations'); await p.waitForTimeout(1000);
@@ -66,11 +66,11 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   ok(c0 - c1 === 2, `6 AI questions used 2 credits (${c0} → ${c1})`);
   ok(/question/.test(await p.textContent('#aiMeter')), 'AI credit meter shown: ' + (await p.textContent('#aiMeter')).trim());
   // 4. Lite sees bests, Ultra gets stats
-  await p.evaluate(() => PMBackend.applyOrder({ id: 'T2', createdAt: Date.now(), total: 2499, items: [{ ...PM_CONFIG.lite.product }] }));
+  await p.evaluate(() => PMBackend.applyOrder({ id: 'T2', code: 'DEV1234', createdAt: Date.now(), total: 2499, items: [{ ...PM_CONFIG.lite.product }] }));
   await p.goto(BASE + 'reaction-test'); await p.waitForTimeout(800);
   await p.evaluate(() => { [260, 241, 233].forEach((v, i) => setTimeout(() => PMStats.record('reaction', v, '5 rounds'), i * 5)); }); await p.waitForTimeout(300);
   ok(await p.evaluate(() => document.documentElement.dataset.plan) === 'lite' && await p.isVisible('[data-tstats="reaction"] .ts-lock') && /233/.test(await p.textContent('[data-tstats="reaction"]')), 'Lite: personal best + Ultra lock on test stats');
-  await p.evaluate(() => PMBackend.applyOrder({ id: 'T3', createdAt: Date.now(), total: 3199, items: [{ ...PM_CONFIG.ultra.product }] }));
+  await p.evaluate(() => PMBackend.applyOrder({ id: 'T3', code: 'DEV1234', createdAt: Date.now(), total: 3199, items: [{ ...PM_CONFIG.ultra.product }] }));
   const s3 = await p.evaluate(() => ({ t: PMBackend.tier(), d: PMBackend.balance().daily, turbo: Math.round((PMBackend.turbo().until - Date.now()) / 864e5), cost: PMBackend.costPerRecommendation() }));
   await p.goto(BASE + 'mouse-ai'); await p.waitForTimeout(800);
   const u0 = await p.evaluate(() => PMBackend.balance().total);
@@ -81,7 +81,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.evaluate(() => PMStats.record('reaction', 228, '5 rounds')); await p.waitForTimeout(1300);
   ok(await p.isVisible('[data-tstats="reaction"] .ts-chart') && await p.$$eval('[data-tstats="reaction"] .ts-tiles > div', a => a.length) >= 6, 'Ultra: full statistics panel with chart and tiles');
   ok((await p.evaluate(() => (PMBackend.getUser().extras.testLog.reaction || []).length)) >= 4, 'Ultra: sessions saved to the account');
-  await p.evaluate(() => PMBackend.applyOrder({ id: 'T4', createdAt: Date.now(), total: 2499, items: [{ ...PM_CONFIG.lite.product }] }));
+  await p.evaluate(() => PMBackend.applyOrder({ id: 'T4', code: 'DEV1234', createdAt: Date.now(), total: 2499, items: [{ ...PM_CONFIG.lite.product }] }));
   ok(await p.evaluate(() => PMBackend.tier()) === 'ultra', 'buying Lite never downgrades Ultra');
   // 5. pages render without errors
   for (const pg of ['shop', 'basic', 'lite', 'ultra', 'my-stats', 'tests', 'cps-test', 'aim-trainer', 'double-click-test', 'scroll-test', 'mouse-button-test', 'polling-rate-test', 'account', 'elite', 'mice', 'mice/compare', 'blog/', 'daily', 'setup', 'tracking-test', 'flick-test', 'target-rush', 'rhythm-test', 'circle-test', 'dpi-analyzer']) { await p.goto(BASE + pg); await p.waitForTimeout(500); }
@@ -92,10 +92,19 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   ok(await p.$$eval('.sk-list li', a => a.length) === 8 && await p.isVisible('.sk-coach'), 'skill profile: 8 skills and the coach');
   // 6. Daily: quests, rewards, pop-up settings
   await p.goto(BASE + 'daily'); await p.waitForTimeout(600);
-  ok(await p.$$eval('.dy-q-item', a => a.length) === 3 && await p.$$eval('.dy-rw', a => a.length) === 17, 'Daily: 3 weekly quests and 17 colour rewards');
+  ok(await p.$$eval('.dy-q-item', a => a.length) === 3 && await p.$$eval('.dy-rw', a => a.length) === 29, 'Daily: 3 weekly quests and 29 colour rewards');
   await p.click('[data-core-set="toasts:off"]'); await p.evaluate(() => PMStats.record('reaction', 199, '')); await p.waitForTimeout(300);
   ok(!(await p.isVisible('.core-toast.on')), 'pop-ups can be turned off');
   await p.click('[data-core-set="toasts:all"]');
+  // 7. checkout only with an unlock code; UI revamps are bought with credits
+  ok(await p.evaluate(() => PMBackend.applyOrder({ id: 'T9', code: 'nope', items: [{ id: 'credits-10', type: 'credits', credits: 10, qty: 1 }] }).then(() => 'granted', e => e.code)) === 'BAD_CODE', 'a wrong code grants nothing');
+  ok(await p.evaluate(() => PMBackend.applyOrder({ id: 'T10', items: [{ id: 'credits-10', type: 'credits', credits: 10, qty: 1 }] }).then(() => 'granted', e => e.code)) === 'BAD_CODE', 'no code grants nothing');
+  await p.goto(BASE + 'shop'); await p.waitForTimeout(600);
+  ok(await p.$$eval('.rv-card', a => a.length) === 7, 'shop lists the UI revamps');
+  const rv = await p.evaluate(async () => { const b = PMBackend.balance().total, r = await PMBackend.buyRevamp('glass'); PMRevamp.use('glass'); return [b - PMBackend.balance().total, r.owned.includes('glass'), document.documentElement.dataset.revamp]; });
+  ok(rv[0] === 30 && rv[1] && rv[2] === 'glass', 'Glass revamp bought for 30 credits and applied');
+  await p.goto(BASE + 'tests'); ok(await p.evaluate(() => document.documentElement.dataset.revamp) === 'glass', 'revamp kept across pages');
+  await p.evaluate(() => PMRevamp.use('default'));
   ok(errs.length === 0, 'no console errors' + (errs.length ? ':\n  ' + errs.slice(0, 8).join('\n  ') : ''));
   await b.close(); console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
 })();

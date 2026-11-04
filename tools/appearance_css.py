@@ -24,6 +24,10 @@ MORE = {  # name: (accent, accent-2, gradient from, gradient to)
  'violet': ('#8b5cf6', '#6d28d9', '#a78bfa', '#5b21b6'), 'gold': ('#eab308', '#ca8a04', '#fde047', '#a16207'), 'ice': ('#7dd3fc', '#38bdf8', '#e0f2fe', '#0ea5e9'),
  'coral': ('#fb7185', '#f43f5e', '#fda4af', '#e11d48'), 'teal': ('#14b8a6', '#0f766e', '#2dd4bf', '#115e59'), 'crimson': ('#dc2626', '#991b1b', '#ef4444', '#7f1d1d'),
  'lavender': ('#c4b5fd', '#a78bfa', '#ede9fe', '#8b5cf6'), 'toxic': ('#a3ff12', '#22c55e', '#d9f99d', '#16a34a'),
+ 'rose': ('#f43f5e', '#be123c', '#fb7185', '#9f1239'), 'forest': ('#22c55e', '#15803d', '#4ade80', '#14532d'), 'mint': ('#6ee7b7', '#10b981', '#d1fae5', '#059669'),
+ 'sky': ('#60a5fa', '#2563eb', '#bfdbfe', '#1d4ed8'), 'indigo': ('#6366f1', '#4338ca', '#818cf8', '#312e81'), 'plum': ('#c026d3', '#86198f', '#e879f9', '#701a75'),
+ 'peach': ('#fdba74', '#fb923c', '#ffedd5', '#ea580c'), 'copper': ('#d97706', '#b45309', '#f59e0b', '#78350f'), 'magenta': ('#ec4899', '#a21caf', '#f472b6', '#86198f'),
+ 'aqua': ('#2dd4bf', '#06b6d4', '#99f6e4', '#0e7490'), 'slate': ('#94a3b8', '#64748b', '#cbd5e1', '#334155'), 'blood': ('#b91c1c', '#7f1d1d', '#dc2626', '#450a0a'),
 }
 for k, v in MORE.items(): P[k] = derive(*v)
 def rgb(h): return ', '.join(str(int(h[i:i + 2], 16)) for i in (1, 3, 5))
@@ -33,7 +37,7 @@ for k, (bg, b2, b3, s1, s2, ac, ac2, deep, ga, gb, t2, t3, ser) in P.items():
     out.append(f'html[data-accent="{k}"] {{ --bg: {bg}; --bg-2: {b2}; --bg-3: {b3}; --surface: {s1}; --surface-2: {s2}; --bg-rgb: {rgb(bg)}; --bg2-rgb: {rgb(b2)}; --bg3-rgb: {rgb(b3)}; '
                f'--accent: {ac}; --accent-2: {ac2}; --accent-deep: {deep}; --accent-rgb: {rgb(ac)}; --accent2-rgb: {rgb(ac2)}; --accent-dim: rgba({rgb(ac)}, .14); --accent-glow: rgba({rgb(ac)}, .42); '
                f'--grad: linear-gradient(120deg, {ga} 0%, {gb} 100%); --text-2: {t2}; --text-3: {t3}; ' + ' '.join(f'--s{i + 1}: {c};' for i, c in enumerate(ser)) + ' }')
-out.append('''html[data-accent="mono"] .btn-primary, html[data-accent="ice"] .btn-primary, html[data-accent="lavender"] .btn-primary, html[data-accent="toxic"] .btn-primary, html[data-accent="gold"] .btn-primary, html[data-accent="lime"] .btn-primary { color: #0a0a0b; }
+out.append('''html[data-accent="mono"] .btn-primary, html[data-accent="ice"] .btn-primary, html[data-accent="lavender"] .btn-primary, html[data-accent="toxic"] .btn-primary, html[data-accent="gold"] .btn-primary, html[data-accent="lime"] .btn-primary, html[data-accent="mint"] .btn-primary, html[data-accent="peach"] .btn-primary, html[data-accent="aqua"] .btn-primary { color: #0a0a0b; }
 html[data-bg="plain"] .hero-bg-grid, html[data-bg="plain"] .ambient .grain { display: none; }
 html[data-bg="aurora"] .ambient::before { opacity: .85; width: 80vmax; height: 80vmax; } html[data-bg="aurora"] .ambient::after { opacity: .8; background: radial-gradient(circle, rgba(var(--accent-rgb), .3), transparent 65%); }
 html[data-glow="off"] { --accent-glow: transparent; --shadow-accent: none; } html[data-glow="off"] .ambient { display: none; }

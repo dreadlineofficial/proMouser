@@ -68,7 +68,7 @@
     Object.entries(s.passes || {}).forEach(([f, t]) => { if (ms(t) > Date.now()) passes[f] = ms(t); });
     return {
       id: s.id, name: s.name, username: s.username, bio: s.bio || '', location: s.location || '',
-      website: s.website || '', avatarUrl: s.avatar_url || null,
+      website: s.website || '', avatarUrl: s.avatar_url || null, cosmetics: s.cosmetics || {},
       identities: (authUser && authUser.identities || []).map(i => ({
         provider: i.provider,
         label: i.identity_data && (i.identity_data.preferred_username || i.identity_data.user_name || i.identity_data.full_name || i.identity_data.name) || ''
@@ -311,19 +311,21 @@
       const c = await ready;
       const ids = [];
       order.items.forEach(it => { for (let i = 0; i < (it.qty || 1); i++) ids.push(it.id); });
-      if (SB.testPayments) {
-        const { error } = await c.rpc('test_grant_order', { p_order: order.id, p_products: ids });
-        if (error) throw fail(/Could not find the function|does not exist/i.test(error.message) ? 'Test payments are off: run supabase/test-payments.sql or set testPayments to false.' : friendly(error));
-        return clone(await refresh());
-      }
-      // Real payments: the Razorpay webhook grants the order on the server. Wait for it to show up.
-      for (let i = 0; i < 15; i++) {
-        await refresh();
-        if (user.orders.some(o => o.id === order.id)) return clone(user);
-        await new Promise(r => setTimeout(r, 2000));
-      }
-      throw fail('Payment received, but your order is still processing. It will appear in your account shortly.');
+      // Nothing is sold for money yet: the order goes through only with a valid unlock code (checked on the server).
+      const { data, error } = await c.rpc('redeem_order', { p_code: order.code || '', p_order: order.id, p_products: ids });
+      if (error) throw fail(/Could not find the function|does not exist/i.test(error.message) ? 'Codes aren’t set up yet: run supabase/schema.sql in Supabase.' : friendly(error));
+      if (!data || !data.ok) { const e = fail(data && data.reason === 'TOO_MANY_TRIES' ? 'Too many wrong codes. Try again in 10 minutes.' : 'That code isn’t valid.'); e.code = (data && data.reason) || 'BAD_CODE'; throw e; }
+      return clone(await refresh());
     },
+    /* UI revamps: bought with credits on the server (buy_revamp) */
+    async buyRevamp(id) {
+      need();
+      const { data, error } = await (await ready).rpc('buy_revamp', { p_id: id });
+      if (error) { const e = fail(/NO_CREDITS/.test(error.message) ? 'Not enough credits.' : /UNKNOWN_REVAMP/.test(error.message) ? 'Unknown revamp.' : friendly(error)); if (/NO_CREDITS/.test(error.message)) e.code = 'NO_CREDITS'; throw e; }
+      await refresh();
+      return { charged: data.charged, owned: data.owned || [] };
+    },
+    revampsOwned() { return ((user && user.cosmetics && user.cosmetics.revamps) || []).slice(); },
     async cancelLite() { return setCancelled(true); },
     async resumeLite() { return setCancelled(false); },
 

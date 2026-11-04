@@ -19,8 +19,9 @@ It takes about 10 minutes.
 1. In the left sidebar, open **SQL Editor** and click **New query**.
 2. Open `supabase/schema.sql` from this folder, copy all of it, paste it in and click **Run**.
    It should end with "Success. No rows returned".
-3. *(Optional, until Razorpay is live)* Do the same with `supabase/test-payments.sql`.
-   This keeps the fake checkout working, so test purchases really add credits, a pass or Lite.
+   Purchases only go through with an **unlock code**: the checkout asks for one and the server
+   checks it (`redeem_order`). The codes are stored as SHA-256 hashes in `public.unlock_codes`;
+   the comments at the end of `schema.sql` show how to add or switch off a code.
 
 Check that it worked: **Table Editor** should now list `profiles`, `credit_balances`,
 `products`, `orders` and `recommendation_runs`. The profile migration adds a unique
@@ -50,8 +51,7 @@ a generated username. Running the schema again is safe.
    ```js
    window.PM_SUPABASE = {
      url: 'https://YOUR-PROJECT.supabase.co',
-     anonKey: 'sb_publishable_...',
-     testPayments: true
+     anonKey: 'sb_publishable_...'
    };
    ```
    These two values are designed to be public. **Never** paste the `service_role` /
@@ -131,10 +131,8 @@ Everyone else gets "not a developer", even if they find the functions.
    Razorpay's signature, then call
    `grant_order(user_id, order_id, product_ids, payment_id)` with the service-role key.
    It returns the order total, so you can check it matches what Razorpay charged.
-3. In `shop.js`, replace `PMPayments.pay()` with Razorpay Checkout (the comment there has
-   the steps). After payment, the site waits for the webhook's order to appear.
-4. Set `testPayments: false` in `supabase-config.js`, then run
-   `drop function public.test_grant_order(text, text[]);` in the SQL Editor.
+3. In `shop.js`, add Razorpay Checkout next to the unlock-code box, and have the site wait
+   for the webhook's order to appear before showing success.
 
 ## Files
 | File | What it is |
@@ -143,6 +141,5 @@ Everyone else gets "not a developer", even if they find the functions.
 | `backend-supabase.js` | the Supabase version of the site's account/credits backend |
 | `backend.js` | demo backend, used when no keys are set; holds `PM_CONFIG` |
 | `supabase/schema.sql` | tables, security rules and server functions |
-| `supabase/test-payments.sql` | optional: lets the fake checkout grant purchases |
 | `supabase/dev-tools.sql` | optional: dev-panel actions for accounts in `public.developers` |
 | `vendor/supabase-2.117.3.js` | the official Supabase JS library (MIT), loaded only when connected |

@@ -1,10 +1,25 @@
-# ProMouser redesign — notes (v11)
+# ProMouser redesign — notes (v12)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v11: more tests, a skill profile, and Daily that pays off
+## What's new in v12: unlock codes, UI revamps, more colours
+
+- **No more demo purchases.** Everything in the shop (plans, passes, credits, Turbo, ProMouser Online items) only unlocks with a valid **unlock code** at checkout. The fake payment methods and "simulate a failure" are gone. Codes are stored as SHA-256 hashes, never in plain text, and checked case-insensitively. 8 wrong codes in 10 minutes locks the checkout for a while.
+  - With Supabase connected, `redeem_order()` in `schema.sql` checks the code on the server, and the old `test_grant_order` function is dropped. Add or switch off codes in `public.unlock_codes` (see the comments in `schema.sql`).
+  - Without Supabase (demo mode, which is what the live site uses right now), the browser checks the code hash.
+- **UI revamps** (`revamps.css`): six whole new looks for every page, bought with credits in the shop (Shop → UI revamps) and switched on the account page. Cosmetic only. Any revamp can be previewed before buying.
+  - Terminal (40 credits), Paper (40, a light theme), Arcade (60), Glass (30), Brutal (50) and Synthwave (60).
+  - Each changes the fonts (loaded on demand), colours, shapes, shadows, background, nav, buttons, cards, headings and page width.
+  - Online, `buy_revamp()` charges the credits and records ownership in `profiles.cosmetics`, which the browser can't write.
+- **More colours**: 31 palettes. The 12 new ones (Sky, Mint, Rose, Indigo, Peach, Forest, Aqua, Plum, Slate, Copper, Magenta and Blood) join the level rewards between levels 11 and 35. Ultra has them all.
+- **Circle test fixed**: the circle is now fitted wherever you draw it, not measured from the centre dot. It used to fail off-centre circles, or score them around 10%. Going a little past one lap no longer costs points.
+- **Shop refresh fix**: after a purchase the shop page updates as soon as the checkout closes, instead of showing old credits and plans until you reload.
+
+**Supabase:** re-run `supabase/schema.sql`. `supabase/test-payments.sql` is gone; don't run old copies of it.
+
+## v11: more tests, a skill profile, and Daily that pays off
 
 - **Six new tests** (`tests2.js`, one page each): **Tracking** (stay on a moving target, % on target), **Flick** (20 flicks from the centre: time, accuracy and path efficiency), **Target rush** (shrinking targets that speed up, 3 lives), **Rhythm** (click on the beat at 90–180 BPM: ms off the beat, early/late tendency), **Circle** (draw a perfect circle; also an angle-snapping check) and the **DPI analyzer** (move a measured distance with a ruler and get your real DPI; raw input in Chrome/Edge). 13 tests in all, with stats, personal bests, hub cards and XP.
 - **Skill profile** (`skills.js`, on My stats and Daily, free for everyone): eight skills scored 0–100 from your last 5 results against rough benchmarks, an overall score, trends, a **coach** that picks what to practise next, **personal records** for every test and a 12-week **activity** heatmap.

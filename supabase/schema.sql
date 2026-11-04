@@ -249,7 +249,7 @@ begin
       'location', p.location, 'website', p.website, 'avatar_url', p.avatar_url,
       'prefs', p.prefs, 'onboarded', p.onboarded,
       'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at,
-      'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best, 'progress', p.progress,
+      'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best, 'progress', p.progress, 'cosmetics', p.cosmetics,
       'passes', coalesce((select jsonb_object_agg(x.feature, x.until) from public.user_passes x where x.user_id = p.id and x.until > now()), '{}'::jsonb),
       'credits', jsonb_build_object('date', b.daily_date, 'daily', b.daily, 'purchased', b.purchased))
     into r
@@ -391,3 +391,82 @@ do $$ begin
     execute $p$create policy "avatar delete" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
   end if;
 end $$;
+
+-- ---------------------------------------------------------------- unlock codes (no paid checkout yet)
+-- Nothing is sold for money. A purchase only goes through with an unlock code. Codes are stored as
+-- SHA-256 hashes of the lower-cased, trimmed code, so the codes themselves aren't in this file.
+-- Add one:     insert into public.unlock_codes (hash, label) values (encode(sha256(convert_to(lower('NEWCODE'), 'UTF8')), 'hex'), 'my note');
+-- Turn off:    update public.unlock_codes set active = false where label = 'my note';
+create table if not exists public.unlock_codes (hash text primary key, label text not null default '', active boolean not null default true);
+create table if not exists public.code_attempts (user_id uuid not null references auth.users(id) on delete cascade, at timestamptz not null default now());
+create index if not exists code_attempts_idx on public.code_attempts (user_id, at desc);
+alter table public.unlock_codes  enable row level security;   -- no policies: never readable from the browser
+alter table public.code_attempts enable row level security;
+revoke all on public.unlock_codes, public.code_attempts from anon, authenticated;
+insert into public.unlock_codes (hash, label) values
+  ('a78f8128f2109434daf14d867c665d97a242909409b29bc0a965111d8a4a9f80', 'code 1'),
+  ('a3e35c83f5e38f9cabd79021eb7f517cd11ffabcd743ce999539911ec593692e', 'code 2')
+  on conflict (hash) do nothing;
+
+-- the old "anyone can grant themselves an order" test function is gone for good
+drop function if exists public.test_grant_order(text, text[]);
+
+-- Redeem an order with a code. 8 wrong codes in 10 minutes locks the account out for a while.
+-- Returns {ok, total} or {ok: false, reason: 'BAD_CODE' | 'TOO_MANY_TRIES'}.
+create or replace function public.redeem_order(p_code text, p_order text, p_products text[]) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid(); h text; total int;
+begin
+  if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
+  delete from public.code_attempts where at < now() - interval '1 day';
+  if (select count(*) from public.code_attempts where user_id = uid and at > now() - interval '10 minutes') >= 8 then
+    return jsonb_build_object('ok', false, 'reason', 'TOO_MANY_TRIES');
+  end if;
+  h := encode(sha256(convert_to(lower(btrim(coalesce(p_code, ''))), 'UTF8')), 'hex');
+  if not exists (select 1 from public.unlock_codes where hash = h and active) then
+    insert into public.code_attempts (user_id) values (uid);
+    return jsonb_build_object('ok', false, 'reason', 'BAD_CODE');
+  end if;
+  if p_order is null or p_order !~ '^[A-Za-z0-9_-]{4,40}$' then raise exception 'BAD_ORDER'; end if;
+  total := public.grant_order(uid, p_order, p_products, null, 'code');
+  return jsonb_build_object('ok', true, 'total', total);
+end $$;
+revoke all on function public.redeem_order(text, text, text[]) from public, anon;
+grant execute on function public.redeem_order(text, text, text[]) to authenticated;
+
+-- ---------------------------------------------------------------- UI revamps (cosmetic only, bought with credits)
+-- Owned revamps live in profiles.cosmetics, which the browser can't write; buy_revamp() is the only way in.
+alter table public.profiles add column if not exists cosmetics jsonb not null default '{}'::jsonb;
+alter table public.profiles drop constraint if exists profiles_cosmetics_check;
+alter table public.profiles add constraint profiles_cosmetics_check check (jsonb_typeof(cosmetics) = 'object' and pg_column_size(cosmetics) < 8000);
+create table if not exists public.revamps (id text primary key, name text not null, credits int not null check (credits > 0), active boolean not null default true);
+alter table public.revamps enable row level security;
+drop policy if exists "revamps read" on public.revamps;
+create policy "revamps read" on public.revamps for select to anon, authenticated using (active);
+revoke insert, update, delete on public.revamps from anon, authenticated;
+insert into public.revamps (id, name, credits) values
+  ('terminal', 'Terminal', 40), ('paper', 'Paper', 40), ('arcade', 'Arcade', 60),
+  ('glass', 'Glass', 30), ('brutal', 'Brutal', 50), ('synthwave', 'Synthwave', 60)
+  on conflict (id) do update set name = excluded.name, credits = excluded.credits, active = true;
+
+-- Buy a revamp with credits (daily credits first, then purchased). Owning it twice costs nothing.
+create or replace function public.buy_revamp(p_id text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid(); rv public.revamps; owned jsonb; b public.credit_balances; from_daily int;
+begin
+  if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
+  select * into rv from public.revamps where id = p_id and active;
+  if not found then raise exception 'UNKNOWN_REVAMP'; end if;
+  perform public.pm_refresh(uid);
+  select coalesce(cosmetics->'revamps', '[]'::jsonb) into owned from public.profiles where id = uid for update;
+  if owned ? p_id then return jsonb_build_object('charged', 0, 'owned', owned); end if;
+  select * into b from public.credit_balances where user_id = uid for update;
+  if b.daily + b.purchased < rv.credits then raise exception 'NO_CREDITS'; end if;
+  from_daily := least(b.daily, rv.credits);
+  update public.credit_balances set daily = daily - from_daily, purchased = purchased - (rv.credits - from_daily) where user_id = uid;
+  owned := owned || to_jsonb(p_id);
+  update public.profiles set cosmetics = jsonb_set(cosmetics, '{revamps}', owned) where id = uid;
+  return jsonb_build_object('charged', rv.credits, 'owned', owned);
+end $$;
+revoke all on function public.buy_revamp(text) from public, anon;
+grant execute on function public.buy_revamp(text) to authenticated;

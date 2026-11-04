@@ -52,6 +52,20 @@
     ]
   };
 
+  // UI revamps: whole new looks for the site (fonts, layout, shapes, colours). Cosmetic only, bought with credits.
+  // The same list (ids and prices) lives in supabase/schema.sql (public.revamps), which is what counts online.
+  CONFIG.revamps = [
+    { id: 'terminal', name: 'Terminal', credits: 40, desc: 'A green-on-black command line: monospace everything, square edges, scanlines and [ bracket ] buttons.' },
+    { id: 'paper', name: 'Paper', credits: 40, desc: 'A light, printed-magazine look: cream pages, ink-black serif type, a narrow reading column and ruled cards.' },
+    { id: 'arcade', name: 'Arcade', credits: 60, desc: 'Pixel fonts, chunky outlines, hard drop shadows and neon on a checkerboard floor.' },
+    { id: 'glass', name: 'Glass', credits: 30, desc: 'Frosted panels floating over a drifting colour mesh, with big soft corners and airy spacing.' },
+    { id: 'brutal', name: 'Brutal', credits: 50, desc: 'Raw and loud: heavy outlines, hard offset shadows, zero rounding, huge type and yellow highlights.' },
+    { id: 'synthwave', name: 'Synthwave', credits: 60, desc: 'Retro-future: chrome headings, a neon horizon grid, sunset gradients and glowing edges.' }
+  ];
+  // Unlock codes: nothing is sold for money yet, a purchase only goes through with a code.
+  // SHA-256 of the lower-cased code (the codes themselves aren't in the source). Online, supabase/schema.sql decides.
+  CONFIG.unlockHashes = ['a78f8128f2109434daf14d867c665d97a242909409b29bc0a965111d8a4a9f80', 'a3e35c83f5e38f9cabd79021eb7f517cd11ffabcd743ce999539911ec593692e'];
+
   CONFIG.pass = CONFIG.passes[0];   // the pass the shop features
 
   /* ---------- plan tiers: free < lite < ultra, and which features each unlocks ---------- */
@@ -92,6 +106,22 @@
   const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  function sha256(str) {
+    const K = [], H = [], isP = n => { for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; }, fr = x => ((x - Math.floor(x)) * 4294967296) | 0;
+    for (let n = 2, c = 0; c < 64; n++) if (isP(n)) { if (c < 8) H[c] = fr(Math.pow(n, 1 / 2)); K[c++] = fr(Math.pow(n, 1 / 3)); }
+    const b = Array.from(new TextEncoder().encode(str)), L = b.length * 8; b.push(0x80); while (b.length % 64 !== 56) b.push(0);
+    for (let i = 7; i >= 0; i--) b.push(i > 3 ? 0 : (L >>> (i * 8)) & 255);
+    const r = (x, n) => (x >>> n) | (x << (32 - n)), W = new Array(64);
+    for (let o = 0; o < b.length; o += 64) {
+      for (let i = 0; i < 16; i++) W[i] = (b[o + i * 4] << 24) | (b[o + i * 4 + 1] << 16) | (b[o + i * 4 + 2] << 8) | b[o + i * 4 + 3];
+      for (let i = 16; i < 64; i++) { const s0 = r(W[i - 15], 7) ^ r(W[i - 15], 18) ^ (W[i - 15] >>> 3), s1 = r(W[i - 2], 17) ^ r(W[i - 2], 19) ^ (W[i - 2] >>> 10); W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0; }
+      let [a, bb, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) { const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) | 0; h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0; }
+      [a, bb, c, d, e, f, g, h].forEach((v, i) => { H[i] = (H[i] + v) | 0; });
+    }
+    return H.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  const codeOk = code => CONFIG.unlockHashes.includes(sha256(String(code || '').trim().toLowerCase()));
   const uid = p => p + '-' + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
   const delay = ms => new Promise(r => setTimeout(r, ms));
   const listeners = new Set();
@@ -281,7 +311,10 @@
     /* orders: called by the checkout once a payment has succeeded */
     async applyOrder(order) {
       const u = current(); if (!u) throw new Error('Please sign in first.');
-      const now = Date.now();
+      const now = Date.now(), tries = (u.codeTries || []).filter(t => now - t < 600000);
+      if (tries.length >= 8) { const e = new Error('Too many wrong codes. Try again in 10 minutes.'); e.code = 'TOO_MANY_TRIES'; throw e; }
+      if (!codeOk(order.code)) { u.codeTries = [...tries, now]; saveUser(u); const e = new Error('That code isn’t valid.'); e.code = 'BAD_CODE'; throw e; }
+      delete order.code;
       order.items.forEach(it => {
         const qty = it.qty || 1;
         if (it.type === 'credits') u.credits.purchased += it.credits * qty;
@@ -295,6 +328,18 @@
       });
       u.orders.unshift(order); saveUser(u); emit(); return clean(u);
     },
+    /* UI revamps: bought with credits (daily first, then purchased); owning one twice costs nothing */
+    async buyRevamp(id) {
+      await delay(120);
+      const u = current(); if (!u) throw new Error('Please sign in first.');
+      const R = CONFIG.revamps.find(x => x.id === id); if (!R) throw new Error('Unknown revamp.');
+      u.cosmetics = u.cosmetics || {}; const owned = u.cosmetics.revamps = u.cosmetics.revamps || [];
+      if (owned.includes(id)) return { charged: 0, owned: [...owned] };
+      if (u.credits.daily + u.credits.purchased < R.credits) { const e = new Error(`You need ${R.credits} credits.`); e.code = 'NO_CREDITS'; throw e; }
+      const fromDaily = Math.min(u.credits.daily, R.credits); u.credits.daily -= fromDaily; u.credits.purchased -= R.credits - fromDaily;
+      owned.push(id); saveUser(u); emit(); return { charged: R.credits, owned: [...owned] };
+    },
+    revampsOwned() { const u = current(); return ((u && u.cosmetics && u.cosmetics.revamps) || []).slice(); },
     async cancelLite() { const u = current(); if (u && PLAN.paid(u.plan.tier)) { u.plan.cancelled = true; saveUser(u); emit(); } return clean(u); },   // cancels Lite or Ultra renewal
     async resumeLite() { const u = current(); if (u && PLAN.paid(u.plan.tier)) { delete u.plan.cancelled; saveUser(u); emit(); } return clean(u); },
 

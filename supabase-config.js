@@ -13,12 +13,10 @@
    the database rules in supabase/schema.sql decide what each user can do.
    NEVER put the service_role / secret key here.
 
-   testPayments: true lets the fake checkout grant purchases for real, which
-   needs supabase/test-payments.sql. Set it to false (and drop that function)
-   before you take real money.
+   Purchases unlock only with a code, checked on the server (redeem_order in
+   supabase/schema.sql).
    ===================================================================== */
 window.PM_SUPABASE = {
   url: '',
-  anonKey: '',
-  testPayments: true
+  anonKey: ''
 };
