@@ -18,7 +18,11 @@
 
   /* ---------- helpers ---------- */
   const root = document.documentElement.dataset.root || '';
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const performanceMode = (() => {
+    try { return JSON.parse(localStorage.getItem('pm_accessibility') || '{}').performance === true; }
+    catch { return false; }
+  })();
+  const reduce = performanceMode || matchMedia('(prefers-reduced-motion: reduce)').matches;
   const NS = 'http://www.w3.org/2000/svg';
   const EASE = 'cubic-bezier(.16,1,.3,1)';
   const $ = (s, r = document) => r.querySelector(s);
@@ -205,7 +209,7 @@
     const mn = k => Math.min(...vals(k)), mx = k => Math.max(...vals(k));
     host.innerHTML = `
       <div class="kpis">
-        <div class="stat-tile"><span>Mice with spec sheets</span><b>${MICE.length}</b><small>${new Set(MICE.map(m => m.brand)).size} brands</small></div>
+        <div class="stat-tile"><span>Mice in catalogue</span><b>${MICE.length}</b><small>${new Set(MICE.map(m => m.brand)).size} brands</small></div>
         <div class="stat-tile"><span>Weights</span><b>${mn('weight')}–${mx('weight')} g</b><small>from ultralight to heavy</small></div>
         <div class="stat-tile"><span>Polling rates</span><b>${num(mn('poll'))}–${num(mx('poll'))} Hz</b><small>standard to ultra</small></div>
         <div class="stat-tile"><span>Prices</span><b>${inr(mn('price'))}–${inr(mx('price'))}</b><small>lowest trusted listings</small></div>
@@ -226,7 +230,7 @@
         </div>
         <p class="result-line" id="xCount" aria-live="polite"></p>
         <div class="table-wrap"><table class="spec-grid"><thead><tr id="tHead"></tr></thead><tbody id="tBody"></tbody></table></div>
-        <p class="stat-disclaimer">Specs are manufacturer-published headline figures; prices are the lowest trusted listing on each review page. Grip, hand-size and CPS fit are editorial estimates. “—” means the figure isn’t published.</p>
+        <p class="stat-disclaimer">Specs are published headline figures where available; some values and fit guidance are estimates. Prices may be approximate or change by seller. “—” means the figure isn’t published.</p>
       </article>
       <article class="panel" style="margin-top:20px"><div class="panel-head"><h3>Spec map</h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><select class="select" id="scY" aria-label="Y axis"></select><select class="select" id="scX" aria-label="X axis"></select></div></div>
@@ -340,7 +344,7 @@
   const SCORE_RING = (host) => {
     const C = 2 * Math.PI * 52;
     host.classList.add('ring');
-    host.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--accent-2)"/></linearGradient></defs><circle class="rg-bg" cx="60" cy="60" r="52"/><circle class="rg-fg" cx="60" cy="60" r="52" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg><div class="rg-num"><b>0</b><small>Match</small></div>`;
+    host.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="rg-bg" cx="60" cy="60" r="52"/><circle class="rg-fg" cx="60" cy="60" r="52" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg><div class="rg-num"><b>0</b><small>Match</small></div>`;
     const fg = $('.rg-fg', host), b = $('b', host);
     return v => { const prev = +host.dataset.v || 0; tween(900, t => { const x = prev + (v - prev) * t; fg.setAttribute('stroke-dashoffset', C * (1 - x / 100)); b.textContent = Math.round(x); }); host.dataset.v = v; };
   };
@@ -357,7 +361,7 @@
       const pct = k => { const p = top.parts.find(x => x.key === k); return p ? Math.round(p.value * 100) : 0; };
       const to = [top.score, pct('grip'), pct('weight'), pct('connection')], from = [...cur];
       tween(800, t => to.forEach((v, i) => { cur[i] = from[i] + (v - from[i]) * t; stats[i].textContent = Math.round(cur[i]) + '%'; }));
-      el.title.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 450, easing: EASE });
+      if (!reduce) el.title.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 450, easing: EASE });
     }
     el.run.addEventListener('click', run);
     ['focus', 'grip', 'weight', 'connection'].forEach(k => el[k].addEventListener('change', run));
@@ -390,7 +394,9 @@
           return `<div class="diff-bar" style="--c:var(--s${i + 1})"><i data-w="${w}"></i><em>${v == null ? '—' : (k === 'price' ? inr(v) : num(v) + (unit ? ' ' + unit : ''))}</em></div>`;
         }).join('')}</div></div>`;
       }).join('');
-      requestAnimationFrame(() => requestAnimationFrame(() => $$('.diff-bar i', host).forEach(i => (i.style.width = i.dataset.w + '%'))));
+      const setBarWidths = () => $$('.diff-bar i', host).forEach(i => (i.style.width = i.dataset.w + '%'));
+      if (reduce) setBarWidths();
+      else requestAnimationFrame(() => requestAnimationFrame(setBarWidths));
       const rowsDef = [
         ['Weight', m => m.weight, m => m.weight + ' g'], ['Max DPI', m => m.dpi, m => num(m.dpi)], ['Tracking speed', m => m.ips, m => (m.ips ? m.ips + ' IPS' : null)],
         ['Polling rate', m => m.poll, m => num(m.poll) + ' Hz'], ['Buttons', m => m.buttons, m => m.buttons], ['Connection', null, m => m.connection],

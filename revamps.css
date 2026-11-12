@@ -244,3 +244,33 @@ html[data-revamp="synthwave"] .site-footer { background: rgba(11, 0, 28, .8); bo
 .rv-prev.synthwave { background: linear-gradient(180deg, #0b001c, #3b0a5c); color: #fdf2ff; font-family: 'Rajdhani', sans-serif; border: 1px solid rgba(255, 43, 214, .5); } .rv-prev.synthwave::after { content: ''; position: absolute; left: -20%; right: -20%; bottom: -30px; height: 80px; background: linear-gradient(transparent 0 90%, rgba(255, 43, 214, .7) 90%) 0 0 / 100% 14px, linear-gradient(90deg, transparent 0 94%, rgba(255, 43, 214, .7) 94%) 0 0 / 22px 100%; transform: perspective(120px) rotateX(55deg); } .rv-prev.synthwave .rp-h { font-family: 'Orbitron', sans-serif; font-weight: 900; text-transform: uppercase; background: linear-gradient(180deg, #fff, #7a5cff 55%, #ffd6f6); -webkit-background-clip: text; background-clip: text; color: transparent; } .rv-prev.synthwave .rp-b { background: linear-gradient(90deg, #ff2bd6, #ff7a3d); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: .1em; } .rv-prev.synthwave .rp-b + .rp-b { background: none; border: 1px solid #00e5ff; color: #00e5ff; }
 .rv-prev.default { background: radial-gradient(circle at 0 0, rgba(var(--accent-rgb), .25), transparent 60%), #08080b; color: #f6f6f8; font-family: 'DM Sans', sans-serif; border: 1px solid rgba(255, 255, 255, .12); } .rv-prev.default .rp-h { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: .02em; } .rv-prev.default .rp-b { border-radius: 999px; background: var(--grad); color: #fff; } .rv-prev.default .rp-b + .rp-b { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .2); }
 html[data-revamp="paper"] :is(.avatar, .avatar *, .acct-btn b, .account-slot .avatar b) { color: #fff !important; -webkit-text-fill-color: #fff; }
+
+html[data-performance="on"] {
+  --font-display: Impact, "Arial Narrow", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --grad: var(--accent);
+}
+html[data-performance="on"] *,
+html[data-performance="on"] *::before,
+html[data-performance="on"] *::after {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+html[data-performance="on"] body { background: var(--bg) !important; }
+html[data-performance="on"] body::before,
+html[data-performance="on"] body::after,
+html[data-performance="on"] .ambient,
+html[data-performance="on"] .scroll-progress,
+html[data-performance="on"] .page-loading,
+html[data-performance="on"] .mode-chooser,
+html[data-performance="on"] .glow-border::after,
+html[data-performance="on"] .mouse-card.cps-top::after,
+html[data-performance="on"] .shop-hero.theme-lite::after,
+html[data-performance="on"] .game-panel .result-card.first::after { display: none !important; }
+html[data-performance="on"] :is(.feature-card, .ql-card, .result-card, .content-panel, .feedback-card, .store-card, .stat-tile, .panel, .mouse-card, .hub-card, .shop-hero, .pack, .dy-rw, .dy-q-item) {
+  background: var(--surface) !important;
+}
+html[data-performance="on"] .btn-primary { background: var(--accent) !important; }
