@@ -21,13 +21,13 @@ create or replace function public.pm_today() returns date
 language sql stable set search_path = '' as $$ select (now() at time zone 'Asia/Kolkata')::date $$;
 
 create or replace function public.pm_allowance(p_plan text) returns int
-language sql immutable set search_path = '' as $$ select case p_plan when 'ultra' then 30 when 'lite' then 20 when 'basic' then 7 else 5 end $$;
+language sql immutable set search_path = '' as $$ select case p_plan when 'mono' then 30 when 'ultra' then 30 when 'lite' then 20 when 'basic' then 7 else 5 end $$;
 
 create or replace function public.pm_rank(p_plan text) returns int
-language sql immutable set search_path = '' as $$ select case p_plan when 'ultra' then 3 when 'lite' then 2 when 'basic' then 1 else 0 end $$;
+language sql immutable set search_path = '' as $$ select case p_plan when 'mono' then 4 when 'ultra' then 3 when 'lite' then 2 when 'basic' then 1 else 0 end $$;
 
 create or replace function public.pm_cost(p_plan text) returns int
-language sql immutable set search_path = '' as $$ select case when p_plan = 'ultra' then 0 when p_plan = 'lite' then 2 else 1 end $$;   -- Ultra: recommendations are free
+language sql immutable set search_path = '' as $$ select case when p_plan in ('ultra', 'mono') then 0 when p_plan = 'lite' then 2 else 1 end $$;   -- Ultra and Mono: recommendations are free
 
 -- ---------------------------------------------------------------- tables
 create table if not exists public.profiles (
@@ -78,9 +78,14 @@ create table if not exists public.credit_balances (
   purchased  int  not null default 0 check (purchased >= 0)
 );
 
--- plans: free < basic < lite < ultra (named constraints so re-running this file upgrades older installs)
+-- plans: free < basic < lite < ultra < mono (named constraints so re-running this file upgrades older installs)
 alter table public.profiles drop constraint if exists profiles_plan_check;
-alter table public.profiles add constraint profiles_plan_check check (plan in ('free','basic','lite','ultra'));
+alter table public.profiles add constraint profiles_plan_check check (plan in ('free','basic','lite','ultra','mono'));
+-- Mono is yearly (plan_renews_at = end of the paid year). plan_base is the lifetime plan underneath it,
+-- which the account goes back to when the year runs out.
+alter table public.profiles add column if not exists plan_base text;
+alter table public.profiles drop constraint if exists profiles_plan_base_check;
+alter table public.profiles add constraint profiles_plan_base_check check (plan_base is null or plan_base in ('basic','lite','ultra'));
 -- Basic, Lite and Ultra are one-time (lifetime) purchases: plan_renews_at stays null for them.
 -- ProMouser Turbo is the monthly plan for ProMouser Online; buying Ultra adds a year (365 days) of it.
 alter table public.profiles add column if not exists turbo_until timestamptz;
@@ -116,7 +121,7 @@ create table if not exists public.products (
   check ((type = 'pass') = (feature is not null))
 );
 alter table public.products drop constraint if exists products_type_check;
-alter table public.products add constraint products_type_check check (type in ('credits','pass','basic','lite','ultra','turbo','item'));
+alter table public.products add constraint products_type_check check (type in ('credits','pass','basic','lite','ultra','mono','turbo','item'));
 -- passes name the feature they cover; ProMouser Online items name the item they grant
 alter table public.products drop constraint if exists products_check;
 alter table public.products drop constraint if exists products_feature_check;
@@ -131,6 +136,7 @@ insert into public.products (id, type, feature, name, credits, days, price_inr) 
   ('basic-lifetime', 'basic', null,          'ProMouser Basic (lifetime)',      0,  0,  599),
   ('lite-lifetime',  'lite',  null,          'ProMouser Lite (lifetime)',       0,  0, 2499),
   ('ultra-lifetime', 'ultra', null,          'ProMouser Ultra (lifetime)',      0,  0, 3199),
+  ('mono-1y',        'mono',  null,          'ProMouser Mono (1 year)',         0, 365, 4999),
   ('turbo-1m',       'turbo', null,          'ProMouser Turbo (1 month)',       0, 30,  199)
 on conflict (id) do update set type = excluded.type, feature = excluded.feature, name = excluded.name, credits = excluded.credits,
   days = excluded.days, price_inr = excluded.price_inr, active = true;
@@ -195,7 +201,7 @@ grant update (name, username, bio, location, website, avatar_url, prefs, onboard
 create or replace function public.pm_guard_extras() returns trigger
 language plpgsql set search_path = '' as $$
 begin
-  if new.extras is distinct from old.extras and new.plan <> 'ultra' and current_user in ('authenticated', 'anon') then
+  if new.extras is distinct from old.extras and new.plan not in ('ultra', 'mono') and current_user in ('authenticated', 'anon') then
     raise exception 'NEEDS_ULTRA';
   end if;
   return new;
@@ -226,7 +232,10 @@ declare p public.profiles;
 begin
   select * into p from public.profiles where id = p_user for update;
   if not found then return; end if;
-  if p.plan in ('basic','lite','ultra') and p.plan_renews_at is not null and p.plan_renews_at < now() then
+  if p.plan = 'mono' and p.plan_renews_at is not null and p.plan_renews_at < now() then   -- a Mono year ran out: back to the lifetime plan
+    update public.profiles set plan = coalesce(plan_base, 'free'), plan_base = null, plan_renews_at = null, plan_cancelled = false, plan_since = now() where id = p_user;
+    p.plan := coalesce(p.plan_base, 'free');
+  elsif p.plan in ('basic','lite','ultra') and p.plan_renews_at is not null and p.plan_renews_at < now() then
     update public.profiles set plan = 'free', plan_cancelled = false where id = p_user;
     p.plan := 'free';
   end if;
@@ -248,7 +257,7 @@ begin
       'id', p.id, 'email', u.email, 'name', p.name, 'username', p.username, 'bio', p.bio,
       'location', p.location, 'website', p.website, 'avatar_url', p.avatar_url,
       'prefs', p.prefs, 'onboarded', p.onboarded,
-      'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at,
+      'created_at', p.created_at, 'plan', p.plan, 'plan_since', p.plan_since, 'plan_renews_at', p.plan_renews_at, 'plan_base', p.plan_base,
       'plan_cancelled', p.plan_cancelled, 'extras', p.extras, 'turbo_until', p.turbo_until, 'cps_best', p.cps_best, 'progress', p.progress, 'cosmetics', p.cosmetics,
       'passes', coalesce((select jsonb_object_agg(x.feature, x.until) from public.user_passes x where x.user_id = p.id and x.until > now()), '{}'::jsonb),
       'credits', jsonb_build_object('date', b.daily_date, 'daily', b.daily, 'purchased', b.purchased))
@@ -271,11 +280,12 @@ begin
   perform public.pm_refresh(uid);
   select * into p from public.profiles where id = uid;
   select * into b from public.credit_balances where user_id = uid for update;
+  if p.plan = 'mono' then return jsonb_build_object('charged', 0, 'pass', null, 'plan', 'mono'); end if;   -- Mono: nothing costs credits
   if exists (select 1 from public.user_passes where user_id = uid and feature = p_feature and until > now()) then
     return jsonb_build_object('charged', 0, 'pass', p_feature);
   end if;
   -- ProMouser AI: 1 credit per batch of questions (the browser asks once per batch); free on Ultra
-  cost := case when p_feature = 'assistant' then (case when p.plan = 'ultra' then 0 else 1 end) else public.pm_cost(p.plan) end;
+  cost := case when p_feature = 'assistant' then (case when p.plan in ('ultra', 'mono') then 0 else 1 end) else public.pm_cost(p.plan) end;
   if cost = 0 then return jsonb_build_object('charged', 0, 'pass', null, 'plan', p.plan); end if;
   if b.daily + b.purchased < cost then raise exception 'NO_CREDITS'; end if;
   from_daily := least(b.daily, cost);
@@ -346,6 +356,21 @@ begin
     elsif pr.type = 'pass' then
       insert into public.user_passes (user_id, feature, until) values (p_user, pr.feature, now() + make_interval(days => pr.days * n))
         on conflict (user_id, feature) do update set until = greatest(public.user_passes.until, now()) + make_interval(days => pr.days * n);
+    elsif pr.type = 'mono' then   -- yearly: a year from today, or from the end of the current Mono year; the lifetime plan stays underneath
+      update public.profiles set
+        plan_base = case when plan = 'mono' then plan_base when plan in ('basic','lite','ultra') and plan_renews_at is null then plan else null end,
+        plan_since = case when plan = 'mono' then plan_since else now() end,
+        plan_renews_at = greatest(case when plan = 'mono' then coalesce(plan_renews_at, now()) else now() end, now()) + make_interval(days => pr.days * n),
+        plan = 'mono', plan_cancelled = false
+        where id = p_user;
+      update public.credit_balances set daily = greatest(daily, public.pm_allowance('mono')) where user_id = p_user;
+      update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), plan_renews_at) where id = p_user;   -- Turbo while Mono lasts
+    elsif pr.type in ('basic','lite','ultra') and exists (select 1 from public.profiles where id = p_user and plan = 'mono') then
+      -- bought during Mono: it goes underneath, ready for when the Mono year ends
+      update public.profiles set plan_base = pr.type where id = p_user and public.pm_rank(coalesce(plan_base, 'free')) < public.pm_rank(pr.type);
+      if pr.type = 'ultra' then
+        update public.profiles set turbo_until = greatest(coalesce(turbo_until, now()), now()) + interval '365 days' where id = p_user;
+      end if;
     elsif pr.type in ('basic','lite','ultra') then   -- one-time: the plan is kept for life and never downgrades
       update public.profiles set plan_cancelled = false, plan_renews_at = null,
         plan_since = case when plan = pr.type then coalesce(plan_since, now()) else now() end,
@@ -379,14 +404,14 @@ do $$ begin
       bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and (
         (name like '%/profile.jpg' and metadata ->> 'mimetype' = 'image/jpeg') or
         (name like '%/profile.gif' and metadata ->> 'mimetype' = 'image/gif' and
-          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan = 'ultra'))
+          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan in ('ultra', 'mono')))
       ))$p$;
     execute $p$create policy "avatar update" on storage.objects for update to authenticated
       using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
       with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text and (
         (name like '%/profile.jpg' and metadata ->> 'mimetype' = 'image/jpeg') or
         (name like '%/profile.gif' and metadata ->> 'mimetype' = 'image/gif' and
-          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan = 'ultra'))
+          exists (select 1 from public.profiles p where p.id = auth.uid() and p.plan in ('ultra', 'mono')))
       ))$p$;
     execute $p$create policy "avatar delete" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
   end if;
@@ -434,39 +459,8 @@ end $$;
 revoke all on function public.redeem_order(text, text, text[]) from public, anon;
 grant execute on function public.redeem_order(text, text, text[]) to authenticated;
 
--- ---------------------------------------------------------------- UI revamps (cosmetic only, bought with credits)
--- Owned revamps live in profiles.cosmetics, which the browser can't write; buy_revamp() is the only way in.
+-- ---------------------------------------------------------------- UI revamps (removed)
+-- The buyable UI revamps were taken out of the site. profiles.cosmetics stays so nothing breaks; nothing writes it any more.
 alter table public.profiles add column if not exists cosmetics jsonb not null default '{}'::jsonb;
-alter table public.profiles drop constraint if exists profiles_cosmetics_check;
-alter table public.profiles add constraint profiles_cosmetics_check check (jsonb_typeof(cosmetics) = 'object' and pg_column_size(cosmetics) < 8000);
-create table if not exists public.revamps (id text primary key, name text not null, credits int not null check (credits > 0), active boolean not null default true);
-alter table public.revamps enable row level security;
-drop policy if exists "revamps read" on public.revamps;
-create policy "revamps read" on public.revamps for select to anon, authenticated using (active);
-revoke insert, update, delete on public.revamps from anon, authenticated;
-insert into public.revamps (id, name, credits) values
-  ('terminal', 'Terminal', 40), ('paper', 'Paper', 40), ('arcade', 'Arcade', 60),
-  ('glass', 'Glass', 30), ('brutal', 'Brutal', 50), ('synthwave', 'Synthwave', 60)
-  on conflict (id) do update set name = excluded.name, credits = excluded.credits, active = true;
-
--- Buy a revamp with credits (daily credits first, then purchased). Owning it twice costs nothing.
-create or replace function public.buy_revamp(p_id text) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare uid uuid := auth.uid(); rv public.revamps; owned jsonb; b public.credit_balances; from_daily int;
-begin
-  if uid is null then raise exception 'NOT_SIGNED_IN'; end if;
-  select * into rv from public.revamps where id = p_id and active;
-  if not found then raise exception 'UNKNOWN_REVAMP'; end if;
-  perform public.pm_refresh(uid);
-  select coalesce(cosmetics->'revamps', '[]'::jsonb) into owned from public.profiles where id = uid for update;
-  if owned ? p_id then return jsonb_build_object('charged', 0, 'owned', owned); end if;
-  select * into b from public.credit_balances where user_id = uid for update;
-  if b.daily + b.purchased < rv.credits then raise exception 'NO_CREDITS'; end if;
-  from_daily := least(b.daily, rv.credits);
-  update public.credit_balances set daily = daily - from_daily, purchased = purchased - (rv.credits - from_daily) where user_id = uid;
-  owned := owned || to_jsonb(p_id);
-  update public.profiles set cosmetics = jsonb_set(cosmetics, '{revamps}', owned) where id = uid;
-  return jsonb_build_object('charged', rv.credits, 'owned', owned);
-end $$;
-revoke all on function public.buy_revamp(text) from public, anon;
-grant execute on function public.buy_revamp(text) to authenticated;
+drop function if exists public.buy_revamp(text);
+drop table if exists public.revamps;

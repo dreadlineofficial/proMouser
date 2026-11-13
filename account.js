@@ -163,7 +163,7 @@
     const bal = B.balance(), t = B.tier(), init = esc(u.name.trim().charAt(0).toUpperCase() || '?');
     const avatar = u.avatarUrl ? `<img src="${esc(u.avatarUrl)}" alt="">` : init;
     slot.innerHTML = `
-      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop" title="Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}">${COIN}<b>${bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
+      <a class="credit-pill${bal.recPass ? ' has-pass' : ''}" href="${root}shop" title="${t === 'mono' ? 'Mono: nothing costs credits' : `Credits: ${bal.daily} daily + ${bal.purchased} purchased${bal.recPass ? ' · Recommendation Pass active' : ''}`}">${COIN}<b>${t === 'mono' ? '∞' : bal.total}</b><small>credits</small>${bal.recPass ? '<span class="pass-dot" aria-label="Recommendation Pass active">PASS</span>' : ''}</a>
       <div class="user-menu">
         <button class="avatar ${t}" style="${avatarStyle(u)}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${avatar}</button>
         <div class="user-dd" role="menu">
@@ -174,7 +174,7 @@
           <a role="menuitem" href="${root}daily">Daily &amp; Mousle</a>
           <a role="menuitem" href="${root}setup">My setup</a>
           <a role="menuitem" href="${root}shop">Shop &amp; credits</a>
-          ${t === 'ultra' ? `<a role="menuitem" href="${root}sens">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite" class="upsell">Upgrade to Lite</a>` : ''}
+          ${PLAN.ultraUp(t) ? `<a role="menuitem" href="${root}sens">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite" class="upsell">Upgrade to Lite</a>` : ''}
           <button role="menuitem" type="button" data-auth="signout">Sign out</button>
         </div>
       </div>`;
@@ -228,7 +228,7 @@
     return `<article class="panel acct-prog"><div class="panel-head"><h3>Your progress</h3><span class="plan-tag">Level ${L} · ${C.titleOf(L)}</span></div>
       <div class="ap-bar"><i style="width:${Math.round((S.xp - lo) / (hi - lo) * 100)}%"></i></div><p class="panel-note">${S.xp - lo} / ${hi - lo} XP to level ${L + 1}</p>
       <div class="credit-stats"><div><span>Streak</span><b>${st ? '🔥 ' + st : '0'}</b><em>best ${S.streak.best}</em></div><div><span>Achievements</span><b>${Object.keys(S.ach).length}<small> / ${C.ACH.length}</small></b><em>unlocked</em></div><div><span>Today</span><b>${ch.done ? '✓' : '—'}</b><em>${ch.done ? 'challenge done' : esc(ch.text)}</em></div></div>
-      ${B.tier() === 'ultra' ? '' : `<div class="ui-row"><span>Colour · unlock more by levelling up</span><div class="ui-swatches">${swatch(BASE_ACCENTS[0])}${C.REWARDS.map(r => swatch([r.id, r.name, r.c[0], r.c[1]], L >= r.level ? 0 : r.level)).join('')}</div></div>`}
+      ${PLAN.ultraUp(B.tier()) ? '' : `<div class="ui-row"><span>Colour</span><div class="ui-swatches">${swatch(BASE_ACCENTS[0])}${C.REWARDS.filter(r => L >= r.level).map(r => swatch([r.id, r.name, r.c[0], r.c[1]])).join('')}</div>${C.REWARDS.some(r => L < r.level) ? `<small class="panel-note">${C.REWARDS.filter(r => L < r.level).length} more colours unlock as you level up on <a href="${root}daily">Daily</a>.</small>` : ''}</div>`}
       <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats">My stats</a><a class="btn btn-ghost btn-sm" href="${root}daily#settings">Pop-up settings</a></div></article>`;
   }
   const BASE_ACCENTS = [['default', 'Default', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80']];
@@ -241,15 +241,6 @@
       <div class="ui-row"><span>Background</span>${seg('bg', [['default', 'Grid'], ['plain', 'Plain'], ['aurora', 'Aurora']])}</div>
       <div class="ui-row"><span>Glow effects</span>${seg('glow', [['default', 'On'], ['off', 'Off']])}</div>
       <div class="ui-row"><span>Density</span>${seg('density', [['default', 'Comfortable'], ['compact', 'Compact']])}</div></article>`;
-  }
-
-  // the UI revamps this account owns, to switch between (the shop sells the rest)
-  function revampPanel() {
-    const all = (window.PM_CONFIG && PM_CONFIG.revamps) || [], mine = B.revampsOwned ? B.revampsOwned() : [], cur = document.documentElement.dataset.revamp || '';
-    const btn = (id, name) => `<button type="button" class="btn ${cur === id || (!cur && id === 'default') ? 'btn-primary' : 'btn-ghost'} btn-sm" data-rv-use="${id}">${esc(name)}</button>`;
-    return `<article class="panel"><h3>Site style</h3><p class="panel-note">${mine.length ? 'Switch between the UI revamps you own.' : 'UI revamps change everything about how ProMouser looks: fonts, layout, shapes and colours.'}</p>
-      <div class="hero-cta" style="margin-top:.6rem">${btn('default', 'Classic')}${all.filter(r => mine.includes(r.id)).map(r => btn(r.id, r.name)).join('')}</div>
-      <p class="panel-note" style="margin-top:1rem"><a href="${root}shop#revamps">${mine.length < all.length ? `Browse ${all.length - mine.length} more revamp${all.length - mine.length === 1 ? '' : 's'} in the shop →` : 'You own every revamp.'}</a></p></article>`;
   }
 
   /* ---------- account page ---------- */
@@ -374,10 +365,10 @@
             <div><span>Purchased credits</span><b>${bal.purchased}</b><em>never expire</em></div>
             <div><span>Recommendation Pass</span><b>${bal.recPass ? 'Active' : '—'}</b><em>${bal.recPass ? 'free recommendations until ' + fmtDate(bal.recPassUntil) : 'unlimited recommendations for 1 month'}</em></div>
           </div>
-          <p class="panel-note">${t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
+          <p class="panel-note">${t === 'mono' ? '<strong>Everything is unlimited on Mono</strong>: nothing ever uses credits.' : t === 'ultra' ? '<strong>Recommendations are unlimited on Ultra</strong> and never use credits.' : `Each recommendation uses <strong>${B.costPerRecommendation()} credit${B.costPerRecommendation() > 1 ? 's' : ''}</strong>${t === 'lite' ? ' on Lite' : t === 'basic' ? ' on Basic' : ''} and shows ${B.resultsLimit() === Infinity ? 'every match' : 'your top ' + B.resultsLimit()}.`}</p>
           <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}shop">Get credits</a>${paid ? (t === 'basic' ? `<a class="btn btn-outline btn-sm" href="${root}lite">Upgrade to Lite</a>` : '') : `<a class="btn btn-outline btn-sm" href="${root}basic">Get Basic · ${inr(CFG.basic.product.price)}</a>`}<a class="btn btn-ghost btn-sm" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online ↗</a>${t !== 'ultra' ? `<a class="btn btn-ghost btn-sm" href="${root}ultra">See Ultra</a>` : ''}</div>
         </article>
-        ${progressPanel()}${t === 'ultra' ? appearancePanel() : ''}${revampPanel()}
+        ${progressPanel()}${PLAN.ultraUp(t) ? appearancePanel() : ''}
         <article class="panel"><h3>Your preferences</h3><p class="panel-note">Used as the starting point for recommendations.</p>
           <form id="prefsForm" class="pref-form">
             <fieldset><legend>Games</legend><div class="chip-set">${GAMES.map(g => `<label class="pick"><input type="checkbox" name="games" value="${g.id}" ${p.games.includes(g.id) ? 'checked' : ''}><span>${g.label}</span></label>`).join('')}</div></fieldset>
@@ -482,7 +473,6 @@
       toast('Preferences saved.');
     });
     if (window.PMUI) PMUI.paint();
-    if (!host.dataset.rvHook) { host.dataset.rvHook = '1'; document.addEventListener('pm:revamp', () => { if (!document.querySelector('.pm-overlay.open')) renderAccountPage(host); }); }
     $('#delAcct', host).addEventListener('click', async () => {
       if (!confirm(B.mode === 'supabase' ? 'Delete your account and all its data? This cannot be undone.' : 'Delete your account and all its data from this browser? This cannot be undone.')) return;
       try { await B.deleteAccount(); toast('Account deleted.'); renderAccountPage(host); renderSlot(); }

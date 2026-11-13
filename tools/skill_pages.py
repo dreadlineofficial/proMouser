@@ -71,7 +71,7 @@ for f in ['aim-trainer.html', 'cps-test.html', 'mouse-button-test.html', 'pollin
 
 # test hub: a "Skill tests" block of cards
 h = open('tests.html').read()
-cards = ''.join(f'<article class="hub-card reveal"><div class="hub-tags"><span class="plan-tag">New</span></div><div class="fc-icon" data-icon="{p[7]}"></div>\n          <h3><a href="{p[0]}">{p[2]}</a></h3><p>{(lambda t: t[0].upper() + t[1:])(p[4].split(": ", 1)[-1])}</p><small class="hub-best" data-best="{p[1]}" hidden></small></article>' for p in PAGES)
+cards = ''.join(f'<article class="hub-card reveal"><div class="fc-icon" data-icon="{p[7]}"></div>\n          <h3><a href="{p[0]}">{p[2]}</a></h3><p>{(lambda t: t[0].upper() + t[1:])(p[4].split(": ", 1)[-1])}</p><small class="hub-best" data-best="{p[1]}" hidden></small></article>' for p in PAGES)
 block = f'<!-- skill-tests --><div class="section-header reveal" id="skill-tests" style="margin:64px 0 22px"><span class="section-label">New: skill tests</span><h2>Train every part of <em>your aim</em></h2><p>Tracking, flicks, speed, timing and control, plus a DPI analyzer to check your sensor. Every result counts towards your skill profile on My stats.</p></div>\n        <div class="hub-grid" data-test-hub2>{cards}</div><!-- /skill-tests -->'
 h = re.sub(r'\n        <!-- skill-tests -->.*?<!-- /skill-tests -->', '', h, flags=re.S)
 if 'tests2.js' not in h: h = h.replace('<script src="tests.js"></script>', '<script src="tests.js"></script>\n  <script src="tests2.js"></script>', 1)
@@ -100,7 +100,7 @@ for f in glob.glob('**/*.html', recursive=True):
     a = re.search(r'<li><a href="([^"]*)aim-trainer"><span class="dd-ico".*?</li>', menu)
     if not a: continue
     pre = a.group(1)
-    items = ''.join(f'<li><a href="{pre}{slug}"><span class="dd-ico" data-icon="{ic}"></span><span class="dd-txt"><b>{nme} <span class="badge">New</span></b><small>{sub}</small></span></a></li>' for slug, (ic, nme, sub) in DDI.items())
+    items = ''.join(f'<li><a href="{pre}{slug}"><span class="dd-ico" data-icon="{ic}"></span><span class="dd-txt"><b>{nme}</b><small>{sub}</small></span></a></li>' for slug, (ic, nme, sub) in DDI.items())
     new = menu.replace(a.group(0), a.group(0) + items, 1).replace('<ul class="dropdown" id="nav-menu-2">', '<ul class="dropdown dd-wide" id="nav-menu-2">', 1)
     open(f, 'w').write(s.replace(menu, new, 1)); nm += 1
 # 2. Test hub: the new skill tests first

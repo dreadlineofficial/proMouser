@@ -1,10 +1,29 @@
-# ProMouser redesign — notes (v12)
+# ProMouser redesign — notes (v13)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v12: unlock codes, UI revamps, more colours
+## What's new in v13: ProMouser Mono, and a calmer site
+
+- **ProMouser Mono** (₹4,999 a year): the plan above Ultra.
+  - Everything in Ultra, plus **nothing ever costs credits** (the header shows ∞).
+  - ProMouser Turbo included while it's active.
+  - The black-and-white **Mono theme** and a Mono badge, also on ProMouser Online.
+  - **Skill trends**: your overall skill score week by week for 12 weeks, on My stats.
+  - **Skill report**: a one-page printable/PDF report of your skills, records and setup.
+  - Adding a year extends it. When a year runs out you go back to the lifetime plan you owned (Basic, Lite or Ultra), so Mono never costs you a plan.
+  - Demo: `backend.js` (`plan.base` holds the plan underneath). Supabase: `plan_base`, `pm_refresh()`, `grant_order()`, `spend_credits()` and product `mono-1y` in `schema.sql`.
+- **UI revamps removed**: no more buying different UIs. `revamps.css`, the shop section, the account panel and `buy_revamp()` are gone (Ramukvaraa's performance-mode CSS moved into `style.css`).
+- **Less clutter**:
+  - The shop reads Mono, then lifetime plans, then extras, then FAQ. It's about 30% shorter, with shorter lists and "How credits work" folded into the FAQ.
+  - The ~1,000 "New" badges in the menus are gone.
+  - The account page shows only the colours you've earned.
+- Fixes: the scroll-reveal script no longer errors when the shop or account page re-renders, and the skill chart's side labels are no longer clipped.
+
+**Supabase:** re-run `supabase/schema.sql` (Mono plan, `plan_base`, and the revamp tables are dropped).
+
+## v12: unlock codes, UI revamps, more colours
 
 - **No more demo purchases.** Everything in the shop (plans, passes, credits, Turbo, ProMouser Online items) only unlocks with a valid **unlock code** at checkout. The fake payment methods and "simulate a failure" are gone. Codes are stored as SHA-256 hashes, never in plain text, and checked case-insensitively. 8 wrong codes in 10 minutes locks the checkout for a while.
   - With Supabase connected, `redeem_order()` in `schema.sql` checks the code on the server, and the old `test_grant_order` function is dropped. Add or switch off codes in `public.unlock_codes` (see the comments in `schema.sql`).

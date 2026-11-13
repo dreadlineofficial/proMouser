@@ -86,7 +86,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   // 5. pages render without errors
   for (const pg of ['shop', 'basic', 'lite', 'ultra', 'my-stats', 'tests', 'cps-test', 'aim-trainer', 'double-click-test', 'scroll-test', 'mouse-button-test', 'polling-rate-test', 'account', 'elite', 'mice', 'mice/compare', 'blog/', 'daily', 'setup', 'tracking-test', 'flick-test', 'target-rush', 'rhythm-test', 'circle-test', 'dpi-analyzer']) { await p.goto(BASE + pg); await p.waitForTimeout(500); }
   await p.goto(BASE + 'shop'); await p.waitForTimeout(600);
-  ok(await p.$$eval('.shop-hero', a => a.length) === 5, 'shop shows Basic, Lite, Ultra, Turbo, Pass');
+  ok(await p.$$eval('#mono, #basic, #lite, #ultra, #turbo, #pass', a => a.length) === 6, 'shop shows Mono, Basic, Lite, Ultra, Turbo, Pass');
   await p.goto(BASE + 'my-stats'); await p.waitForTimeout(600);
   ok(await p.$$eval('[data-tstats] .ts-head', a => a.length) === 13, 'My stats shows all 13 tests');
   ok(await p.$$eval('.sk-list li', a => a.length) === 8 && await p.isVisible('.sk-coach'), 'skill profile: 8 skills and the coach');
@@ -96,15 +96,9 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.click('[data-core-set="toasts:off"]'); await p.evaluate(() => PMStats.record('reaction', 199, '')); await p.waitForTimeout(300);
   ok(!(await p.isVisible('.core-toast.on')), 'pop-ups can be turned off');
   await p.click('[data-core-set="toasts:all"]');
-  // 7. checkout only with an unlock code; UI revamps are bought with credits
+  // 7. checkout only with an unlock code
   ok(await p.evaluate(() => PMBackend.applyOrder({ id: 'T9', code: 'nope', items: [{ id: 'credits-10', type: 'credits', credits: 10, qty: 1 }] }).then(() => 'granted', e => e.code)) === 'BAD_CODE', 'a wrong code grants nothing');
   ok(await p.evaluate(() => PMBackend.applyOrder({ id: 'T10', items: [{ id: 'credits-10', type: 'credits', credits: 10, qty: 1 }] }).then(() => 'granted', e => e.code)) === 'BAD_CODE', 'no code grants nothing');
-  await p.goto(BASE + 'shop'); await p.waitForTimeout(600);
-  ok(await p.$$eval('.rv-card', a => a.length) === 7, 'shop lists the UI revamps');
-  const rv = await p.evaluate(async () => { const b = PMBackend.balance().total, r = await PMBackend.buyRevamp('glass'); PMRevamp.use('glass'); return [b - PMBackend.balance().total, r.owned.includes('glass'), document.documentElement.dataset.revamp]; });
-  ok(rv[0] === 30 && rv[1] && rv[2] === 'glass', 'Glass revamp bought for 30 credits and applied');
-  await p.goto(BASE + 'tests'); ok(await p.evaluate(() => document.documentElement.dataset.revamp) === 'glass', 'revamp kept across pages');
-  await p.evaluate(() => PMRevamp.use('default'));
   ok(errs.length === 0, 'no console errors' + (errs.length ? ':\n  ' + errs.slice(0, 8).join('\n  ') : ''));
   await b.close(); console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
 })();

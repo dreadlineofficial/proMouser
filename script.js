@@ -251,7 +251,7 @@
     const KEY = 'pm_ui', B = () => window.PMBackend, C = () => window.PMCore;
     const get = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
     const put = ui => { try { localStorage.setItem(KEY, JSON.stringify(ui)); } catch (e) { /* storage off */ } };
-    const ultra = () => { try { return !!(B() && B().tier && B().tier() === 'ultra'); } catch (e) { return false; } };
+    const ultra = () => { try { return !!(B() && B().has && B().has('ui')); } catch (e) { return false; } };   // Ultra or Mono
     const earned = id => { const c = C(); return !!(c && c.REWARDS && c.REWARDS.some(r => r.id === id) && c.unlocked(id)); };
     const VARS = ['--bg', '--bg-2', '--bg-3', '--surface', '--surface-2', '--bg-rgb', '--bg2-rgb', '--bg3-rgb', '--accent', '--accent-2', '--accent-deep', '--accent-rgb', '--accent2-rgb', '--accent-dim', '--accent-glow', '--grad', '--text-2', '--text-3', '--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7'];
     // a full palette from one colour (custom colour, Ultra): dark backgrounds tinted with its hue
@@ -314,75 +314,8 @@
     window.PMUI = { apply, set, get, paint, paletteCss, earned, ultra };
   })();
 
-  /* ── UI REVAMPS: whole new looks for the site, bought with credits (cosmetic only).
-     The chosen one is kept in localStorage "pm_revamp" (applied before first paint by the <head> script)
-     and in the account (prefs.revamp). Only revamps the account owns can be used; any can be previewed. ── */
-  (function () {
-    const B = () => window.PMBackend, KEY = 'pm_revamp';
-    const FONTS = { terminal: 'JetBrains+Mono:wght@400;600;800', paper: 'Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,600&family=Newsreader:opsz,wght@6..72,400;6..72,600',
-      arcade: 'Press+Start+2P&family=VT323', glass: 'Manrope:wght@400;600;700;800&family=Sora:wght@600;800', brutal: 'Archivo+Black&family=Space+Grotesk:wght@400;500;700', synthwave: 'Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700' };
-    const list = () => ((window.PM_CONFIG && PM_CONFIG.revamps) || []);
-    const owned = () => { try { return B() && B().revampsOwned ? B().revampsOwned() : []; } catch (e) { return []; } };
-    const saved = () => { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } };
-    let previewing = null;
-    function fonts(id) {
-      if (!FONTS[id] || document.getElementById('rv-font-' + id)) return;
-      const l = document.createElement('link'); l.id = 'rv-font-' + id; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + FONTS[id] + '&display=swap'; document.head.appendChild(l);
-    }
-    function show(id) { if (id && FONTS[id]) { fonts(id); doc.dataset.revamp = id; } else delete doc.dataset.revamp; document.dispatchEvent(new CustomEvent('pm:revamp', { detail: { id: id || '' } })); }
-    function bar() {
-      let el = document.querySelector('.rv-bar');
-      if (!previewing) { if (el) el.remove(); return; }
-      const R = list().find(r => r.id === previewing); if (!R) return;
-      if (!el) { el = document.createElement('div'); el.className = 'rv-bar'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-      el.innerHTML = `<span>Previewing <b>${R.name}</b></span><button type="button" class="go" data-rv-buy="${R.id}">Buy for ${R.credits} credits</button><button type="button" data-rv-stop>Stop preview</button>`;
-    }
-    // use an owned revamp ('' or 'default' = the normal look)
-    function use(id) {
-      id = id === 'default' ? '' : id || '';
-      if (id && !owned().includes(id)) return false;
-      previewing = null; bar();
-      try { id ? localStorage.setItem(KEY, id) : localStorage.removeItem(KEY); } catch (e) { /* storage off */ }
-      show(id);
-      try { const u = B() && B().getUser(); if (u && (u.prefs || {}).revamp !== id) B().updateProfile({ prefs: { revamp: id } }).catch(() => {}); } catch (e) { /* not signed in */ }
-      return true;
-    }
-    function preview(id) { if (!FONTS[id]) return; if (owned().includes(id)) return use(id); previewing = id; show(id); bar(); }
-    function stop() { previewing = null; bar(); show(saved()); }
-    async function buy(id) {
-      const A = window.PMAccount, R = list().find(r => r.id === id); if (!R || !B()) return;
-      const go = async () => {
-        try {
-          const res = await B().buyRevamp(id);
-          use(id);
-          A && A.toast && A.toast(res.charged ? `${R.name} is yours (−${res.charged} credits). It’s on now.` : `${R.name} is on.`);
-        } catch (e) {
-          if (A && A.toast) A.toast(e.code === 'NO_CREDITS' ? `You need ${R.credits} credits for ${R.name}. Get more in the shop.` : (e.message || 'Something went wrong.'), 'err');
-        }
-      };
-      if (A && A.requireAuth) A.requireAuth(go); else go();
-    }
-    // keep the look in line with the account: their saved choice, and nothing they don't own
-    function sync() {
-      if (previewing) return;
-      const u = B() && B().getUser && B().getUser(), mine = owned();
-      let id = saved();
-      if (u && u.prefs && u.prefs.revamp !== undefined && mine.includes(u.prefs.revamp)) id = u.prefs.revamp;
-      if (id && !mine.includes(id)) id = '';
-      try { id ? localStorage.setItem(KEY, id) : localStorage.removeItem(KEY); } catch (e) { /* storage off */ }
-      if ((doc.dataset.revamp || '') !== id) show(id);
-    }
-    document.addEventListener('click', e => {
-      const t = e.target.closest('[data-rv-preview],[data-rv-buy],[data-rv-use],[data-rv-stop]'); if (!t) return;
-      e.preventDefault();
-      if (t.dataset.rvPreview) preview(t.dataset.rvPreview);
-      else if (t.dataset.rvBuy) buy(t.dataset.rvBuy);
-      else if (t.dataset.rvUse !== undefined) use(t.dataset.rvUse);
-      else stop();
-    });
-    sync(); if (B() && B().on) B().on(sync);
-    window.PMRevamp = { use, preview, stop, buy, owned, list, current: () => previewing || doc.dataset.revamp || '', fonts, FONTS };
-  })();
+  try { localStorage.removeItem('pm_revamp'); } catch (e) { /* storage off */ }   // UI revamps were removed
+  delete doc.dataset.revamp;
 
   /* ── MOBILE MENU + DROPDOWN ARIA ── */
   (function () {
@@ -548,6 +481,7 @@
     if (reduce || !('IntersectionObserver' in window)) { targets.forEach(t => t.classList.add('visible')); return; }
     const io = new IntersectionObserver(entries => {
       entries.filter(e => e.isIntersecting).forEach(e => {
+        if (!e.target.parentElement) { io.unobserve(e.target); return; }   // re-rendered away (shop, account)
         const sibs = $$('.reveal:not(.visible)', e.target.parentElement);
         const delay = Math.min(Math.max(sibs.indexOf(e.target), 0), 8) * 70;
         e.target.style.transitionDelay = delay + 'ms';

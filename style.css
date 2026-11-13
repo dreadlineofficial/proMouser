@@ -118,6 +118,21 @@
 }
 .theme-ultra { background: var(--bg); color: var(--text); }
 
+/* ProMouser Mono: black, white and silver. Applied to <html data-plan="mono"> for subscribers, and to .theme-mono previews.
+   (Before the colour palettes in this file, so a colour picked on the account page still wins.) */
+[data-plan="mono"], .theme-mono {
+  --bg: #050505; --bg-2: #0b0b0b; --bg-3: #131313; --surface: #151515; --surface-2: #1e1e1e;
+  --bg-rgb: 5, 5, 5; --bg2-rgb: 11, 11, 11; --bg3-rgb: 19, 19, 19;
+  --accent: #f2f2f2; --accent-2: #a3a3a3; --accent-deep: #2a2a2a; --accent-rgb: 242, 242, 242; --accent2-rgb: 163, 163, 163;
+  --accent-dim: rgba(242, 242, 242, .1); --accent-glow: rgba(242, 242, 242, .22);
+  --grad: linear-gradient(120deg, #ffffff 0%, #9a9a9a 100%);
+  --text-2: #a6a6a6; --text-3: #6f6f6f; --glass: rgba(6, 6, 6, .78);
+  --s1: #f2f2f2; --s2: #bdbdbd; --s3: #8c8c8c; --s4: #5e5e5e; --s5: #dcdcdc; --s6: #777; --s7: #b0b0b0;
+}
+.theme-mono { background: var(--bg); color: var(--text); }
+html[data-plan="mono"]:not([data-accent]) .btn-primary, .theme-mono .btn-primary { color: #0a0a0a; }
+html[data-plan="mono"]:not([data-accent]) ::selection { color: #000; }
+
 /* Subscriber theme choices. Theme colors override the plan accent without changing plan access. */
 html[data-theme="classic"] {
   --bg: #050506;
@@ -2024,3 +2039,69 @@ html[data-performance="on"] .reveal { opacity: 1 !important; transform: none !im
 .code-box input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .code-err { margin: 0; color: #ff8a9b; font-size: .88rem; font-weight: 600; }
 .code-box .onb-actions { margin-top: 4px; }
+
+/* ===== Performance mode (moved here from revamps.css, which was removed) ===== */
+html[data-performance="on"] {
+  --font-display: Impact, "Arial Narrow", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --grad: var(--accent);
+}
+html[data-performance="on"] *,
+html[data-performance="on"] *::before,
+html[data-performance="on"] *::after {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+html[data-performance="on"] body { background: var(--bg) !important; }
+html[data-performance="on"] body::before,
+html[data-performance="on"] body::after,
+html[data-performance="on"] .ambient,
+html[data-performance="on"] .scroll-progress,
+html[data-performance="on"] .page-loading,
+html[data-performance="on"] .mode-chooser,
+html[data-performance="on"] .glow-border::after,
+html[data-performance="on"] .mouse-card.cps-top::after,
+html[data-performance="on"] .shop-hero.theme-lite::after,
+html[data-performance="on"] .game-panel .result-card.first::after { display: none !important; }
+html[data-performance="on"] :is(.feature-card, .ql-card, .result-card, .content-panel, .feedback-card, .store-card, .stat-tile, .panel, .mouse-card, .hub-card, .shop-hero, .pack, .dy-rw, .dy-q-item) {
+  background: var(--surface) !important;
+}
+html[data-performance="on"] .btn-primary { background: var(--accent) !important; }
+
+/* ===== ProMouser Mono ===== */
+.plan-tag.mono, .mono-chip { background: rgba(255, 255, 255, .08); color: #f2f2f2; border: 1px solid rgba(255, 255, 255, .35); }
+.mono-chip { display: inline-flex; padding: .22rem .7rem; border-radius: 999px; font-size: .74rem; font-weight: 700; }
+.avatar.mono { background: linear-gradient(135deg, #fff, #8a8a8a); color: #0a0a0a; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #f2f2f2, 0 0 22px rgba(255, 255, 255, .25); }
+.shop-hero.theme-mono { background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, .12), transparent 55%), #0a0a0a; border-color: rgba(255, 255, 255, .4); position: relative; isolation: isolate; }
+.shop-hero.theme-mono::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--spin), transparent 0 55%, #777 70%, #fff 76%, #999 82%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: borderSpin 6s linear infinite; }
+.shop-hero.theme-mono h3 em { background: linear-gradient(120deg, #fff, #9a9a9a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.shop-hero.theme-mono .btn-primary { background: #f2f2f2; color: #0a0a0a; box-shadow: 0 10px 30px -12px rgba(255, 255, 255, .45); }
+.mono-badge { display: inline-flex; align-items: center; gap: 6px; padding: .3rem .75rem; border-radius: 999px; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #0a0a0a; background: linear-gradient(135deg, #fff, #9a9a9a); }
+.lite-welcome.mono { border-color: rgba(255, 255, 255, .4); }
+
+/* ===== Shop (simplified): Mono, lifetime plans, extras ===== */
+.shop-mono { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(20px, 4vw, 48px); align-items: center; padding: clamp(24px, 4vw, 44px); }
+.shop-mono h3 { font-size: clamp(2.4rem, 5vw, 3.6rem); margin: .8rem 0 .3rem; } .sm-pitch { color: var(--text-2); margin: .4rem 0 1rem; max-width: 36ch; }
+.sm-list { display: grid; gap: .55rem; } .sm-list li { color: var(--text-2); }
+.shop-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.shop-plan { display: flex; flex-direction: column; gap: .4rem; padding: 26px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); }
+.shop-plan h3 { font-size: 1.9rem; } .shop-plan .tick-list { flex: 1; margin: .4rem 0 1rem; } .shop-plan .tick-list li { font-size: .92rem; }
+.shop-plan.theme-ultra { border-color: rgba(168, 85, 247, .5); background: linear-gradient(160deg, rgba(168, 85, 247, .18), rgba(14, 6, 24, .85)); }
+.shop-plan.theme-lite { border-color: rgba(74, 163, 255, .35); } .shop-plan.theme-basic { border-color: rgba(59, 99, 227, .3); }
+.shop-extras { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+.shop-extra { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface); }
+.shop-extra h3 { font-size: 1.4rem; margin: .4rem 0 .2rem; } .shop-extra h3 small { font-family: var(--font-body); font-size: .85rem; color: var(--text-3); margin-left: .4rem; } .shop-extra p { font-size: .88rem; margin: 0; }
+.shop-codes { margin: 26px 0 0; }
+@media (max-width: 900px) { .shop-mono, .shop-plans, .shop-extras { grid-template-columns: 1fr; } .shop-extra { flex-direction: column; align-items: flex-start; } }
+.sk-mono { margin-bottom: 18px; }
+.sk-trend-top { display: flex; align-items: baseline; gap: 14px; margin: 6px 0 4px; } .sk-trend-top b { font: 400 2.6rem/1 var(--font-display); } .sk-trend-top span { color: var(--text-3); font-weight: 600; } .sk-trend-top .up { color: #34d399; } .sk-trend-top .down { color: #ff7a8a; }
+.sk-trend { width: 100%; display: block; } .sk-grid { stroke: rgba(255, 255, 255, .07); } .sk-ax { fill: var(--text-3); font: 600 11px var(--font-body); }
+.sk-tline { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 8px var(--accent-glow)); } .sk-tdot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+.sk-mono-tease { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding: 12px 16px; border-radius: 14px; border: 1px dashed var(--border-2); color: var(--text-2); font-size: .9rem; } .sk-mono-tease:hover { border-color: var(--accent); color: var(--text); } .sk-mono-tease b { margin-left: auto; }
+html[data-plan="mono"]:not([data-accent]) .announcement-bar, html[data-plan="mono"]:not([data-accent]) .announcement-bar * { color: #0a0a0a !important; }
+.sk-trend { max-height: 260px; }

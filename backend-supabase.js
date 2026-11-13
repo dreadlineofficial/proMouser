@@ -75,7 +75,7 @@
       })),
       email: s.email, createdAt: ms(s.created_at), onboarded: !!s.onboarded,
       prefs: Object.assign({ games: [], weight: 'any', grip: 'any', connection: 'any' }, s.prefs || {}),
-      plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
+      plan: paid ? Object.assign({ tier: s.plan, since: ms(s.plan_since), renewsAt: ms(s.plan_renews_at) }, s.plan_base ? { base: s.plan_base } : {}, s.plan_cancelled ? { cancelled: true } : {}) : { tier: 'free' },
       extras: { watchlist: ex.watchlist || [], profiles: ex.profiles || [], memory: ex.memory || null, testLog: ex.testLog || {}, ui: ex.ui || null },
       turboUntil: ms(s.turbo_until), cpsBest: s.cps_best || {}, progress: s.progress || {},
       credits: { date: s.credits.date, daily: s.credits.daily, purchased: s.credits.purchased },
@@ -317,15 +317,7 @@
       if (!data || !data.ok) { const e = fail(data && data.reason === 'TOO_MANY_TRIES' ? 'Too many wrong codes. Try again in 10 minutes.' : 'That code isn’t valid.'); e.code = (data && data.reason) || 'BAD_CODE'; throw e; }
       return clone(await refresh());
     },
-    /* UI revamps: bought with credits on the server (buy_revamp) */
-    async buyRevamp(id) {
-      need();
-      const { data, error } = await (await ready).rpc('buy_revamp', { p_id: id });
-      if (error) { const e = fail(/NO_CREDITS/.test(error.message) ? 'Not enough credits.' : /UNKNOWN_REVAMP/.test(error.message) ? 'Unknown revamp.' : friendly(error)); if (/NO_CREDITS/.test(error.message)) e.code = 'NO_CREDITS'; throw e; }
-      await refresh();
-      return { charged: data.charged, owned: data.owned || [] };
-    },
-    revampsOwned() { return ((user && user.cosmetics && user.cosmetics.revamps) || []).slice(); },
+
     async cancelLite() { return setCancelled(true); },
     async resumeLite() { return setCancelled(false); },
 

@@ -117,7 +117,7 @@
     const tier = b.tier ? b.tier() : u.plan.tier;
     el.innerHTML = `
       <h4>Plan</h4>
-      <div class="row"><div class="seg">${[['free', 'Normal'], ['basic', 'Basic'], ['lite', 'Lite'], ['ultra', 'Ultra']].map(([k, l]) => `<button type="button" data-plan="${k}" class="${k} ${tier === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <div class="row"><div class="seg">${[['free', 'Normal'], ['basic', 'Basic'], ['lite', 'Lite'], ['ultra', 'Ultra'], ['mono', 'Mono']].map(([k, l]) => `<button type="button" data-plan="${k}" class="${k} ${tier === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <h4>Credits</h4>
       <dl class="kv"><dt>Daily</dt><dd>${bal.daily} / ${bal.dailyAllowance}</dd><dt>Bought</dt><dd>${bal.purchased}</dd><dt>Recommendation Pass</dt><dd>${bal.recPass ? 'until ' + new Date(bal.recPassUntil).toLocaleDateString('en-IN') : 'none'}</dd><dt>Mode</dt><dd>${b.mode === 'supabase' ? 'Supabase' : 'Demo (this browser)'}</dd></dl>
       <div class="row" style="margin-top:8px"><button class="b" data-cr="+5">+5 bought</button><button class="b" data-cr="+50">+50 bought</button><button class="b" data-cr="empty">Empty all</button><button class="b" data-cr="next">Next day (refill)</button></div>
@@ -219,7 +219,7 @@
   function render(keepMsg) {
     if (panel.hidden) return;
     const b = B(), u = b && b.getUser();
-    $('#pdWho', panel).textContent = u ? `${u.name} · ${({ free: 'Normal', lite: 'Lite', ultra: 'Ultra' })[u.plan.tier] || 'Normal'}` : 'signed out';
+    $('#pdWho', panel).textContent = u ? `${u.name} · ${({ free: 'Normal', basic: 'Basic', lite: 'Lite', ultra: 'Ultra', mono: 'Mono' })[u.plan.tier] || 'Normal'}` : 'signed out';
     $$('nav button', panel).forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
     const msg = keepMsg && $('.msg', panel) ? [$('.msg', panel).textContent, $('.msg', panel).className] : null;
     ({ Account: accountTab, Engine: engineTab, Data: dataTab, View: viewTab })[tab](body());

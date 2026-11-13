@@ -29,7 +29,7 @@
   function render() {
     const u = B.getUser();
     if (!u) return gate();
-    const bal = B.balance(), t = B.tier(), lite = B.has('advanced'), ultra = t === 'ultra', now = Date.now(), hist = Array.isArray(u.history) ? u.history.filter(Boolean) : [];
+    const bal = B.balance(), t = B.tier(), lite = B.has('advanced'), ultra = window.PM_PLAN.ultraUp(t), now = Date.now(), hist = Array.isArray(u.history) ? u.history.filter(Boolean) : [];
     const PLANS = window.PM_PLAN;
     const activeTheme = PLANS.themes.some(theme => theme.id === (u.prefs && u.prefs.theme)) ? u.prefs.theme : 'plan';
     const week = hist.filter(h => now - h.at < 7 * DAY).length;

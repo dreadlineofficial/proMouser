@@ -13,7 +13,7 @@
 
    Storage keys (listed in privacy):
      pm_users    demo accounts      pm_session  signed-in user id
-     pm_plan     'free' | 'basic' | 'lite' | 'ultra' (so the plan's theme can apply before the page paints)
+     pm_plan     'free' | 'basic' | 'lite' | 'ultra' | 'mono' (so the plan's theme can apply before the page paints)
    ===================================================================== */
 (function () {
   'use strict';
@@ -33,6 +33,11 @@
     // a year of ProMouser Turbo, plus the Ultra-only features below.
     ultra: { dailyCredits: 30, resultsLimit: Infinity, costPerRecommendation: 0, historyLimit: 100, maxProfiles: 10, maxWatch: 50, turboDays: 365,
       product: { id: 'ultra-lifetime', type: 'ultra', name: 'ProMouser Ultra (lifetime)', price: 3199 } },
+    // Mono: the yearly plan above Ultra. Everything in Ultra, and nothing ever costs credits, Turbo is included while it's
+    // active, plus the Mono theme, skill trends and the skill report. When a year runs out you go back to the lifetime
+    // plan you had before (Basic, Lite or Ultra), so buying Mono never costs you a plan you own.
+    mono: { dailyCredits: 30, resultsLimit: Infinity, costPerRecommendation: 0, historyLimit: 300, maxProfiles: 25, maxWatch: 200, yearly: true,
+      product: { id: 'mono-1y', type: 'mono', name: 'ProMouser Mono (1 year)', price: 4999, days: 365 } },
     // ProMouser Turbo: the monthly plan for ProMouser Online (gradient names, profile themes, battle pass, a Turbo mouse).
     // Same account on both sites. Buying Ultra adds a year (365 days) of Turbo.
     turbo: { onlineUrl: 'https://dreadlineofficial.github.io/ProMouser-Online/',
@@ -52,28 +57,19 @@
     ]
   };
 
-  // UI revamps: whole new looks for the site (fonts, layout, shapes, colours). Cosmetic only, bought with credits.
-  // The same list (ids and prices) lives in supabase/schema.sql (public.revamps), which is what counts online.
-  CONFIG.revamps = [
-    { id: 'terminal', name: 'Terminal', credits: 40, desc: 'A green-on-black command line: monospace everything, square edges, scanlines and [ bracket ] buttons.' },
-    { id: 'paper', name: 'Paper', credits: 40, desc: 'A light, printed-magazine look: cream pages, ink-black serif type, a narrow reading column and ruled cards.' },
-    { id: 'arcade', name: 'Arcade', credits: 60, desc: 'Pixel fonts, chunky outlines, hard drop shadows and neon on a checkerboard floor.' },
-    { id: 'glass', name: 'Glass', credits: 30, desc: 'Frosted panels floating over a drifting colour mesh, with big soft corners and airy spacing.' },
-    { id: 'brutal', name: 'Brutal', credits: 50, desc: 'Raw and loud: heavy outlines, hard offset shadows, zero rounding, huge type and yellow highlights.' },
-    { id: 'synthwave', name: 'Synthwave', credits: 60, desc: 'Retro-future: chrome headings, a neon horizon grid, sunset gradients and glowing edges.' }
-  ];
   // Unlock codes: nothing is sold for money yet, a purchase only goes through with a code.
   // SHA-256 of the lower-cased code (the codes themselves aren't in the source). Online, supabase/schema.sql decides.
   CONFIG.unlockHashes = ['a78f8128f2109434daf14d867c665d97a242909409b29bc0a965111d8a4a9f80', 'a3e35c83f5e38f9cabd79021eb7f517cd11ffabcd743ce999539911ec593692e'];
 
   CONFIG.pass = CONFIG.passes[0];   // the pass the shop features
 
-  /* ---------- plan tiers: free < lite < ultra, and which features each unlocks ---------- */
-  const RANK = { free: 0, basic: 1, lite: 2, ultra: 3 };
+  /* ---------- plan tiers: free < basic < lite < ultra < mono, and which features each unlocks ---------- */
+  const RANK = { free: 0, basic: 1, lite: 2, ultra: 3, mono: 4 };
   const FEATURES = {
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
-    freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra', animatedAvatar: 'ultra'   // Ultra only
+    freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra', animatedAvatar: 'ultra',   // Ultra and Mono
+    unlimited: 'mono', skillTrends: 'mono', report: 'mono'                                         // Mono only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,
@@ -86,14 +82,15 @@
     tierOf: u => (u && u.plan && RANK[u.plan.tier] != null ? u.plan.tier : 'free'),
     has: (u, f) => RANK[PLAN.tierOf(u)] >= RANK[FEATURES[f] || 'free'],
     cfg: u => CONFIG[PLAN.tierOf(u)] || CONFIG.free,
-    label: t => ({ free: 'Free', basic: 'ProMouser Basic', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra' })[t] || 'Free',
-    short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra' })[t] || 'Free',
-    paid: t => t === 'basic' || t === 'lite' || t === 'ultra',
-    themed: t => t === 'basic' || t === 'lite' || t === 'ultra',   // Basic navy, Lite blue, Ultra purple
+    label: t => ({ free: 'Free', basic: 'ProMouser Basic', lite: 'ProMouser Lite', ultra: 'ProMouser Ultra', mono: 'ProMouser Mono' })[t] || 'Free',
+    short: t => ({ free: 'Free', basic: 'Basic', lite: 'Lite', ultra: 'Ultra', mono: 'Mono' })[t] || 'Free',
+    paid: t => RANK[t] > 0,
+    ultraUp: t => RANK[t] >= RANK.ultra,                            // Ultra or Mono: every Ultra feature
+    themed: t => RANK[t] > 0,   // Basic navy, Lite blue, Ultra purple, Mono black and white
     applyTheme(t, preference = 'plan') {
       if (PLAN.themed(t)) document.documentElement.dataset.plan = t;
       else delete document.documentElement.dataset.plan;
-      if ((t === 'lite' || t === 'ultra') && PLAN.themes.some(theme => theme.id === preference) && preference !== 'plan') {
+      if (RANK[t] >= RANK.lite && PLAN.themes.some(theme => theme.id === preference) && preference !== 'plan') {
         document.documentElement.dataset.theme = preference;
       } else {
         delete document.documentElement.dataset.theme;
@@ -152,7 +149,7 @@
   /* refill daily credits, expire plans / passes. Returns true if the record changed. */
   function normalize(u) {
     let changed = false; const now = Date.now();
-    if (PLAN.paid(u.plan.tier) && u.plan.renewsAt && now > u.plan.renewsAt) { u.plan = { tier: 'free', lapsedAt: now }; changed = true; }
+    if (PLAN.paid(u.plan.tier) && u.plan.renewsAt && now > u.plan.renewsAt) { const base = u.plan.base; u.plan = base && base !== 'free' ? { tier: base, since: u.plan.baseSince || now, lapsedMono: now } : { tier: 'free', lapsedAt: now }; changed = true; }
     if (!u.extras) { u.extras = { watchlist: [], profiles: [], memory: null }; changed = true; }
     if (!u.username) { u.username = makeUsername(u.name, u.id); changed = true; }
     if (u.bio == null) { u.bio = ''; changed = true; }
@@ -300,6 +297,7 @@
       await delay(80);
       const u = current(); if (!u) throw new Error('Please sign in first.');
       if (passActive(u, reason)) return { charged: 0, pass: reason };
+      if (PLAN.has(u, 'unlimited')) return { charged: 0, plan: 'mono' };
       if (reason === 'recommendation' && PLAN.has(u, 'freeRecs')) return { charged: 0, plan: 'ultra' };
       if (reason === 'assistant' && PLAN.has(u, 'freeAI')) return { charged: 0, plan: 'ultra' };
       if (u.credits.daily + u.credits.purchased < cost) { const e = new Error('Not enough credits.'); e.code = 'NO_CREDITS'; throw e; }
@@ -319,6 +317,18 @@
         const qty = it.qty || 1;
         if (it.type === 'credits') u.credits.purchased += it.credits * qty;
         if (it.type === 'pass') { const P = passFor(it.feature || 'recommendation'); const base = passActive(u, P.feature) ? u.passes[P.feature] : now; u.passes[P.feature] = base + P.days * DAY * qty; }
+        if (it.type === 'mono') {   // yearly: adds a year from today or from the end of the current year; keeps the lifetime plan underneath
+          const was = u.plan, base = was.tier === 'mono' ? was.base || 'free' : (was.renewsAt ? 'free' : was.tier);
+          const from = was.tier === 'mono' && was.renewsAt > now ? was.renewsAt : now, until = from + CONFIG.mono.product.days * DAY * qty;
+          u.plan = { tier: 'mono', since: was.tier === 'mono' ? was.since : now, renewsAt: until, base, baseSince: was.tier === 'mono' ? was.baseSince : was.since };
+          u.credits.daily = Math.max(u.credits.daily, CONFIG.mono.dailyCredits);
+          u.turboUntil = Math.max(u.turboUntil || 0, until);   // Turbo for as long as Mono lasts
+        }
+        if (u.plan.tier === 'mono' && PLAN.RANK[it.type] && it.type !== 'mono') {   // a lifetime plan bought during Mono goes underneath it
+          if (PLAN.RANK[it.type] > PLAN.RANK[u.plan.base || 'free']) { u.plan.base = it.type; u.plan.baseSince = now; }
+          if (it.type === 'ultra') u.turboUntil = Math.max(u.turboUntil || 0, now) + CONFIG.ultra.turboDays * DAY;
+          return;
+        }
         if (it.type === 'basic' || it.type === 'lite' || it.type === 'ultra') {   // one-time: the plan is yours for life, and never downgrades
           if (PLAN.RANK[it.type] > PLAN.RANK[u.plan.tier] || (u.plan.tier === it.type && u.plan.renewsAt)) u.plan = { tier: it.type, since: u.plan.tier === it.type ? (u.plan.since || now) : now };
           u.credits.daily = Math.max(u.credits.daily, CONFIG[it.type].dailyCredits);
@@ -328,18 +338,6 @@
       });
       u.orders.unshift(order); saveUser(u); emit(); return clean(u);
     },
-    /* UI revamps: bought with credits (daily first, then purchased); owning one twice costs nothing */
-    async buyRevamp(id) {
-      await delay(120);
-      const u = current(); if (!u) throw new Error('Please sign in first.');
-      const R = CONFIG.revamps.find(x => x.id === id); if (!R) throw new Error('Unknown revamp.');
-      u.cosmetics = u.cosmetics || {}; const owned = u.cosmetics.revamps = u.cosmetics.revamps || [];
-      if (owned.includes(id)) return { charged: 0, owned: [...owned] };
-      if (u.credits.daily + u.credits.purchased < R.credits) { const e = new Error(`You need ${R.credits} credits.`); e.code = 'NO_CREDITS'; throw e; }
-      const fromDaily = Math.min(u.credits.daily, R.credits); u.credits.daily -= fromDaily; u.credits.purchased -= R.credits - fromDaily;
-      owned.push(id); saveUser(u); emit(); return { charged: R.credits, owned: [...owned] };
-    },
-    revampsOwned() { const u = current(); return ((u && u.cosmetics && u.cosmetics.revamps) || []).slice(); },
     async cancelLite() { const u = current(); if (u && PLAN.paid(u.plan.tier)) { u.plan.cancelled = true; saveUser(u); emit(); } return clean(u); },   // cancels Lite or Ultra renewal
     async resumeLite() { const u = current(); if (u && PLAN.paid(u.plan.tier)) { delete u.plan.cancelled; saveUser(u); emit(); } return clean(u); },
 
@@ -357,7 +355,7 @@
       async setPlan(tier) {
         const u = current(); if (!u) throw new Error('Sign in first.');
         const now = Date.now();
-        if (PLAN.paid(tier)) { u.plan = { tier, since: now }; u.credits.daily = Math.max(Math.min(u.credits.daily, CONFIG[tier].dailyCredits), CONFIG[tier].dailyCredits); }
+        if (PLAN.paid(tier)) { u.plan = { tier, since: now, ...(tier === 'mono' ? { renewsAt: now + 365 * DAY } : {}) }; u.credits.daily = Math.max(Math.min(u.credits.daily, CONFIG[tier].dailyCredits), CONFIG[tier].dailyCredits); }
         else { u.plan = { tier: 'free' }; u.credits.daily = Math.min(u.credits.daily, CONFIG.free.dailyCredits); }
         saveUser(u); emit(); return clean(u);
       },
