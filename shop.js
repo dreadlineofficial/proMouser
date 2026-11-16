@@ -28,7 +28,7 @@
     const body = A.openModal('', { wide: true });
     const summary = () => `
       <div class="auth-head"><span class="section-label">Checkout</span><h2>Review your <em>order</em></h2></div>
-      <ul class="order-lines">${lines.map(l => `<li><div><b>${esc(l.name)}</b><small>${l.type === 'credits' ? 'Never expire · used after your daily credits' : l.type === 'pass' ? (l.perk || 'Unlimited recommendations for 30 days') : l.type === 'mono' ? 'Everything unlimited, Mono theme, skill trends, skill report, Turbo included · 1 year' : l.type === 'ultra' ? 'Purple theme, unlimited recommendations, profiles, watchlist, sens converter, export, assistant memory · 30 days' : 'Blue theme, advanced preferences, unlimited results · 30 days'}</small></div><span>${inr(l.price)}</span></li>`).join('')}</ul>
+      <ul class="order-lines">${lines.map(l => `<li><div><b>${esc(l.name)}</b><small>${l.type === 'credits' ? 'Never expire · used after your daily credits' : l.type === 'pass' ? (l.perk || 'Unlimited recommendations for 30 days') : l.type === 'mono' ? 'Everything unlimited, Turbo included, 1.5× XP, streak freezes, personal plan, skill trends and report, saved setups · 1 year' : l.type === 'ultra' ? 'Purple theme, unlimited recommendations, profiles, watchlist, sens converter, export, assistant memory · 30 days' : 'Blue theme, advanced preferences, unlimited results · 30 days'}</small></div><span>${inr(l.price)}</span></li>`).join('')}</ul>
       <div class="order-total"><span>Total</span><b>${inr(total)}</b></div>
       <form class="code-box" id="coForm" autocomplete="off"><label for="coCode"><b>Unlock code</b><small>ProMouser isn’t taking payments yet. Purchases unlock with a valid code.</small></label>
         <input id="coCode" name="code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="Enter your code" maxlength="40" required>
@@ -81,11 +81,6 @@
       const u = B.getUser(), t = B.tier(), R = window.PM_PLAN.RANK, bal = B.balance(), worth = CFG.lite.product.price + CFG.turbo.product.price * 12;
       const perCredit = p => (p.price / p.credits).toFixed(2);
       const mono = t === 'mono', monoUntil = mono && u && u.plan ? u.plan.renewsAt : null, lifeOwned = mono ? (u.plan.base || 'free') : t;
-      const owns = need => R[lifeOwned] >= R[need];
-      const plan = (id, name, theme, price, items, cta) => `<article class="shop-plan theme-${theme} reveal visible" id="${id}"><h3>ProMouser <em>${name}</em></h3><p class="shop-price"><b>${inr(price)}</b> once</p>
-          <ul class="tick-list">${items.map(x => `<li>${x}</li>`).join('')}</ul>${cta}</article>`;
-      const lifeCta = (id, name, need) => owns(need) ? `<p class="panel-note">${lifeOwned === need ? `You own ${name} for life. ✓` : `Your plan includes everything in ${name}.`}</p>`
-        : `<div class="hero-cta"><button class="btn btn-primary btn-sm" data-buy="${CFG[need].product.id}" type="button">${R[lifeOwned] ? `Upgrade to ${name}` : `Get ${name}`}</button><a class="btn btn-ghost btn-sm" href="${root}${need}">Details</a></div>`;
       host.innerHTML = `
         <article class="shop-hero shop-mono theme-mono reveal visible" id="mono">
           <div class="sm-left"><span class="mono-badge">New · Yearly</span>
@@ -95,29 +90,68 @@
             ${mono ? `<p class="panel-note">Mono is active until <b>${fmtDate(monoUntil)}</b>. Adding a year extends it.</p>` : ''}
             <div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.mono.product.id}" type="button">${mono ? 'Add a year' : 'Get Mono'}</button></div></div>
           <ul class="tick-list sm-list"><li><strong>Unlimited everything</strong>: recommendations, ProMouser AI, and nothing ever costs credits</li><li>Everything in Ultra: statistics for every test, profiles, watchlist, sensitivity converter, every colour</li>
-            <li><strong>ProMouser Turbo included</strong> for as long as Mono lasts</li><li><strong>Skill trends</strong>: your skill score week by week</li><li><strong>Skill report</strong>: a one-page PDF of your skills, records and setup</li><li>The black-and-white <strong>Mono theme</strong> and a Mono badge</li>
+            <li><strong>ProMouser Turbo included</strong> for as long as Mono lasts</li><li><strong>1.5× XP</strong> and <strong>2 streak freezes a month</strong> on Daily</li><li><strong>Personal training plan</strong> built around your weakest skills, plus a <strong>weekly recap</strong></li>
+            <li><strong>Skill trends</strong> week by week and a one-page <strong>skill report</strong> (PDF)</li><li><strong>5 saved setups</strong>, one for each game</li><li>The black-and-white <strong>Mono theme</strong> and a Mono badge</li>
             <li>Keeps any lifetime plan you own: when a year ends you’re back on it</li></ul>
         </article>
-        <div class="section-header" style="margin-top:56px"><span class="section-label">Lifetime plans</span><h2>Pay once, <em>keep it</em></h2></div>
-        <div class="shop-plans">
-          ${plan('basic', 'Basic', 'basic', CFG.basic.product.price, [`<strong>${CFG.basic.dailyCredits} credits a day</strong>`, `Your top ${CFG.basic.resultsLimit} matches`, 'Match breakdown and “check any mouse”', 'Dark blue theme'], lifeCta('basic', 'Basic', 'basic'))}
-          ${plan('lite', 'Lite', 'lite', CFG.lite.product.price, ['Everything in Basic', `<strong>${CFG.lite.dailyCredits} credits a day</strong> and every match`, 'Advanced preferences and CPS stats', 'Blue theme'], lifeCta('lite', 'Lite', 'lite'))}
-          ${plan('ultra', 'Ultra', 'ultra', CFG.ultra.product.price, ['Everything in Lite', '<strong>Unlimited recommendations</strong>', '<strong>Statistics for every test</strong>', `<strong>1 year of Turbo</strong> (${inr(CFG.turbo.product.price * 12)} value)`, 'Profiles, watchlist, sensitivity converter, purple theme'], lifeCta('ultra', 'Ultra', 'ultra'))}
+        <div class="shop-heroes" style="margin-top:18px">
+          <article class="shop-hero shop-basic theme-basic reveal visible" id="basic">
+            <span class="plan-tag basic">One-time · yours forever</span>
+            <h3>ProMouser <em>Basic</em></h3>
+            <p class="shop-price"><b>${inr(CFG.basic.product.price)}</b> once</p>
+            <ul class="tick-list"><li><strong>${CFG.basic.dailyCredits} credits a day</strong> instead of ${CFG.free.dailyCredits}</li><li>Your top ${CFG.basic.resultsLimit} matches instead of ${CFG.free.resultsLimit}</li><li>A match breakdown on every pick</li><li>Check any mouse against your answers</li><li>History of your last ${CFG.basic.historyLimit} runs</li><li>Dark blue &amp; black theme</li></ul>
+            ${R[t] >= 1 ? `<p class="panel-note">${t === 'basic' ? 'You own Basic for life. ✓' : 'Your plan already includes everything in Basic.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.basic.product.id}" type="button">Get Basic</button><a class="btn btn-ghost" href="${root}basic">What’s included</a></div>`}
+          </article>
+          <article class="shop-hero theme-lite reveal visible" id="lite">
+            <span class="plan-tag lite">One-time · yours forever</span>
+            <h3>ProMouser <em>Lite</em></h3>
+            <p class="shop-price"><b>${inr(CFG.lite.product.price)}</b> once</p>
+            <ul class="tick-list"><li>Everything in Basic</li><li><strong>${CFG.lite.dailyCredits} credits a day</strong>, ${CFG.lite.costPerRecommendation} per run</li><li>Every match, not just the top few</li><li>Advanced preferences: hand length, left-handed, Minecraft 1.8 vs 1.9+, budget, buttons, click style</li><li>Advanced CPS stats and personal bests on every test</li><li>Blue &amp; black theme</li></ul>
+            ${R[t] >= 2 ? `<p class="panel-note">${t === 'lite' ? 'You own Lite for life. ✓' : 'You’re on Ultra, which already includes everything in Lite.'}</p>` : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.lite.product.id}" type="button">${t === 'basic' ? 'Upgrade to Lite' : 'Get Lite'}</button><a class="btn btn-ghost" href="${root}lite">What’s included</a></div>`}
+          </article>
+          <article class="shop-hero theme-ultra shop-best reveal visible" id="ultra">
+            <span class="ultra-badge">Best value · One-time</span>
+            <h3>ProMouser <em>Ultra</em></h3>
+            <p class="shop-price"><b>${inr(CFG.ultra.product.price)}</b> once <small class="was">${inr(worth)} value</small></p>
+            <ul class="tick-list"><li>Everything in Lite</li><li><strong>Unlimited recommendations</strong>, never uses credits</li><li><strong>Statistics for every test</strong>: trend charts, consistency, percentile, CSV export</li><li><strong>1 year of ProMouser Turbo</strong> (${inr(CFG.turbo.product.price * 12)} on its own)</li><li>Saved profiles, price watchlist, sensitivity converter, shortlist export, assistant memory</li><li>${CFG.ultra.dailyCredits} credits a day · purple &amp; black theme</li></ul>
+            ${t === 'ultra' || lifeOwned === 'ultra' ? `<p class="panel-note">You own Ultra for life. ✓</p>` : mono ? `<p class="panel-note">Mono includes everything in Ultra while it’s active.</p>`
+              : `<div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.ultra.product.id}" type="button">${R[t] ? 'Upgrade to Ultra' : 'Get Ultra'}</button><a class="btn btn-ghost" href="${root}ultra">What’s included</a></div>`}
+          </article>
+          <article class="shop-hero theme-turbo reveal visible" id="turbo">
+            <span class="plan-tag turbo">Monthly · ProMouser Online</span>
+            <h3>ProMouser <em>Turbo</em></h3>
+            <p class="shop-price"><b>${inr(CFG.turbo.product.price)}</b> / month</p>
+            <ul class="tick-list"><li>A gradient username on ProMouser Online</li><li>Custom gradients on your profile page</li><li>The Turbo battle pass track</li><li>An exclusive 3D digital mouse</li></ul>
+            ${B.turbo().active ? `<p class="panel-note">Turbo is active until ${fmtDate(B.turbo().until)}.</p>` : ''}
+            <div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.turbo.product.id}" type="button">${B.turbo().active ? 'Add a month' : 'Get Turbo'}</button><a class="btn btn-ghost" href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">Open ProMouser Online</a></div>
+          </article>
+          <article class="shop-hero reveal visible">
+            <span class="plan-tag">Pass</span>
+            <h3>Recommendation <em>Pass</em></h3>
+            <p class="shop-price"><b>${inr(CFG.pass.price)}</b> / ${CFG.pass.days} days</p>
+            <ul class="tick-list"><li>Unlimited recommendations for a month</li><li>Recommendations stop using credits, so your credits stay free for everything else</li><li>Works on Free, Basic and Lite (Ultra already includes it)</li></ul>
+            <p class="field-note">Passes cover one feature each. Credits work everywhere.</p>
+            ${bal && bal.recPass ? `<p class="panel-note">Active until ${fmtDate(bal.recPassUntil)}.</p>` : ''}
+            <div class="hero-cta"><button class="btn btn-primary" data-buy="${CFG.pass.id}" type="button">${bal && bal.recPass ? 'Extend by a month' : 'Get the pass'}</button></div>
+          </article>
         </div>
-        <div class="section-header" style="margin-top:56px"><span class="section-label">Extras</span><h2>Top up <em>anything</em></h2><p>Bought credits never expire and are used after your free daily credits.</p></div>
+        <div class="section-header" style="margin-top:56px"><span class="section-label">Credit packs</span><h2>Top up when you <em>need</em> it</h2><p>Bought credits never expire and are used after your free daily credits.</p></div>
         <div class="pack-grid">${CFG.packs.map(p => `<article class="pack reveal visible">${p.tag ? `<span class="pack-tag">${p.tag}</span>` : ''}<b class="pack-n">${p.credits}</b><span>credits</span><p class="pack-price">${inr(p.price)}</p><small>₹${perCredit(p)} per credit</small><button class="btn btn-outline btn-sm" data-buy="${p.id}" type="button">Buy</button></article>`).join('')}</div>
-        <div class="shop-extras">
-          <article class="shop-extra theme-turbo reveal visible" id="turbo"><div><span class="plan-tag turbo">ProMouser Online</span><h3>Turbo <small>${inr(CFG.turbo.product.price)} / month</small></h3><p>Gradient username, profile gradients, the Turbo pass track and an exclusive 3D mouse.${B.turbo().active ? ` Active until ${fmtDate(B.turbo().until)}.` : ''}</p></div>
-            <button class="btn btn-ghost btn-sm" data-buy="${CFG.turbo.product.id}" type="button">${B.turbo().active ? 'Add a month' : 'Get Turbo'}</button></article>
-          <article class="shop-extra reveal visible" id="pass"><div><span class="plan-tag">Pass</span><h3>Recommendation Pass <small>${inr(CFG.pass.price)} / ${CFG.pass.days} days</small></h3><p>Unlimited recommendations for a month without spending credits.${bal && bal.recPass ? ` Active until ${fmtDate(bal.recPassUntil)}.` : ''}</p></div>
-            <button class="btn btn-ghost btn-sm" data-buy="${CFG.pass.id}" type="button">${bal && bal.recPass ? 'Extend' : 'Get the pass'}</button></article>
+        <div class="panel info-panel reveal visible"><h3>How credits work</h3>
+          <ul class="tick-list">
+            <li><strong>${CFG.free.dailyCredits} free credits every day</strong> on a free account (${CFG.basic.dailyCredits} on Basic, ${CFG.lite.dailyCredits} on Lite, ${CFG.ultra.dailyCredits} on Ultra). They reset each day and don’t stack. On Mono nothing costs credits.</li>
+            <li>A free recommendation uses <strong>${CFG.free.costPerRecommendation} credit</strong> and shows your top ${CFG.free.resultsLimit} matches (top ${CFG.basic.resultsLimit} on Basic). On Lite it uses <strong>${CFG.lite.costPerRecommendation} credits</strong> and shows every match. On Ultra recommendations are free.</li>
+            <li>Daily credits are spent first, then credits you’ve bought.</li>
+            <li><strong>Credits work for everything</strong> on ProMouser. <strong>Passes cover one feature</strong>: the Recommendation Pass makes recommendations free for ${CFG.pass.days} days without touching your credits.</li>
+          </ul>
+          <p class="demo-note"><strong>Unlock codes only:</strong> ProMouser isn’t taking payments yet. Everything in the shop unlocks with a valid code at checkout. Prices show what each item will cost.</p>
         </div>
-        <p class="demo-note shop-codes"><strong>Unlock codes only:</strong> ProMouser isn’t taking payments yet. Everything here unlocks with a valid code at checkout.</p>
         <div class="faq reveal visible"><h3>Questions</h3>
-          <details><summary>What’s the difference between Mono and Ultra?</summary><p>Ultra (${inr(CFG.ultra.product.price)}, once) is yours for life. Mono (${inr(CFG.mono.product.price)} a year) has everything in Ultra, makes everything unlimited so nothing ever costs credits, includes Turbo while it lasts, and adds skill trends, the skill report and the Mono theme. If you own a lifetime plan, you go back to it when a Mono year ends.</p></details>
-          <details><summary>How do credits work?</summary><p>You get ${CFG.free.dailyCredits} free credits a day (${CFG.basic.dailyCredits} on Basic, ${CFG.lite.dailyCredits} on Lite, ${CFG.ultra.dailyCredits} on Ultra). They reset daily. A recommendation costs ${CFG.free.costPerRecommendation} credit (${CFG.lite.costPerRecommendation} on Lite, free on Ultra and Mono). Daily credits are used first, then bought ones, which never expire. On Mono nothing costs credits.</p></details>
-          <details><summary>I already have a plan. Can I upgrade?</summary><p>Yes. A higher lifetime plan replaces yours for life, and a lower one never downgrades you. Mono sits on top of any lifetime plan.</p></details>
-          <details><summary>What is ProMouser Turbo?</summary><p>Turbo is for <a href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online</a>, our social site with games, friends and lobbies, on the same account. Ultra includes a year of it and Mono includes it for as long as Mono lasts.</p></details>
+          <details><summary>What’s the difference between Mono and Ultra?</summary><p>Ultra (${inr(CFG.ultra.product.price)}, once) is yours for life. Mono (${inr(CFG.mono.product.price)} a year) has everything in Ultra, makes everything unlimited so nothing ever costs credits, includes Turbo while it lasts, and adds Mono-only features. If you own a lifetime plan, you go back to it when a Mono year ends.</p></details>
+          <details><summary>Are Basic, Lite and Ultra subscriptions?</summary><p>No. Basic (${inr(CFG.basic.product.price)}), Lite (${inr(CFG.lite.product.price)}) and Ultra (${inr(CFG.ultra.product.price)}) are one-time payments: pay once and keep them forever. Turbo (${inr(CFG.turbo.product.price)} a month) is monthly and Mono (${inr(CFG.mono.product.price)}) is yearly.</p></details>
+          <details><summary>Why is Ultra the best deal?</summary><p>Ultra is everything in Lite plus a full year of Turbo, which alone costs ${inr(CFG.turbo.product.price * 12)}. That’s ${inr(CFG.lite.product.price + CFG.turbo.product.price * 12)} of value for ${inr(CFG.ultra.product.price)}, and it adds unlimited recommendations and statistics for every test on top.</p></details>
+          <details><summary>I already have a plan. Can I upgrade?</summary><p>Yes. Buying a higher plan switches you to it for life. Buying a lower plan never downgrades you.</p></details>
+          <details><summary>What is ProMouser Turbo?</summary><p>Turbo is for <a href="${CFG.turbo.onlineUrl}" target="_blank" rel="noopener">ProMouser Online</a>, our social site with games, friends and lobbies. It uses the same account. Ultra includes a whole year.</p></details>
           <details><summary>How do I buy something?</summary><p>Right now, only with an unlock code: press the button on what you want and enter your code at checkout. Payments will come later.</p></details>
         </div>`;
     };

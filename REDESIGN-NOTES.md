@@ -1,10 +1,24 @@
-# ProMouser redesign — notes (v13)
+# ProMouser redesign — notes (v14)
 
 Drop-in replacement for the original site: same file names and URLs, same tools.
 Open `index.html`, or serve the folder (`python3 -m http.server 8000`) and visit
 http://localhost:8000. Everything works from either.
 
-## What's new in v13: ProMouser Mono, and a calmer site
+## What's new in v14: more Mono, a calmer top bar
+
+- **Top bar**: Mice, Tests, Guides, More, plus Recommend (Recommend mode) or Ask AI (Hub mode); nine links became five.
+  - Daily and My stats moved into the Tests menu; Shop and ProMouser Online are at the top of More.
+  - The mode switch is a small icon, and the Daily streak and reminder dot now show in the account menu.
+  - `tools/nav_tidy.py` applies all of this to every page and is safe to re-run.
+- **The rest of the site is back as it was**: the shop has its previous card layout and "How credits work" panel (with Mono as a featured card on top), and the account page shows every colour again.
+- **More Mono features**:
+  - **1.5× XP** on everything.
+  - **2 streak freezes a month**: a missed day doesn't break your streak.
+  - **A personal training plan**: 14 days built around your two weakest skills, with a weekly check-in.
+  - **A weekly recap** on Daily: XP, tests, challenges and PBs against last week, plus your biggest skill moves.
+  - **Up to 5 saved setups** on My setup, e.g. one per game.
+
+## v13: ProMouser Mono, and a calmer site
 
 - **ProMouser Mono** (₹4,999 a year): the plan above Ultra.
   - Everything in Ultra, plus **nothing ever costs credits** (the header shows ∞).

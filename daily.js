@@ -17,6 +17,7 @@
   /* ---------- layout ---------- */
   host.innerHTML = `
     <section class="dy-hero panel" id="dyHero"></section>
+    <section class="panel dy-recap" id="dyRecap" hidden></section>
     <div class="dy-grid">
       <section class="panel dy-challenge" id="dyChallenge"></section>
       <section class="panel dy-week" id="dyWeek"></section>
@@ -111,19 +112,48 @@
     });
   }
 
+  const fname = t => { const k = window.PMSkills && PMSkills.SKILLS.find(x => x.test === t); return k ? k.name : C.LONG[t]; };
+  // the two skills a Mono personal plan works on: the weakest scored ones, then ones not tried yet
+  function monoFocus() {
+    const P = window.PMSkills && PMSkills.profile(); if (!P) return ['tracking', 'flick'];
+    const scored = P.tested.slice().sort((a, b) => a.score - b.score).map(k => k.test), untested = P.skills.filter(k => !k.n).map(k => k.test);
+    return [...scored, ...untested].slice(0, 2);
+  }
+
+  /* ---------- Mono: weekly recap (this week so far vs the same days last week) ---------- */
+  function recap() {
+    const el = $('#dyRecap'); if (!C.isMono()) { el.hidden = true; return; } el.hidden = false;
+    const n = C.dayNum(), ws = n - ((n + 3) % 7), span = n - ws + 1;
+    const sum = (from, f) => [...Array(span)].reduce((a, _, i) => { const d = C.state.days[C.keyOf(from + i)]; return a + (d ? f(d) : 0); }, 0);
+    const M = [['XP', d => d.xp || 0], ['Tests', d => Object.values(d.tests || {}).reduce((x, y) => x + y, 0)], ['Challenges', d => (d.ch ? 1 : 0)], ['Personal bests', d => d.pb || 0]]
+      .map(([l, f]) => [l, sum(ws, f), sum(ws - 7, f)]);
+    let movers = '';
+    if (window.PMSkills) {
+      const now = PMSkills.profile(), before = PMSkills.profile(Date.now() - 7 * 864e5);
+      const ch = now.skills.map((k, i) => ({ k, d: k.n && before.skills[i].n ? k.score - before.skills[i].score : null })).filter(x => x.d).sort((a, b) => b.d - a.d).slice(0, 3);
+      movers = ch.length ? `<div class="dy-movers"><span>Biggest moves this week</span>${ch.map(x => `<b class="${x.d > 0 ? 'up' : 'down'}">${esc(x.k.name)} ${x.d > 0 ? '▲ +' : '▼ '}${x.d}</b>`).join('')}</div>` : '';
+    }
+    const fz = C.freezesLeft();
+    el.innerHTML = `<div class="dy-ch-top"><div><span class="section-label">Your week · <span class="plan-tag mono">Mono</span></span><h3 class="dy-q-title">Week so far vs last week</h3></div>
+      <span class="dy-reward">1.5× XP · 🧊 ${fz} streak freeze${fz === 1 ? '' : 's'} left this month</span></div>
+      <div class="dy-recap-grid">${M.map(([l, a, b]) => `<div><span>${l}</span><b>${num(a)}</b><small class="${a > b ? 'up' : a < b ? 'down' : ''}">${a === b ? 'same as' : a > b ? `+${num(a - b)} on` : `${num(a - b)} on`} last week</small></div>`).join('')}</div>${movers}`;
+  }
+
   /* ---------- training plans ---------- */
   function plans() {
     $('#dyPlans').innerHTML = Object.entries(C.PLANS).map(([id, P]) => {
       const ps = C.planState(id);
+      if (P.mono && !C.isMono()) return `<article class="panel dy-plan dy-plan-mono"><span class="section-label">${P.days} sessions · <span class="plan-tag mono">Mono</span></span><h3>${esc(P.name)}</h3><p class="panel-note">${esc(P.desc)} It picks your weakest skills from your skill profile.</p><a class="btn btn-ghost btn-sm" href="${root}shop#mono">See Mono</a></article>`;
+      if (!ps && P.mono) { const f = monoFocus(); return `<article class="panel dy-plan dy-plan-mono"><span class="section-label">${P.days} sessions · <span class="plan-tag mono">Mono</span></span><h3>${esc(P.name)}</h3><p class="panel-note">${esc(P.desc)} Right now that’s <b>${f.map(t => esc(fname(t))).join('</b> and <b>')}</b>.</p><button class="btn btn-primary btn-sm" type="button" data-start="${id}">Start my plan</button></article>`; }
       if (!ps) return `<article class="panel dy-plan"><span class="section-label">${P.days} sessions</span><h3>${esc(P.name)}</h3><p class="panel-note">${esc(P.desc)}</p><button class="btn btn-primary btn-sm" type="button" data-start="${id}">Start the plan</button></article>`;
-      return `<article class="panel dy-plan on"><div class="dy-plan-top"><div><span class="section-label">${ps.finished ? 'Complete' : `Session ${ps.session} of ${P.days}`}</span><h3>${esc(P.name)}</h3></div>${ps.doneToday ? '<span class="dy-done">✓ Today done</span>' : '<span class="dy-reward">+30 XP</span>'}</div>
+      return `<article class="panel dy-plan on"><div class="dy-plan-top"><div><span class="section-label">${ps.finished ? 'Complete' : `Session ${ps.session} of ${P.days}`}</span><h3>${esc(P.name)}</h3>${ps.focus ? `<small class="dy-focus">Focus: ${ps.focus.map(t => esc(fname(t))).join(' · ')}</small>` : ''}</div>${ps.doneToday ? '<span class="dy-done">✓ Today done</span>' : '<span class="dy-reward">+30 XP</span>'}</div>
         <div class="dy-xpbar"><i style="width:${Math.round(ps.progress * 100)}%"></i></div>
         ${ps.finished ? '<p class="panel-note">You finished every session. Start again any time to keep your edge.</p>' : `<ul class="dy-tasks">${ps.tasks.map(t => `<li class="${t.ok ? 'ok' : ''}">${t.manual && !ps.doneToday ? `<button type="button" data-tick="${id}:${t.i}" aria-pressed="${t.ok}">${t.ok ? '✓' : ''}</button>` : `<i>${t.ok ? '✓' : ''}</i>`}<span>${esc(t.t)}</span>${!t.manual && !t.ok ? `<a href="${root}${({ cps: 'cps-test', aim: 'aim-trainer', reaction: 'reaction-test', doubleclick: 'double-click-test', tracking: 'tracking-test', flick: 'flick-test', rush: 'target-rush', rhythm: 'rhythm-test', circle: 'circle-test' })[t.test]}">Go →</a>` : ''}</li>`).join('')}</ul>`}
         <button class="linkish dy-stop" type="button" data-stop="${id}">${ps.finished ? 'Start over' : 'Leave plan'}</button></article>`;
     }).join('');
   }
   host.addEventListener('click', e => {
-    const s = e.target.closest('[data-start]'); if (s) { C.startPlan(s.dataset.start); render(); return; }
+    const s = e.target.closest('[data-start]'); if (s) { const id = s.dataset.start; C.startPlan(id, C.PLANS[id].mono ? { focus: monoFocus() } : null); render(); return; }
     const t = e.target.closest('[data-tick]'); if (t) { const [id, i] = t.dataset.tick.split(':'); C.event('plan-manual', { id, i: +i }); render(); return; }
     const x = e.target.closest('[data-stop]'); if (x) { const id = x.dataset.stop, ps = C.planState(id); if (ps && ps.finished) C.startPlan(id); else if (confirm('Leave this plan? Your finished sessions will be cleared.')) C.stopPlan(id); render(); }
   });
@@ -164,15 +194,15 @@
   function settings() {
     const st = C.settings, seg = (k, opts) => `<div class="ui-seg">${opts.map(([v, l]) => `<button type="button" data-core-set="${k}:${v}" aria-pressed="${String(st[k]) === String(v)}">${l}</button>`).join('')}</div>`;
     $('#dySettings').innerHTML = `<div class="ui-row"><span>Progress pop-ups</span>${seg('toasts', [['all', 'All'], ['big', 'Big moments only'], ['off', 'Off']])}<small class="dy-set-note">${st.toasts === 'all' ? 'XP after every test, plus level-ups, personal bests, streaks and achievements.' : st.toasts === 'big' ? 'Only level-ups, personal bests, streaks, quests and achievements.' : 'No pop-ups. You still earn XP and unlock everything.'}</small></div>
-      <div class="ui-row"><span>Streak and reminder dot in the menu</span>${seg('navStreak', [['true', 'Show'], ['false', 'Hide']])}</div>`;
+      <div class="ui-row"><span>Streak and reminder dot in the account menu</span>${seg('navStreak', [['true', 'Show'], ['false', 'Hide']])}</div>`;
   }
   host.addEventListener('click', e => { const b = e.target.closest('[data-core-set]'); if (!b) return; const [k, v] = b.dataset.coreSet.split(':'); C.setSetting(k, v === 'true' ? true : v === 'false' ? false : v); settings(); });
   document.addEventListener('click', e => { if (e.target.closest('[data-ui-set]')) setTimeout(rewards, 0); });
 
-  function render() { hero(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); settings(); if (window.PMSkills) PMSkills.render(); }
+  function render() { hero(); recap(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); settings(); if (window.PMSkills) PMSkills.render(); }
   render(); mousle();
   document.addEventListener('DOMContentLoaded', () => { rewards(); if (window.PMSkills) PMSkills.render(); });
-  document.addEventListener('pm:core', () => { hero(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); });
+  document.addEventListener('pm:core', () => { hero(); recap(); challenge(); questsPanel(); plans(); calendar(); achievements(); rewards(); });
   if (location.hash === '#settings') setTimeout(() => $('#settings').scrollIntoView({ block: 'start' }), 200);
   if (location.hash === '#mousle') setTimeout(() => $('#mousle').scrollIntoView({ block: 'start' }), 200);
 })();

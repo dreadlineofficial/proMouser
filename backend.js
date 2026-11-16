@@ -69,7 +69,7 @@
     breakdown: 'basic', checkAny: 'basic',                                                       // Basic and up
     advanced: 'lite', allResults: 'lite', testHistory: 'lite',                                  // Lite and up
     freeRecs: 'ultra', freeAI: 'ultra', ui: 'ultra', profiles: 'ultra', watchlist: 'ultra', sens: 'ultra', export: 'ultra', memory: 'ultra', testStats: 'ultra', testLog: 'ultra', animatedAvatar: 'ultra',   // Ultra and Mono
-    unlimited: 'mono', skillTrends: 'mono', report: 'mono'                                         // Mono only
+    unlimited: 'mono', skillTrends: 'mono', report: 'mono', xpBoost: 'mono', streakFreeze: 'mono', monoPlan: 'mono', setups: 'mono', recap: 'mono'   // Mono only
   };
   const PLAN = window.PM_PLAN = {
     RANK, FEATURES,

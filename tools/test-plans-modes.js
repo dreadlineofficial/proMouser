@@ -11,7 +11,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   await p.click('.mc-opt.hub'); await p.waitForTimeout(500);
   ok(await p.evaluate(() => document.documentElement.dataset.mode) === 'hub', 'hub mode set');
   ok(await p.isVisible('#hub') && !(await p.isVisible('#hero')), 'hub hero shown, recommend hero hidden');
-  ok(await p.isVisible('.nav-links a[href="my-stats"]') && !(await p.isVisible('.nav-rec')), 'hub nav (My stats shown, Recommend hidden)');
+  ok(await p.isVisible('.nav-links > li > a[href="mouse-ai"]') && !(await p.isVisible('.nav-rec')), 'hub nav (Ask AI shown, Recommend hidden)');
   ok(await p.$$eval('.hub-test', a => a.length) === 14 && await p.$$eval('.hub-lead', a => a.length) >= 6 && await p.isVisible('.motd-specs'), 'hub tests, leaders, mouse of the day');
   await p.fill('[data-hub-search] input', 'wireless under 60 g'); await p.waitForTimeout(200);
   const res = await p.$$eval('.hub-results a', a => a.map(x => x.textContent));
@@ -86,7 +86,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   // 5. pages render without errors
   for (const pg of ['shop', 'basic', 'lite', 'ultra', 'my-stats', 'tests', 'cps-test', 'aim-trainer', 'double-click-test', 'scroll-test', 'mouse-button-test', 'polling-rate-test', 'account', 'elite', 'mice', 'mice/compare', 'blog/', 'daily', 'setup', 'tracking-test', 'flick-test', 'target-rush', 'rhythm-test', 'circle-test', 'dpi-analyzer']) { await p.goto(BASE + pg); await p.waitForTimeout(500); }
   await p.goto(BASE + 'shop'); await p.waitForTimeout(600);
-  ok(await p.$$eval('#mono, #basic, #lite, #ultra, #turbo, #pass', a => a.length) === 6, 'shop shows Mono, Basic, Lite, Ultra, Turbo, Pass');
+  ok(await p.$$eval('#mono, #basic, #lite, #ultra, #turbo', a => a.length) === 5 && /Recommendation Pass/.test(await p.textContent('[data-shop]')), 'shop shows Mono, Basic, Lite, Ultra, Turbo, Pass');
   await p.goto(BASE + 'my-stats'); await p.waitForTimeout(600);
   ok(await p.$$eval('[data-tstats] .ts-head', a => a.length) === 13, 'My stats shows all 13 tests');
   ok(await p.$$eval('.sk-list li', a => a.length) === 8 && await p.isVisible('.sk-coach'), 'skill profile: 8 skills and the coach');

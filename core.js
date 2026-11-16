@@ -37,6 +37,8 @@
   const blank = () => ({ v: 1, xp: 0, updated: 0, days: {}, streak: { cur: 0, best: 0, last: null }, ach: {}, plans: {},
     count: { tests: {}, testsTotal: 0, views: 0, viewed: [], ai: 0, recs: 0, compares: 0, mousleWins: 0, mousleFast: 0, planSessions: 0, plansDone: 0, pbs: 0, quests: 0, sweeps: 0 }, best: {}, setup: false, weeks: {}, settings: { toasts: 'all', navStreak: true } });
   const user = () => { try { return B() && B().getUser ? B().getUser() : null; } catch (e) { return null; } };
+  const isMono = () => { try { return !!(B() && B().has && B().has('xpBoost')); } catch (e) { return false; } };   // ProMouser Mono
+  const XP_BOOST = 1.5, FREEZES = 2;   // Mono: 1.5x XP, 2 streak freezes a month
   const storeKey = () => 'pm_core:' + ((user() || {}).id || 'guest');
   const readLocal = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   let S = load();
@@ -161,6 +163,7 @@
   }
 
   /* ---------- training plans ---------- */
+  const LONG = { cps: 'CPS test', reaction: 'reaction test', aim: 'aim trainer run', tracking: 'tracking test', flick: 'flick test', rush: 'Target rush run', rhythm: 'rhythm test', circle: 'circle test' };
   const PLANS = {
     cps: { name: '28-day CPS plan', short: 'CPS plan', days: 28, desc: 'Build faster, steadier clicking in four weeks.',
       tasks: i => { const w = Math.floor(i / 7); return [{ t: '2-minute hand warm-up', manual: true },
@@ -169,6 +172,10 @@
     aim: { name: '30-day aim plan', short: 'Aim plan', days: 30, desc: 'Flicks, precision and reaction, 15 minutes a day.',
       tasks: i => (i === 0 || i === 14 || i === 29) ? [{ t: 'Benchmark: reaction test', test: 'reaction', n: 1 }, { t: 'Benchmark: aim trainer', test: 'aim', n: 1 }, { t: 'Benchmark: CPS test', test: 'cps', n: 1 }]
         : [{ t: '3-minute warm-up', manual: true }, { t: `${i < 14 ? 2 : 3} aim trainer runs`, test: 'aim', n: i < 14 ? 2 : 3 }, { t: '1 reaction test', test: 'reaction', n: 1 }] },
+    mono: { name: 'Mono personal plan', short: 'Personal plan', days: 14, mono: true, desc: 'Built around your two weakest skills, with a check-in every week.',
+      tasks: (i, p) => { const f = (p && p.focus && p.focus.length ? p.focus : ['tracking', 'flick']), nm = t => LONG[t] || t;
+        return [{ t: '2-minute warm-up', manual: true }, { t: `2 × ${nm(f[0])}`, test: f[0], n: 2 }, ...(f[1] ? [{ t: `1 × ${nm(f[1])}`, test: f[1], n: 1 }] : []),
+          ...(i % 7 === 6 ? [{ t: 'Weekly check-in: 1 reaction test', test: 'reaction', n: 1 }] : [])]; } },
     all: { name: '14-day all-rounder', short: 'All-rounder', days: 14, desc: 'Every skill test in rotation, to fill out your whole skill profile.',
       tasks: i => { const rot = [['tracking', 'flick'], ['rush', 'rhythm'], ['circle', 'aim'], ['tracking', 'reaction'], ['flick', 'rush'], ['rhythm', 'cps'], ['circle', 'tracking']][i % 7];
         return [{ t: '2-minute warm-up', manual: true }, ...rot.map(t => ({ t: `1 ${({ tracking: 'tracking test', flick: 'flick test', rush: 'Target rush run', rhythm: 'rhythm test', circle: 'circle test', aim: 'aim trainer run', reaction: 'reaction test', cps: 'CPS test' })[t]}`, test: t, n: 1 }))]; } }
@@ -177,8 +184,8 @@
     const p = S.plans[id]; if (!p) return null;
     const P = PLANS[id], doneToday = p.done.includes(dayKey()), idx = Math.min(P.days - 1, p.done.length - (doneToday ? 1 : 0));
     const d = S.days[dayKey()] || { tests: {} }, man = (p.manual || {})[dayKey()] || [];
-    const tasks = P.tasks(idx).map((t, i) => ({ ...t, i, ok: doneToday || (t.manual ? man.includes(i) : (d.tests[t.test] || 0) >= t.n) }));
-    return { id, ...P, session: idx + 1, doneToday, finished: p.done.length >= P.days, tasks, progress: p.done.length / P.days };
+    const tasks = P.tasks(idx, p).map((t, i) => ({ ...t, i, ok: doneToday || (t.manual ? man.includes(i) : (d.tests[t.test] || 0) >= t.n) }));
+    return { id, ...P, focus: p.focus || null, session: idx + 1, doneToday, finished: p.done.length >= P.days, tasks, progress: p.done.length / P.days };
   }
   function planTick(id) {   // finish today's session when every task is done
     const ps = planState(id); if (!ps || ps.doneToday || ps.finished || !ps.tasks.every(t => t.ok)) return;
@@ -190,7 +197,7 @@
   const queue = [], SKILL = ['cps', 'reaction', 'aim', 'tracking', 'flick', 'rush', 'rhythm', 'circle'];
   const TNAME = { cps: 'CPS', reaction: 'Reaction', aim: 'Aim trainer', tracking: 'Tracking', flick: 'Flick', rush: 'Target rush', rhythm: 'Rhythm', circle: 'Circle' };
   const TFMT = { cps: v => v.toFixed(2) + ' CPS', reaction: v => Math.round(v) + ' ms', aim: v => Math.round(v) + ' ms/target', tracking: v => v.toFixed(1) + '%', flick: v => Math.round(v) + ' ms', rush: v => Math.round(v) + ' targets', rhythm: v => Math.round(v) + ' ms', circle: v => v.toFixed(1) + '%' };
-  function gain(xp, why) { if (!xp) return; const before = levelOf(S.xp); S.xp += xp; today().xp += xp; queue.push([xp, why]); const after = levelOf(S.xp); if (after > before) queue.push(['level', after]); }
+  function gain(xp, why) { if (!xp) return; if (isMono()) { xp = Math.round(xp * XP_BOOST); why = why ? why + ' · Mono 1.5×' : ''; } const before = levelOf(S.xp); S.xp += xp; today().xp += xp; queue.push([xp, why]); const after = levelOf(S.xp); if (after > before) queue.push(['level', after]); }
   function event(type, data = {}) {
     const d = today(), c = S.count;
     if (type === 'test') {
@@ -216,8 +223,10 @@
     // daily challenge + streak
     const ch = challenge();
     if (!d.ch && ch.ok(d, ch.n)) {
-      d.ch = true; const y = keyOf(dayNum() - 1);
-      S.streak.cur = S.streak.last === y ? S.streak.cur + 1 : S.streak.last === dayKey() ? S.streak.cur : 1;
+      d.ch = true; const y = keyOf(dayNum() - 1), missed = missedDays();
+      if (S.streak.last && missed > 0 && missed <= freezesLeft()) {   // Mono: a streak freeze covers the missed days
+        useFreezes(missed); S.streak.cur++; queue.push(['freeze', missed]);
+      } else S.streak.cur = S.streak.last === y ? S.streak.cur + 1 : S.streak.last === dayKey() ? S.streak.cur : 1;
       S.streak.last = dayKey(); S.streak.best = Math.max(S.streak.best, S.streak.cur);
       gain(60 + Math.min(40, S.streak.cur * 5), 'Daily challenge complete');
       queue.push(['streak', S.streak.cur]);
@@ -227,7 +236,11 @@
     for (let pass = 0; pass < 2; pass++) A.forEach(a => { if (!S.ach[a.id] && a.ok(S)) { S.ach[a.id] = Date.now(); queue.push(['ach', a]); gain(a.xp, ''); } });
     save(); flush();
   }
-  const streakNow = () => (S.streak.last === dayKey() || S.streak.last === keyOf(dayNum() - 1) ? S.streak.cur : 0);
+  const streakNow = () => (S.streak.last === dayKey() || S.streak.last === keyOf(dayNum() - 1) || (S.streak.last && missedDays() <= freezesLeft()) ? S.streak.cur : 0);
+  // days between the last challenge and yesterday that were skipped (0 = the streak is intact)
+  function missedDays() { return S.streak.last ? Math.max(0, dayNum() - dayNum(S.streak.last) - 1) : 0; }
+  function freezesLeft() { if (!isMono()) return 0; const m = dayKey().slice(0, 7), f = S.freeze || {}; return Math.max(0, FREEZES - (f.m === m ? f.used : 0)); }
+  function useFreezes(n) { const m = dayKey().slice(0, 7), f = S.freeze && S.freeze.m === m ? S.freeze : { m, used: 0 }; f.used += n; S.freeze = f; }
 
   /* ---------- toasts: XP, level up, streak, achievement ---------- */
   let tq = [], showing = false;
@@ -239,6 +252,7 @@
     rest.forEach(([k, v]) => {
       if (k === 'level') { const r = REWARDS.find(x => x.level === v); tq.push([`<i class="ct-lvl">${v}</i><b>Level up!</b><span>You’re now level ${v} · ${titleOf(v)}${r ? ` · ${r.name} colour unlocked` : ''}</span>`, 'big']); }
       if (k === 'pb') tq.push([`<i class="ct-ach" data-icon="Rate"></i><b>New personal best!</b><span>${esc(TNAME[v[0]])}: ${esc(TFMT[v[0]](v[2]))} (was ${esc(TFMT[v[0]](v[1]))})</span>`, 'big']);
+      if (k === 'freeze') tq.push([`<i class="ct-fire">🧊</i><b>Streak saved</b><span>Mono used ${v} streak freeze${v === 1 ? '' : 's'} for the day${v === 1 ? '' : 's'} you missed.</span>`, 'big']);
       if (k === 'quest') tq.push([`<i class="ct-ach" data-icon="Insight"></i><b>Weekly quest done</b><span>${esc(v)} · +${QUEST_XP} XP</span>`, 'big']);
       if (k === 'streak') tq.push([`<i class="ct-fire">🔥</i><b>${v}-day streak</b><span>Daily challenge done. Come back tomorrow!</span>`, 'big']);
       if (k === 'ach') tq.push([`<i class="ct-ach" data-icon="${v.icon}"></i><b>Achievement: ${esc(v.name)}</b><span>${esc(v.desc)}${v.xp ? ` · +${v.xp} XP` : ''}</span>`, 'big']);
@@ -274,7 +288,7 @@
   function paint() {
     const done = challenge().done, st = streakNow();
     const show = S.settings.navStreak !== false;
-    document.querySelectorAll('[data-daily-nav]').forEach(a => { a.innerHTML = `Daily${show && st ? ` <span class="dn-fire">🔥${st}</span>` : ''}${show && !done ? '<i class="dn-dot" aria-label="Today’s challenge is waiting"></i>' : ''}`; });
+    document.querySelectorAll('[data-daily-nav]').forEach(a => { a.innerHTML = `${a.dataset.label || 'Daily'}${show && st ? ` <span class="dn-fire">🔥${st}</span>` : ''}${show && !done ? '<i class="dn-dot" aria-label="Today’s challenge is waiting"></i>' : ''}`; });
     document.querySelectorAll('[data-core-level]').forEach(el => { el.textContent = 'Lv ' + levelOf(S.xp); });
     document.dispatchEvent(new CustomEvent('pm:core'));
   }
@@ -296,7 +310,8 @@
     get settings() { return S.settings; },
     get state() { return S; },
     today, persist: save,
-    startPlan(id) { if (!PLANS[id]) return; S.plans[id] = { start: dayKey(), done: [], manual: {} }; save(); },
+    startPlan(id, extra) { if (!PLANS[id] || (PLANS[id].mono && !isMono())) return; S.plans[id] = { start: dayKey(), done: [], manual: {}, ...(extra || {}) }; save(); },
+    freezesLeft, missedDays, isMono, XP_BOOST, FREEZES, LONG,
     stopPlan(id) { delete S.plans[id]; save(); },
     reset() { S = blank(); save(); }
   };

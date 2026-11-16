@@ -30,7 +30,8 @@
         <label><span>Hand length (cm)</span><input name="hand" type="number" min="12" max="26" step="0.1" value="${S.hand}" placeholder="e.g. 18.5"></label></div>
       <div class="su-actions"><button class="btn btn-primary btn-sm" type="submit">Save my setup</button><button class="btn btn-ghost btn-sm" type="button" id="suCopy">Copy as text</button><span class="su-saved" id="suSaved" hidden>Saved ✓</span></div>
     </form>
-    <div class="su-out" id="suOut"></div></div>`;
+    <div class="su-out" id="suOut"></div></div>
+    <section class="panel su-saved-setups" id="suSets"></section>`;
 
   const val = () => { const f = new FormData($('#suForm')); return { mouse: f.get('mouse'), dpi: +f.get('dpi') || 800, game: f.get('game'), sens: +f.get('sens') || 0, pad: +f.get('pad'), hz: +f.get('hz'), grip: f.get('grip'), hand: f.get('hand') ? +f.get('hand') : '' }; };
   function calc(s) {
@@ -79,5 +80,36 @@
     const t = $('#suSaved'); t.hidden = false; setTimeout(() => { t.hidden = true; }, 2200);
   });
   $('#suCopy').addEventListener('click', () => { const t = text(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('#suCopy').textContent = 'Copied!'; }).catch(() => prompt('Copy your setup:', t)); });
-  render();
+  /* ---------- Mono: up to 5 saved setups (e.g. one per game) ---------- */
+  const SKEY = 'pm_setups', MAXSETS = 5, mono = () => !!(B && B.has && B.has('setups'));
+  const getSets = () => { const u = B && B.getUser ? B.getUser() : null; if (u && u.prefs && Array.isArray(u.prefs.setups)) return u.prefs.setups; try { return JSON.parse(localStorage.getItem(SKEY) || '[]') || []; } catch (e) { return []; } };
+  async function putSets(list) {
+    try { localStorage.setItem(SKEY, JSON.stringify(list)); } catch (e) { /* storage off */ }
+    try { if (B && B.getUser && B.getUser()) await B.updateProfile({ prefs: { setups: list } }); } catch (e) { /* keep local */ }
+    sets();
+  }
+  function load(x) {
+    const f = $('#suForm'); Object.entries(x.s).forEach(([k, v]) => { const el = f.elements[k]; if (el) el.value = v; }); render();
+  }
+  function sets() {
+    const el = $('#suSets');
+    if (!mono()) { el.innerHTML = `<div class="su-sets-tease"><span class="plan-tag mono">Mono</span><span>Save up to ${MAXSETS} setups, one for each game, and switch between them in a click.</span><a href="${root}shop#mono">See Mono →</a></div>`; return; }
+    const list = getSets();
+    el.innerHTML = `<div class="dy-ch-top"><div><span class="section-label">Saved setups · <span class="plan-tag mono">Mono</span></span><h3>One for <em>every game</em></h3></div><span class="panel-note" style="margin:0">${list.length} / ${MAXSETS}</span></div>
+      <div class="su-sets">${list.map((x, i) => `<div class="su-set"><button type="button" class="su-set-load" data-load="${i}"><b>${esc(x.name)}</b><small>${esc((GAMES[x.s.game] || GAMES.other)[0])} · ${num(x.s.dpi)} DPI · ${esc(x.s.sens)}</small></button><button type="button" class="su-set-x" data-del="${i}" aria-label="Delete ${esc(x.name)}">×</button></div>`).join('') || '<p class="panel-note" style="margin:0">No saved setups yet.</p>'}</div>
+      <form class="su-set-new" id="suSetForm"><input name="name" maxlength="24" placeholder="Name this setup, e.g. Valorant" required ${list.length >= MAXSETS ? 'disabled' : ''}><button class="btn btn-primary btn-sm" type="submit" ${list.length >= MAXSETS ? 'disabled' : ''}>Save current setup</button></form>`;
+  }
+  $('#suSets').addEventListener('click', e => {
+    const l = e.target.closest('[data-load]'); if (l) { load(getSets()[+l.dataset.load]); return; }
+    const d = e.target.closest('[data-del]'); if (d) { const list = getSets().slice(); list.splice(+d.dataset.del, 1); putSets(list); }
+  });
+  $('#suSets').addEventListener('submit', e => {
+    if (e.target.id !== 'suSetForm') return; e.preventDefault();
+    const name = e.target.elements.name.value.trim().slice(0, 24); if (!name) return;
+    const list = getSets().filter(x => x.name.toLowerCase() !== name.toLowerCase());
+    if (list.length >= MAXSETS) return;
+    putSets([...list, { name, s: val() }]);
+  });
+  if (B && B.on) B.on(sets);
+  render(); sets();
 })();

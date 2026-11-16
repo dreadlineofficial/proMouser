@@ -171,7 +171,7 @@
           <a role="menuitem" href="${root}elite">Elite Dashboard</a>
           <a role="menuitem" href="${root}account">My account</a>
           <a role="menuitem" href="${root}recommendations">Recommendations</a>
-          <a role="menuitem" href="${root}daily">Daily &amp; Mousle</a>
+          <a role="menuitem" href="${root}daily" data-daily-nav data-label="Daily &amp; Mousle">Daily &amp; Mousle</a>
           <a role="menuitem" href="${root}setup">My setup</a>
           <a role="menuitem" href="${root}shop">Shop &amp; credits</a>
           ${PLAN.ultraUp(t) ? `<a role="menuitem" href="${root}sens">Sensitivity converter</a>` : `<a role="menuitem" href="${root}ultra" class="upsell">Go Ultra</a>`}${t === 'free' || t === 'basic' ? `<a role="menuitem" href="${root}lite" class="upsell">Upgrade to Lite</a>` : ''}
@@ -228,7 +228,7 @@
     return `<article class="panel acct-prog"><div class="panel-head"><h3>Your progress</h3><span class="plan-tag">Level ${L} · ${C.titleOf(L)}</span></div>
       <div class="ap-bar"><i style="width:${Math.round((S.xp - lo) / (hi - lo) * 100)}%"></i></div><p class="panel-note">${S.xp - lo} / ${hi - lo} XP to level ${L + 1}</p>
       <div class="credit-stats"><div><span>Streak</span><b>${st ? '🔥 ' + st : '0'}</b><em>best ${S.streak.best}</em></div><div><span>Achievements</span><b>${Object.keys(S.ach).length}<small> / ${C.ACH.length}</small></b><em>unlocked</em></div><div><span>Today</span><b>${ch.done ? '✓' : '—'}</b><em>${ch.done ? 'challenge done' : esc(ch.text)}</em></div></div>
-      ${PLAN.ultraUp(B.tier()) ? '' : `<div class="ui-row"><span>Colour</span><div class="ui-swatches">${swatch(BASE_ACCENTS[0])}${C.REWARDS.filter(r => L >= r.level).map(r => swatch([r.id, r.name, r.c[0], r.c[1]])).join('')}</div>${C.REWARDS.some(r => L < r.level) ? `<small class="panel-note">${C.REWARDS.filter(r => L < r.level).length} more colours unlock as you level up on <a href="${root}daily">Daily</a>.</small>` : ''}</div>`}
+      ${PLAN.ultraUp(B.tier()) ? '' : `<div class="ui-row"><span>Colour · unlock more by levelling up</span><div class="ui-swatches">${swatch(BASE_ACCENTS[0])}${C.REWARDS.map(r => swatch([r.id, r.name, r.c[0], r.c[1]], L >= r.level ? 0 : r.level)).join('')}</div></div>`}
       <div class="hero-cta" style="margin-top:1rem"><a class="btn btn-primary btn-sm" href="${root}daily">Open Daily</a><a class="btn btn-ghost btn-sm" href="${root}setup">My setup</a><a class="btn btn-ghost btn-sm" href="${root}my-stats">My stats</a><a class="btn btn-ghost btn-sm" href="${root}daily#settings">Pop-up settings</a></div></article>`;
   }
   const BASE_ACCENTS = [['default', 'Default', '#a855f7', '#7c3aed'], ['classic', 'Red', '#ff2a47', '#c4001f'], ['lite', 'Blue', '#4aa3ff', '#1f5fe6'], ['navy', 'Navy', '#3b63e3', '#142a80']];
